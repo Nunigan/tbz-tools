@@ -7,6 +7,9 @@ dort hierher kopiert.
 
 - `projektionsmethode-trainer.html` – TZ Kap. 2, sechs Ansichten nach
   Projektionsmethode 1 zuordnen (drehbares 3D-Modell).
+- `skript-aufgaben.html` – TZ Kap. 2.3, die sechs Werkstücke der
+  Skript-Aufgaben S. 18–21 als 3D-Modell; Ansichten aufdecken oder als
+  Quiz zuordnen (vom Trainer aus verlinkt).
 - `konstante-beschleunigung-animation.html` – Physik Kap. 2, Bewegung
   mit konstanter Beschleunigung: Fahrzeug, Zerlegung
   x = x₀ + v₀·t + ½·a·t² und die drei Diagramme x–t, v–t, a–t.

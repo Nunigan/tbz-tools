@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Projektionsmethode-Trainer</title>
+<title>Skript-Aufgaben Projektion</title>
 <style>
   :root{
     --paper:#F6F7F4;
@@ -85,36 +85,44 @@
   .howto summary{cursor:pointer;font-weight:600;color:var(--blue)}
   .howto ol{margin:8px 0 4px;padding-left:20px}
   .howto li{margin:4px 0}
+  .nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+  .nav button{font:inherit;background:#fff;border:1.5px solid var(--rule);border-radius:3px;padding:6px 11px;cursor:pointer;color:var(--ink)}
+  .nav button.on{border-color:var(--ink);background:var(--ink);color:#fff}
+  .nav button small{opacity:.75;margin-left:4px}
+  .aufgabe{background:#fff;border:1.5px solid var(--rule);border-left:5px solid var(--blue);padding:10px 14px;margin:10px 0 0;font-size:14px}
+  .aufgabe b{display:block;margin-bottom:3px}
+  .aufgabe .src{color:var(--ink-soft);font-size:12px;display:block;margin-top:5px}
+  .slot.given{border-color:var(--ink);border-style:solid;background:#fff}
+  .slot .tag{position:absolute;right:6px;top:4px;font-size:11px;color:var(--ink-soft)}
+  .slot.hidden{cursor:pointer}
+  .slot.hidden:hover{border-color:var(--blue);background:var(--blue-wash)}
+  .slot.hidden .q{font-size:26px;color:var(--blue);font-weight:300}
+  .ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 2px 0}
+  .modes{display:inline-flex;border:1.5px solid var(--rule);border-radius:3px;overflow:hidden}
+  .modes button{font:inherit;background:#fff;border:0;padding:6px 12px;cursor:pointer;color:var(--ink-soft)}
+  .modes button.on{background:var(--ink);color:#fff}
+  a.back{color:var(--blue);font-size:13px;text-decoration:none;margin-left:auto}
+  a.back:hover{text-decoration:underline}
+  #quiz{display:none}#quiz.show{display:block}
 </style>
 </head>
 <body>
 <header>
-  <h1>Projektionsmethode 1 <span>· Ansichten zuordnen</span></h1>
-  <label style="font-size:13px;color:var(--ink-soft)">Schwierigkeit
-    <select id="diff">
-      <option value="0">leicht</option>
-      <option value="1" selected>mittel</option>
-      <option value="2">schwer</option>
-    </select>
-  </label>
-  <a href="skript-aufgaben.html" style="color:var(--blue);font-size:13px;text-decoration:none">Aufgaben aus dem Skript (S. 18–21) →</a>
-  <div class="stats">
-    <div class="stat"><b id="score">0</b><small>Punkte</small></div>
-    <div class="stat"><b id="streak">0</b><small>Serie</small></div>
-    <div class="stat"><b id="round">1</b><small>Modell</small></div>
-  </div>
+  <h1>Aufgaben aus dem Skript <span>· Kapitel 2.3, Seiten 18–21</span></h1>
+  <a class="back" href="projektionsmethode-trainer.html">← zum Trainer mit Zufallsmodellen</a>
 </header>
 
 <details class="howto">
-  <summary>So übst du mit dem Trainer</summary>
+  <summary>So arbeitest du mit den Skript-Aufgaben</summary>
   <ol>
-    <li><b>Modell anschauen.</b> Links das Werkstück mit der Maus oder dem Finger drehen. Der blaue Pfeil ist die Blickrichtung der Vorderansicht V – sie ist im Feld V schon eingetragen.</li>
-    <li><b>Feld mit dem Fragezeichen lesen.</b> Rechts blinkt das gesuchte Feld (z.&nbsp;B. SL). Überlege zuerst: Von welcher Seite schaue ich? Wo liegt diese Ansicht in Methode&nbsp;1 – <em>gegenüber</em> der Blickrichtung.</li>
-    <li><b>Zeichnung wählen.</b> Vergleiche die vier Vorschläge: Umriss, Lage der Stufen, gestrichelte (verdeckte) Kanten. Erst entscheiden, dann klicken.</li>
-    <li><b>Aus Fehlern lernen.</b> Bei einem Fehlversuch steht unter der Frage, was an der gewählten Zeichnung nicht stimmt (gespiegelt, andere Blickrichtung, verdreht). Nach der richtigen Antwort dreht sich das Modell in diese Blickrichtung – prüfe, ob du das so gesehen hättest. «Lösung zeigen» hilft weiter, gibt aber keine Punkte.</li>
-    <li><b>Ziel.</b> Stufe «mittel» drei Modelle hintereinander fehlerfrei, dann auf «schwer» wechseln (mehr Ausschnitte, schräge Flächen). Das ist die Vorbereitung auf die Prüfung zu Kapitel&nbsp;2 (Darstellungen eines Körpers).</li>
+    <li><b>Aufgabe wählen.</b> Die sechs Werkstücke entsprechen den Übungen im Skript «PL1 Darstellung eines Körpers», Seiten 18 bis 21. Ansichten, die im Skript vorgegeben sind, stehen bereits im Feld (gegeben).</li>
+    <li><b>Zuerst selbst zeichnen.</b> Modell drehen, Ansichten auf Papier konstruieren – wie im Skript verlangt. Erst danach die Felder mit dem Fragezeichen anklicken: sie zeigen die Lösung.</li>
+    <li><b>Modus «Quiz».</b> Statt aufzudecken wählst du wie im Trainer zwischen vier Vorschlägen. Fehlerhinweise stehen unter der Frage.</li>
+    <li><b>Hinweis.</b> Die Modelle sind nach den Skizzen im Skript nachgebaut; Masse sind Rastereinheiten, nicht M1:1.</li>
   </ol>
 </details>
+
+<div class="nav" id="nav"></div>
 
 <main>
   <section>
@@ -122,8 +130,10 @@
       <div class="title">Werkstück – 3D</div>
       <canvas id="c3d" width="520" height="440" aria-label="Drehbares 3D-Modell"></canvas>
     </div>
-    <p class="hint">Ziehen zum Drehen. Der blaue Pfeil zeigt die Blickrichtung der Vorderansicht V. Nach jeder richtigen Antwort dreht sich das Modell kurz in die gewählte Blickrichtung.</p>
-    <p class="hint"><button class="ghost" id="reset">Ansicht zurücksetzen</button> <button class="ghost" id="skip">Modell überspringen</button></p>
+    <p class="hint">Ziehen zum Drehen. Der blaue Pfeil zeigt die Blickrichtung der Vorderansicht V.</p>
+    <p class="hint"><button class="ghost" id="reset">Ansicht zurücksetzen</button>
+      <button class="ghost" data-cam="V">V</button><button class="ghost" data-cam="D">D</button><button class="ghost" data-cam="SL">SL</button><button class="ghost" data-cam="SR">SR</button><button class="ghost" data-cam="U">U</button><button class="ghost" data-cam="R">R</button></p>
+    <div class="aufgabe" id="aufgabe"></div>
   </section>
 
   <section>
@@ -136,16 +146,21 @@
       </div>
     </div>
 
-    <div class="task">
-      <h2 id="taskTitle">Welche Zeichnung gehört in das Feld <em>D</em>?</h2>
-      <span class="sub" id="taskSub">Draufsicht</span>
+    <div class="ctrl">
+      <span class="modes"><button id="mReveal" class="on">Aufdecken</button><button id="mQuiz">Quiz</button></span>
+      <button class="ghost" id="all">Alle Lösungen zeigen</button>
+      <button class="ghost" id="clear">Felder leeren</button>
     </div>
-    <div class="options" id="options"></div>
-    <p class="hint"><button class="ghost" id="reveal">Lösung zeigen</button> <span style="margin-left:6px">– füllt das Feld ohne Punkte; die Serie beginnt von vorn.</span></p>
+    <p class="hint" id="revealHint">Feld mit «?» anklicken, um die Lösung aufzudecken.</p>
 
-    <div class="done" id="done">
-      <div><b>Alle Ansichten zugeordnet.</b> <span id="doneText"></span></div>
-      <button class="primary" id="next">Nächstes Modell</button>
+    <div id="quiz">
+      <div class="task">
+        <h2 id="taskTitle"></h2>
+        <span class="sub" id="taskSub"></span>
+      </div>
+      <div class="options" id="options"></div>
+      <p class="hint"><button class="ghost" id="reveal">Lösung zeigen</button></p>
+      <div class="done" id="done"><div><b>Alle Ansichten zugeordnet.</b> <span id="doneText"></span></div><button class="primary" id="next">Nächste Aufgabe</button></div>
     </div>
 
     <div class="legend">
@@ -559,83 +574,139 @@ function animateTo(target,ms,then){
 const CAMS={V:{yaw:0,pitch:0},R:{yaw:Math.PI,pitch:0},SL:{yaw:Math.PI/2,pitch:0},SR:{yaw:-Math.PI/2,pitch:0},D:{yaw:0,pitch:Math.PI/2-0.001},U:{yaw:0,pitch:-Math.PI/2+0.001}};
 document.getElementById("reset").onclick=()=>animateTo(home,500);
 
-/* ---------- Spielablauf ---------- */
-let task=null,queue=[],current=null,score=0,streak=0,round=1,attempts=0;
+/* ---------- Werkstücke aus dem Skript (Rastereinheiten, V blickt von +z) ---------- */
+const AUFGABEN=[
+  {name:"Winkelklotz mit schräger Ecke",page:"S. 18 oben",
+   text:"Übungen zur Projektion (Raumeck): Das Werkstück steht in der Mitte – konstruieren Sie mit Hilfslinien die Vorderansicht auf der hinteren Ebene, die Seitenansicht von links auf der rechten Ebene und die Draufsicht auf der Bodenebene.",
+   given:[],
+   // Raster: 8 lang, 6 hoch, 3 tief; Nut 2 x 3 (offen nach vorn und zu beiden Seiten), hinten eine senkrechte Schrägfläche
+   parts:[prism("y",0,6,[[2,0],[2,3],[5,3],[8,1],[8,0]]),
+          prism("y",5,6,[[0,0],[0,3],[2,3],[2,0]]),
+          prism("y",0,2,[[0,0],[0,3],[2,3],[2,0]])]},
+  {name:"Geschlitzter Klotz mit Spitze",page:"S. 18 unten",
+   text:"Übungen zur Projektion (Raumeck): Das Werkstück steht in der Mitte – konstruieren Sie mit Hilfslinien die Vorderansicht auf der hinteren Ebene, die Seitenansicht von links auf der rechten Ebene und die Draufsicht auf der Bodenebene.",
+   given:[],
+   // Raster: Block 8 x 6 x 2 mit durchgehendem Schlitz (2 breit, 1.5 tief) von vorn; hinten dreieckige Spitze 2 tief
+   parts:[prism("y",0,6,[[0,2],[8,2],[8,2.5],[0,2.5]]),
+          prism("y",0,6,[[5,2.5],[8,2.5],[8,4],[5,4]]),
+          prism("y",0,6,[[0,2.5],[3,2.5],[3,4],[0,4]]),
+          prism("y",0,6,[[0,2],[8,2],[4,0]])]},
+  {name:"Winkel mit Rippe",page:"S. 19",
+   text:"Konstruieren Sie alle Ansichten (M1:1) in der richtigen Reihenfolge und bezeichnen Sie diese. Vorderansicht und Seitenansicht von links sind im Skript vorgegeben.",
+   given:["V","SL"],
+   parts:[prism("x",0,7,[[0,0],[5,0],[5,1],[0,1]]),
+          prism("x",0,7,[[0,1],[1,1],[1,4.5],[0.5,5],[0,5]]),
+          prism("x",3,4,[[1,1],[5,1],[1,4.5]])]},
+  {name:"L-Klotz mit Fase",page:"S. 20",
+   text:"Zeichnen Sie die 6 Ansichten und positionieren Sie diese richtig zueinander (Vorderansicht, Draufsicht, Seitenansicht von links, Seitenansicht von rechts, Unteransicht, Rückansicht).",
+   given:[],
+   parts:[prism("x",0,2,[[0,0],[4,0],[4,1.3],[3.3,2],[0,2]]),   // 3 cm breit, 2 cm tief, 4 cm hoch
+          prism("x",2,3,[[0,0],[0.6,0],[0.6,2],[0,2]])]},
+  {name:"Schräg abgeschnittener Sechskantstab",page:"S. 21 oben",
+   text:"Konstruieren Sie die Seitenansicht von links des schräg abgeschnittenen Sechskantstabes! Vorderansicht und Draufsicht sind vorgegeben.",
+   given:["V","D"],
+   parts:[cutPrism("y",0,p=>1.5+0.6*p[0],hexagon(2,1.73,2))]},
+  {name:"Klotz mit Schrägfläche und Nut",page:"S. 21 unten",
+   text:"Konstruieren Sie die Vorderansicht! Seitenansicht von links und Draufsicht sind vorgegeben.",
+   given:["SL","D"],
+   parts:[prism("x",0,4,[[0,0],[2,0],[2,2],[0,2]]),
+          prism("x",0,0.75,[[2,0],[6,0],[6,3],[2,3]]),
+          prism("x",3.25,4,[[2,0],[6,0],[6,3],[2,3]]),
+          prism("x",0.75,3.25,[[2,0],[6,0],[4,3],[2,3]])]},
+].map(a=>({...a,shape:angledShape(a.name,0,a.parts)}));
+
+/* ---------- Ablauf ---------- */
+let idx=0,mode="reveal",task=null,queue=[],current=null,attempts=0;
 const $=id=>document.getElementById(id);
 function cellSize(p,max){return Math.min(max/p.W,max/p.H,22);}
+const slotEl=v=>document.querySelector(`.slot[data-v="${v}"]`);
 
-function newRound(){
-  const level=+$("diff").value;
-  task=makeTask(level);
-  if(!task){alert("Kein passendes Modell gefunden – bitte erneut versuchen.");return;}
-  shape=task.shape;Object.assign(cam,home);anim=null;draw3d();
-  document.querySelector(".sheet .title").textContent=shape.voxel?"Werkstück – 3D":"Werkstück – 3D · "+shape.name;
-  document.querySelectorAll(".slot[data-v]").forEach(s=>{s.className="slot";s.innerHTML=`<span class="lbl">${s.dataset.v}</span>`;});
-  fillSlot("V",task.proj.V,false);
-  queue=["D","SL","SR","U","R"].sort(()=>Math.random()-.5);
-  $("done").classList.remove("show");$("round").textContent=round;
-  nextSlot();
+const nav=$("nav");
+AUFGABEN.forEach((a,i)=>{const b=document.createElement("button");b.innerHTML=`${i+1}. ${a.name}<small>${a.page}</small>`;b.onclick=()=>load(i);nav.appendChild(b);});
+
+function load(i){
+  idx=i;const a=AUFGABEN[i];
+  [...nav.children].forEach((b,k)=>b.classList.toggle("on",k===i));
+  shape=a.shape;Object.assign(cam,home);anim=null;draw3d();
+  document.querySelector(".sheet .title").textContent="Werkstück – 3D · "+a.name;
+  $("aufgabe").innerHTML=`<b>Aufgabe ${i+1} – ${a.name}</b>${a.text}<span class="src">Skript «PL1 Darstellung eines Körpers», ${a.page}. Modell nach der Skizze nachgebaut.</span>`;
+  task=buildOptions(shape);
+  if(!task){task={shape,proj:Object.fromEntries(VIEWS.map(v=>[v,project(shape,v)])),opts:null};}
+  $("mQuiz").disabled=!task.opts;
+  if(!task.opts&&mode==="quiz")setMode("reveal");
+  resetBoard();
 }
-function fillSlot(v,p,flash){
-  const s=document.querySelector(`.slot[data-v="${v}"]`);
-  s.className="slot filled"+(flash?" just":"");
-  s.innerHTML=`<span class="lbl">${v}</span>`+svgView(p,cellSize(p,84));
+function fillSlot(v,p,flash,tag){
+  const s=slotEl(v);s.className="slot filled"+(flash?" just":"")+(tag?" given":"");
+  s.innerHTML=`<span class="lbl">${v}</span>`+(tag?`<span class="tag">${tag}</span>`:"")+svgView(p,cellSize(p,84));
   if(flash)setTimeout(()=>s.classList.remove("just"),900);
+}
+function hideSlot(v){const s=slotEl(v);s.className="slot hidden";s.innerHTML=`<span class="lbl">${v}</span><span class="q">?</span>`;}
+function resetBoard(){
+  const a=AUFGABEN[idx];
+  VIEWS.forEach(v=>{if(a.given.includes(v))fillSlot(v,task.proj[v],false,"gegeben");else hideSlot(v);});
+  if(mode==="quiz")startQuiz();else{$("quiz").classList.remove("show");$("revealHint").style.display="";}
+}
+document.querySelectorAll(".slot[data-v]").forEach(s=>s.addEventListener("click",()=>{
+  if(mode!=="reveal"||!s.classList.contains("hidden"))return;
+  const v=s.dataset.v;fillSlot(v,task.proj[v],true);animateTo(CAMS[v],600,()=>setTimeout(()=>animateTo(home,600),700));
+}));
+$("all").onclick=()=>{if(mode==="quiz")setMode("reveal");VIEWS.forEach(v=>{if(slotEl(v).classList.contains("hidden"))fillSlot(v,task.proj[v],true);});};
+$("clear").onclick=()=>resetBoard();
+document.querySelectorAll("[data-cam]").forEach(b=>b.onclick=()=>animateTo(CAMS[b.dataset.cam],500));
+$("reset").onclick=()=>animateTo(home,500);
+
+function setMode(m){mode=m;$("mReveal").classList.toggle("on",m==="reveal");$("mQuiz").classList.toggle("on",m==="quiz");resetBoard();}
+$("mReveal").onclick=()=>setMode("reveal");
+$("mQuiz").onclick=()=>{if(task.opts)setMode("quiz");};
+
+/* Quiz: wie im Trainer, aber nur für die nicht vorgegebenen Felder */
+function startQuiz(){
+  const a=AUFGABEN[idx];
+  $("quiz").classList.add("show");$("revealHint").style.display="none";$("done").classList.remove("show");
+  // V ist immer Ausgangspunkt (kein Quiz-Feld), gegebene Felder ebenfalls
+  if(!a.given.includes("V"))fillSlot("V",task.proj.V,false,"Ausgang");
+  queue=["D","SL","SR","U","R"].filter(v=>!a.given.includes(v)).sort(()=>Math.random()-.5);
+  attempts=0;nextSlot();
 }
 function nextSlot(){
   document.querySelectorAll(".slot.active").forEach(s=>s.classList.remove("active"));
   if(!queue.length){
-    $("options").innerHTML="";
-    $("taskTitle").innerHTML="Fertig – alle sechs Ansichten sind zugeordnet.";$("taskSub").textContent="";
-    $("doneText").textContent=attempts===5?"Fehlerfrei, sehr gut.":`${attempts-5} Fehlversuch${attempts-5===1?"":"e"} in dieser Runde.`;
+    $("options").innerHTML="";$("taskTitle").textContent="Fertig – alle gesuchten Ansichten sind zugeordnet.";$("taskSub").textContent="";
+    const n=5-AUFGABEN[idx].given.filter(v=>v!=="V").length;
+    $("doneText").textContent=attempts===n?"Fehlerfrei, sehr gut.":`${attempts-n} Fehlversuch${attempts-n===1?"":"e"}.`;
     $("done").classList.add("show");return;
   }
   current=queue.shift();
-  const s=document.querySelector(`.slot[data-v="${current}"]`);
-  s.classList.add("active");s.innerHTML=`<span class="lbl">${current}</span><span class="q">?</span>`;
-  $("taskTitle").innerHTML=`Welche Zeichnung gehört in das Feld <em>${current}</em>?`;
-  $("taskSub").textContent=NAMES[current];
+  const s=slotEl(current);s.className="slot active";s.innerHTML=`<span class="lbl">${current}</span><span class="q">?</span>`;
+  $("taskTitle").innerHTML=`Welche Zeichnung gehört in das Feld <em>${current}</em>?`;$("taskSub").textContent=NAMES[current];
   const box=$("options");box.innerHTML="";
-  task.opts[current].forEach((o,i)=>{
-    const b=document.createElement("button");b.className="opt";
-    b.innerHTML=svgView(o.p,cellSize(o.p,110))+`<span class="k">${String.fromCharCode(65+i)}</span>`;
-    b.onclick=()=>choose(b,o);box.appendChild(b);
-  });
+  task.opts[current].forEach((o,i)=>{const b=document.createElement("button");b.className="opt";
+    b.innerHTML=svgView(o.p,cellSize(o.p,110))+`<span class="k">${String.fromCharCode(65+i)}</span>`;b.onclick=()=>choose(b,o);box.appendChild(b);});
 }
 function choose(btn,o){
   if(btn.classList.contains("wrong")||btn.classList.contains("right"))return;
   attempts++;
   if(o.correct){
-    btn.classList.add("right");
-    const firstTry=![...document.querySelectorAll(".opt.wrong")].length;
-    streak=firstTry?streak+1:0;
-    score+=firstTry?10+Math.min(streak-1,5)*2:4;
-    $("score").textContent=score;$("streak").textContent=streak;
-    fillSlot(current,o.p,true);
+    btn.classList.add("right");fillSlot(current,o.p,true);
     document.querySelectorAll(".opt").forEach(b=>b.disabled=true);
     animateTo(CAMS[current],600,()=>setTimeout(()=>animateTo(home,600),700));
     setTimeout(nextSlot,900);
   }else{
-    btn.classList.add("wrong");streak=0;score=Math.max(0,score-3);
-    $("score").textContent=score;$("streak").textContent=streak;
-    const why=o.why==="spiegel"?"Das ist die Ansicht von der gegenüberliegenden Seite (gespiegelt) – in Methode 3 stünde sie an dieser Stelle, in Methode 1 nicht.":o.why==="andere"||o.why==="andereS"?"Diese Zeichnung gehört zu einer anderen Blickrichtung.":"Diese Zeichnung ist verdreht.";
-    $("taskSub").textContent=why;
+    btn.classList.add("wrong");
+    $("taskSub").textContent=o.why==="spiegel"?"Das ist die Ansicht von der gegenüberliegenden Seite (gespiegelt) – in Methode 3 stünde sie an dieser Stelle, in Methode 1 nicht.":o.why==="andere"||o.why==="andereS"?"Diese Zeichnung gehört zu einer anderen Blickrichtung.":"Diese Zeichnung ist verdreht.";
   }
 }
 $("reveal").onclick=()=>{
-  if(!current)return;
-  const o=task.opts[current].find(o=>o.correct);
-  attempts++;streak=0;$("streak").textContent=0;
+  if(!current||!$("quiz").classList.contains("show"))return;
+  attempts++;
   document.querySelectorAll(".opt").forEach((b,i)=>{b.disabled=true;if(task.opts[current][i].correct)b.classList.add("right");});
-  $("taskSub").textContent="Richtig wäre "+NAMES[current]+" – so sieht sie aus. Weiter mit dem nächsten Feld.";
-  fillSlot(current,o.p,true);
-  animateTo(CAMS[current],600,()=>setTimeout(()=>animateTo(home,600),700));
+  $("taskSub").textContent="Richtig wäre "+NAMES[current]+" – so sieht sie aus.";
+  fillSlot(current,task.proj[current],true);animateTo(CAMS[current],600,()=>setTimeout(()=>animateTo(home,600),700));
   setTimeout(nextSlot,1400);
 };
-$("next").onclick=()=>{round++;attempts=0;newRound();};
-$("skip").onclick=()=>{round++;attempts=0;streak=0;$("streak").textContent=0;newRound();};
-$("diff").onchange=()=>{attempts=0;newRound();};
-newRound();
+$("next").onclick=()=>load((idx+1)%AUFGABEN.length);
+load(0);
 </script>
 </body>
 </html>
