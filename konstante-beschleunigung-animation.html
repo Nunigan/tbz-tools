@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Konstante Beschleunigung – Animation</title>
+<!--
+  Eigenständige Animation (keine Abhängigkeiten, läuft lokal im Browser)
+  zur Bewegung mit konstanter Beschleunigung, Physik Skript 2.5 und
+  Prüfung 1 Aufgabe 7c: Ort x, Geschwindigkeit v und Beschleunigung a
+  als drei Diagramme, dazu die Zerlegung x = x0 + v0·t + ½·a·t².
+  Voreinstellung = Zahlen der Prüfungsaufgabe (x0 = 30 m, v0 = 6 m/s,
+  a = 1 m/s²). Selbst erstellt, 28.09.2026.
+-->
+<style>
+  :root{
+    --paper:#F6F7F4; --grid:#E3E7E0; --ink:#1E2A38; --ink-soft:#5B6878;
+    --rule:#9AA6B4; --blue:#005AC8; --blue-wash:#DCE4F5;
+    --x:#CC0000; --v:#008C00; --a:#D96D00;
+    --x-wash:rgba(204,0,0,.10); --v-wash:rgba(0,140,0,.16); --a-wash:rgba(217,109,0,.20);
+    --x0:#5B6878; --x0-wash:rgba(91,104,120,.18);
+    --font:"Avenir Next","Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:24px 24px}
+  body{padding:18px 22px 40px;max-width:1240px;margin:0 auto;font-size:15px;line-height:1.4}
+
+  header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 28px;border-bottom:1.5px solid var(--ink);padding-bottom:10px;margin-bottom:14px}
+  h1{font-size:22px;font-weight:600;margin:0;letter-spacing:-.01em}
+  h1 span{color:var(--blue);font-weight:500}
+  .formula{margin-left:auto;font-size:20px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .formula i{font-style:italic}
+  .cx0{color:var(--x0)} .cv{color:var(--v)} .ca{color:var(--a)} .cx{color:var(--x)}
+
+  .controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-bottom:12px}
+  .controls label{display:flex;align-items:center;gap:6px;white-space:nowrap}
+  .controls input[type=number]{width:72px;font:inherit;padding:4px 6px;border:1px solid var(--rule);border-radius:3px;background:#fff;color:var(--ink);text-align:right}
+  .controls select{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--rule);padding:4px 8px;border-radius:3px}
+  button{font:inherit;padding:6px 14px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);border-radius:3px;cursor:pointer}
+  button.primary{background:var(--ink);color:#fff;min-width:96px}
+  button:hover{background:var(--blue-wash)} button.primary:hover{background:var(--blue)}
+  .timebar{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
+  .timebar input[type=range]{flex:1;accent-color:var(--blue)}
+  .timebar b{font-variant-numeric:tabular-nums;min-width:82px;font-size:18px}
+
+  .sheet{background:#fff;border:1.5px solid var(--ink);position:relative}
+  .sheet .title{position:absolute;left:0;top:0;background:var(--ink);color:#fff;font-size:12px;padding:3px 9px;letter-spacing:.02em;z-index:1}
+  canvas{display:block;width:100%;height:auto}
+  .diagrams canvas{cursor:col-resize;touch-action:none}
+
+  .readout{display:grid;grid-template-columns:repeat(4,1fr) 1.2fr;gap:12px;margin:14px 0}
+  .tile{background:#fff;border:1.5px solid var(--rule);padding:8px 12px;font-variant-numeric:tabular-nums;line-height:1.2}
+  .tile small{display:block;color:var(--ink-soft);font-size:12px;margin-bottom:3px}
+  .tile b{font-size:22px;font-weight:600}
+  .tile .op{position:absolute;right:-13px;top:14px;font-size:22px;color:var(--ink-soft);background:var(--paper);padding:0 2px}
+  .tile{position:relative}
+  .tile.x0{border-color:var(--x0)} .tile.v{border-color:var(--v)} .tile.a{border-color:var(--a)} .tile.x{border-color:var(--x);border-width:2px}
+  .tile.va{display:flex;flex-direction:column;justify-content:space-between}
+  .tile.va div{display:flex;justify-content:space-between;align-items:baseline}
+  .tile.va b{font-size:18px}
+  .diagrams{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+  @media (max-width:900px){.diagrams{grid-template-columns:1fr}.readout{grid-template-columns:repeat(2,1fr)}.tile .op{display:none}.formula{margin-left:0}}
+  .hint{color:var(--ink-soft);font-size:13px;margin:10px 2px 0}
+  footer{margin-top:26px;color:var(--ink-soft);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Bewegung mit <span>konstanter Beschleunigung</span></h1>
+  <div class="formula"><i class="cx">x</i> = <i class="cx0">x₀</i> + <i class="cv">v₀</i>·<i>t</i> + ½·<i class="ca">a</i>·<i>t</i>²</div>
+</header>
+
+<section class="controls">
+  <label>Beispiel <select id="preset">
+    <option value="30,6,1,8">Prüfung 1, Aufgabe 7c</option>
+    <option value="2.8,0,4.2,6">Skript 2.5: Motorrad</option>
+    <option value="0,0,2,8">Start aus der Ruhe</option>
+    <option value="0,12,-2,6">Bremsen bis zum Stillstand</option>
+    <option value="0,10,0,8">Gleichförmig (a = 0)</option>
+    <option value="0,15,-3,10">Anhalten und zurück</option>
+  </select></label>
+  <label><span class="cx0">x₀</span> <input id="x0" type="number" step="1" value="30"> m</label>
+  <label><span class="cv">v₀</span> <input id="v0" type="number" step="0.5" value="6"> m/s</label>
+  <label><span class="ca">a</span> <input id="a" type="number" step="0.5" value="1"> m/s²</label>
+  <label>bis <i>t</i> = <input id="tEnd" type="number" step="1" min="1" max="60" value="8"> s</label>
+  <label>Tempo <select id="speed"><option value="0.25">¼×</option><option value="0.5">½×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label>
+  <button id="play" class="primary">▶ Start</button>
+  <button id="reset">↺ Zurück</button>
+</section>
+<div class="timebar">
+  <span><i>t</i> =</span><b id="tval">0.0 s</b>
+  <input id="tslider" type="range" min="0" max="8" step="0.02" value="0">
+</div>
+
+<section class="sheet"><span class="title">Strecke (Ort x)</span><canvas id="track" height="200"></canvas></section>
+
+<section class="readout">
+  <div class="tile x0"><small>Anfangsort x₀</small><b id="rx0">30.0 m</b><span class="op">+</span></div>
+  <div class="tile v"><small>v₀ · t</small><b id="rv0t">0.0 m</b><span class="op">+</span></div>
+  <div class="tile a"><small>½ · a · t²</small><b id="rat2">0.0 m</b><span class="op">=</span></div>
+  <div class="tile x"><small>Ort x</small><b id="rx">30.0 m</b></div>
+  <div class="tile va"><div><small>v = v₀ + a·t</small><b id="rv" class="cv">6.0 m/s</b></div><div><small>a</small><b id="ra" class="ca">1.0 m/s²</b></div></div>
+</section>
+
+<main class="diagrams">
+  <section class="sheet"><span class="title">Zeit-Ort-Diagramm</span><canvas id="dx" height="300"></canvas></section>
+  <section class="sheet"><span class="title">Zeit-Geschwindigkeits-Diagramm</span><canvas id="dv" height="300"></canvas></section>
+  <section class="sheet"><span class="title">Zeit-Beschleunigungs-Diagramm</span><canvas id="da" height="300"></canvas></section>
+</main>
+<p class="hint">Leertaste: Start/Stopp · Pfeiltasten ←/→: Zeit schrittweise · in ein Diagramm klicken oder ziehen: Zeit setzen.
+Farben: <span class="cx">Ort</span>, <span class="cv">Geschwindigkeit</span>, <span class="ca">Beschleunigung</span>.
+Die Fläche unter der v-Kurve ist der zurückgelegte Weg, die Fläche unter der a-Kurve die Geschwindigkeitsänderung.</p>
+<footer>Nur für den Unterrichtsgebrauch. M. Schmid, Technische Berufsschule Zürich.</footer>
+
+<script>
+(function(){
+'use strict';
+const S = {x0:30, v0:6, a:1, tEnd:8, t:0, playing:false, speed:1};
+const X  = t => S.x0 + S.v0*t + 0.5*S.a*t*t;
+const V  = t => S.v0 + S.a*t;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const C = {};
+['--ink','--ink-soft','--rule','--grid','--blue','--x','--v','--a','--x-wash','--v-wash','--a-wash','--x0','--x0-wash']
+  .forEach(n => C[n.slice(2)] = css(n));
+const $ = id => document.getElementById(id);
+const fmt = (n, d=1) => (Math.abs(n) < 5e-12 ? 0 : n).toFixed(d).replace('-', '−');
+
+// ---------- Skalen ----------
+function niceStep(range, target){
+  const raw = range/target, p = Math.pow(10, Math.floor(Math.log10(raw)));
+  for(const m of [1,2,2.5,5,10]) if(m*p >= raw) return m*p;
+  return 10*p;
+}
+function span(fn, tEnd){                       // [min,max] von fn (oder Liste) auf [0,tEnd], immer mit 0
+  let lo = 0, hi = 0;
+  for(const f of [].concat(fn)) for(let i=0;i<=200;i++){ const y = f(i/200*tEnd); lo=Math.min(lo,y); hi=Math.max(hi,y); }
+  if(hi-lo < 1e-9) hi = lo+1;
+  const st = niceStep(hi-lo, 5);
+  return {lo: Math.floor(lo/st)*st, hi: Math.ceil(hi/st)*st + (hi % st === 0 ? 0 : 0), step: st};
+}
+
+// ---------- Canvas-Hilfen ----------
+function setup(cv, h){
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth;
+  cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
+  cv.style.height = h+'px';
+  const g = cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  g.font = '13px '+css('--font'); g.lineJoin='round'; g.lineCap='round';
+  return {g, w, h};
+}
+function arrow(g, x1,y1,x2,y2, color, width, head){
+  head = head || 7;
+  g.strokeStyle=color; g.fillStyle=color; g.lineWidth=width;
+  const dx=x2-x1, dy=y2-y1, L=Math.hypot(dx,dy); if(L<0.5) return;
+  const ux=dx/L, uy=dy/L;
+  g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2-ux*head*0.6, y2-uy*head*0.6); g.stroke();
+  g.beginPath(); g.moveTo(x2,y2); g.lineTo(x2-ux*head-uy*head*0.45, y2-uy*head+ux*head*0.45);
+  g.lineTo(x2-ux*head+uy*head*0.45, y2-uy*head-ux*head*0.45); g.closePath(); g.fill();
+}
+function dashed(g, x1,y1,x2,y2, color){
+  g.save(); g.setLineDash([4,4]); g.strokeStyle=color; g.lineWidth=1;
+  g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke(); g.restore();
+}
+
+// ---------- Diagramm ----------
+const diagrams = [
+  {id:'dx', fn:X, color:'--x', wash:'--x-wash', label:'x (m)', kind:'x'},
+  {id:'dv', fn:V, color:'--v', wash:'--v-wash', label:'v (m/s)', kind:'v'},
+  {id:'da', fn:()=>S.a, color:'--a', wash:'--a-wash', label:'a (m/s²)', kind:'a'},
+];
+function drawDiagram(d){
+  const cv = $(d.id), {g,w,h} = setup(cv, 300);
+  const m = {l:52, r:44, t:40, b:38};
+  const t = S.t, tEnd = S.tEnd, sc = span(d.fn, tEnd);
+  const px = tt => m.l + tt/tEnd*(w-m.l-m.r);
+  const py = y  => h-m.b - (y-sc.lo)/(sc.hi-sc.lo)*(h-m.t-m.b);
+  const tStep = niceStep(tEnd, 6), y0 = py(0);
+  d.px = px; d.plotW = w-m.l-m.r; d.left = m.l;
+
+  // Raster
+  g.strokeStyle=C.grid; g.lineWidth=1;
+  for(let tt=0; tt<=tEnd+1e-9; tt+=tStep){ g.beginPath(); g.moveTo(px(tt),m.t); g.lineTo(px(tt),h-m.b); g.stroke(); }
+  for(let y=sc.lo; y<=sc.hi+1e-9; y+=sc.step){ g.beginPath(); g.moveTo(m.l,py(y)); g.lineTo(w-m.r,py(y)); g.stroke(); }
+
+  // Flächen / Zerlegung (nur bis zur aktuellen Zeit)
+  const col = C[d.color.slice(2)], wash = C[d.wash.slice(2)];
+  if(d.kind==='v' && t>0){
+    // Rechteck v0·t (grün) und Dreieck ½·a·t·t (orange)
+    g.fillStyle=C['v-wash'];
+    g.fillRect(px(0), Math.min(y0,py(S.v0)), px(t)-px(0), Math.abs(py(S.v0)-y0));
+    g.fillStyle=C['a-wash'];
+    g.beginPath(); g.moveTo(px(0),py(S.v0)); g.lineTo(px(t),py(S.v0)); g.lineTo(px(t),py(V(t))); g.closePath(); g.fill();
+  }
+  if(d.kind==='a' && t>0){
+    g.fillStyle=C['a-wash'];
+    g.fillRect(px(0), Math.min(y0,py(S.a)), px(t)-px(0), Math.abs(py(S.a)-y0));
+  }
+  const clip = () => { g.save(); g.beginPath(); g.rect(m.l, m.t, w-m.l-m.r, h-m.t-m.b); g.clip(); };
+  if(d.kind==='x'){
+    // Hilfslinien: x0 (grau) und x0 + v0·t (grün gestrichelt)
+    clip();
+    dashed(g, px(0),py(S.x0), px(tEnd),py(S.x0), C.x0);
+    dashed(g, px(0),py(S.x0), px(tEnd),py(S.x0+S.v0*tEnd), C.v);
+    g.font='11px '+css('--font'); g.textAlign='right'; g.textBaseline='bottom';
+    g.fillStyle=C.x0; g.fillText('x₀', px(tEnd)-2, py(S.x0)-2);
+    g.fillStyle=C.v; g.fillText('x₀ + v₀·t', px(tEnd)-2, py(S.x0+S.v0*tEnd)-2);
+    g.font='13px '+css('--font'); g.restore();
+  }
+
+  // Achsen
+  g.strokeStyle=C.ink; g.lineWidth=1.5;
+  arrow(g, m.l,y0, w-m.r+14,y0, C.ink, 1.5, 8);
+  arrow(g, m.l,h-m.b, m.l,m.t-14, C.ink, 1.5, 8);
+  g.fillStyle=C.ink; g.textAlign='left'; g.textBaseline='middle';
+  g.fillText('t (s)', w-m.r+18, y0);
+  g.textAlign='left'; g.textBaseline='middle'; g.fillText(d.label, m.l+10, m.t-8);
+  g.textAlign='center'; g.textBaseline='top'; g.fillStyle=C['ink-soft']; g.font='12px '+css('--font');
+  for(let tt=tStep; tt<=tEnd+1e-9; tt+=tStep) g.fillText(fmt(tt, tStep<1?1:0), px(tt), y0+4);
+  g.textAlign='right'; g.textBaseline='middle';
+  for(let y=sc.lo; y<=sc.hi+1e-9; y+=sc.step) if(Math.abs(y)>1e-9) g.fillText(fmt(y, sc.step<1?1:0), m.l-6, py(y));
+  g.fillText('0', m.l-6, y0);
+  g.font='13px '+css('--font');
+
+  // Kurve: ganze Kurve blass, bis t kräftig
+  const curve = (t1,t2,style,width) => {
+    g.strokeStyle=style; g.lineWidth=width; g.beginPath();
+    const n = 120;
+    for(let i=0;i<=n;i++){ const tt=t1+(t2-t1)*i/n; const xx=px(tt), yy=py(d.fn(tt)); i?g.lineTo(xx,yy):g.moveTo(xx,yy); }
+    g.stroke();
+  };
+  g.save(); g.globalAlpha=0.28; curve(0,tEnd,col,2); g.restore();
+  if(t>0) curve(0,t,col,3);
+
+  // Zerlegung im x-Diagramm: senkrechte Balken bei t
+  if(d.kind==='x' && t>0){
+    clip();
+    const bx = px(t)+12, bw=8;
+    const seg = (ya,yb,c) => { g.fillStyle=c; g.fillRect(bx, Math.min(py(ya),py(yb)), bw, Math.abs(py(ya)-py(yb))); };
+    seg(0, S.x0, C.x0); seg(S.x0, S.x0+S.v0*t, C.v); seg(S.x0+S.v0*t, X(t), C.a);
+    g.restore();
+  }
+
+  // Zeitmarke und Punkt
+  dashed(g, px(t),m.t, px(t),h-m.b, C.blue);
+  g.fillStyle=col; g.beginPath(); g.arc(px(t),py(d.fn(t)),5,0,Math.PI*2); g.fill();
+  g.strokeStyle='#fff'; g.lineWidth=1.5; g.stroke();
+  // Wertebeschriftung
+  const val = d.kind==='x'?fmt(X(t))+' m': d.kind==='v'?fmt(V(t))+' m/s': fmt(S.a)+' m/s²';
+  g.font='600 13px '+css('--font'); g.fillStyle=col; g.textBaseline='bottom';
+  const right = px(t) > w*0.62;
+  g.textAlign = right?'right':'left';
+  const yy = py(d.fn(t));
+  g.fillText(val, px(t)+(right?-10:(d.kind==='x'&&t>0?26:10)), yy-6 < m.t+14 ? yy+18 : yy-6);
+}
+
+// ---------- Strecke ----------
+function drawTrack(){
+  const cv = $('track'), {g,w,h} = setup(cv, 200);
+  const t=S.t, tEnd=S.tEnd, sc = span([()=>S.x0, tt=>S.x0+S.v0*tt, X], tEnd);
+  const m={l:40,r:70}, yRoad=112;
+  const px = x => m.l + (x-sc.lo)/(sc.hi-sc.lo)*(w-m.l-m.r);
+  // Strasse
+  g.fillStyle='#EEF0EC'; g.fillRect(m.l-10, yRoad-30, w-m.l-m.r+20, 32);
+  g.strokeStyle=C.ink; g.lineWidth=1.5;
+  arrow(g, m.l-10,yRoad+2, w-m.r+22,yRoad+2, C.ink, 1.5, 8);
+  g.fillStyle=C.ink; g.textAlign='left'; g.textBaseline='middle'; g.fillText('x (m)', w-m.r+28, yRoad+2);
+  g.fillStyle=C['ink-soft']; g.font='12px '+css('--font'); g.textAlign='center';
+  for(let x=sc.lo; x<=sc.hi+1e-9; x+=sc.step){
+    g.strokeStyle=C.ink; g.lineWidth=1; g.beginPath(); g.moveTo(px(x),yRoad+2); g.lineTo(px(x),yRoad+8); g.stroke();
+    g.fillText(fmt(x, sc.step<1?1:0), px(x), yRoad+10);
+  }
+  g.font='13px '+css('--font');
+
+  // Zerlegung unterhalb der Achse: x0 | v0·t | ½at²
+  const x1=S.x0, x2=S.x0+S.v0*t, x3=X(t);
+  const rows=[[0,x1,C.x0,'x₀'],[x1,x2,C.v,'v₀·t'],[x2,x3,C.a,'½·a·t²']];
+  rows.forEach(([a,b,c,lab],i)=>{
+    const y=yRoad+34+i*16;
+    if(Math.abs(b-a)<1e-9) return;
+    arrow(g, px(a),y, px(b),y, c, 3, 7);
+    g.fillStyle=c; g.font='600 12px '+css('--font'); g.textBaseline='middle';
+    const mid=px((a+b)/2), wide=Math.abs(px(b)-px(a))>62;
+    g.textAlign = wide?'center':(b>=a?'left':'right');
+    const tx = wide?mid:(b>=a?px(b)+8:px(b)-8), txt = lab+' = '+fmt(b-a)+' m';
+    g.lineWidth=4; g.strokeStyle='#fff'; g.strokeText(txt, tx, y); g.fillText(txt, tx, y);
+  });
+  // senkrechte Marke am Ort x
+  dashed(g, px(x3),yRoad-34, px(x3),yRoad+34+2*16+6, C.x);
+  g.font='13px '+css('--font');
+
+  // Fahrzeug
+  const cx=px(x3), cy=yRoad-14;
+  g.fillStyle=C.x; g.beginPath();
+  g.moveTo(cx-22,cy+6); g.lineTo(cx-22,cy-2); g.lineTo(cx-12,cy-2); g.lineTo(cx-6,cy-11); g.lineTo(cx+9,cy-11);
+  g.lineTo(cx+15,cy-2); g.lineTo(cx+22,cy-1); g.lineTo(cx+22,cy+6); g.closePath(); g.fill();
+  g.fillStyle=C.ink; [cx-12,cx+12].forEach(wx=>{ g.beginPath(); g.arc(wx,cy+7,4.5,0,Math.PI*2); g.fill(); });
+  g.fillStyle='#fff'; g.beginPath(); g.moveTo(cx-4,cy-9); g.lineTo(cx+7,cy-9); g.lineTo(cx+11,cy-3); g.lineTo(cx-4,cy-3); g.closePath(); g.fill();
+
+  // Geschwindigkeits- und Beschleunigungspfeil
+  const vr = span(V,tEnd), vScale = (w-m.l-m.r)*0.14/Math.max(Math.abs(vr.lo),Math.abs(vr.hi),1e-9);
+  const vl = V(t)*vScale;
+  const label = (txt, x0px, x1px, y, c) => {   // zentriert über dem Pfeil, innerhalb des Bildes
+    g.font='600 13px '+css('--font'); g.textBaseline='bottom'; g.textAlign='center'; g.fillStyle=c;
+    const tw = g.measureText(txt).width/2, mid = (x0px+x1px)/2;
+    g.fillText(txt, Math.max(m.l+tw, Math.min(w-6-tw, mid)), y);
+  };
+  if(Math.abs(vl)>2){
+    arrow(g, cx, cy-24, cx+vl, cy-24, C.v, 3, 8);
+    label('v = '+fmt(V(t))+' m/s', cx, cx+vl, cy-29, C.v);
+  }
+  const ar = Math.max(Math.abs(S.a),1e-9), al = S.a/ar*Math.min(70, 18+16*ar);
+  if(Math.abs(S.a)>1e-9){
+    arrow(g, cx, cy-50, cx+al, cy-50, C.a, 3, 8);
+    label('a = '+fmt(S.a)+' m/s²', cx, cx+al, cy-55, C.a);
+  }
+  // Startort-Marke
+  dashed(g, px(S.x0),yRoad-30, px(S.x0),yRoad+2, C.x0);
+}
+
+// ---------- Anzeige ----------
+function render(){
+  const t=S.t;
+  $('tval').textContent = fmt(t)+' s';
+  $('tslider').value = t;
+  $('rx0').textContent  = fmt(S.x0)+' m';
+  $('rv0t').textContent = fmt(S.v0*t)+' m';
+  $('rat2').textContent = fmt(0.5*S.a*t*t)+' m';
+  $('rx').textContent   = fmt(X(t))+' m';
+  $('rv').textContent   = fmt(V(t))+' m/s';
+  $('ra').textContent   = fmt(S.a)+' m/s²';
+  drawTrack(); diagrams.forEach(drawDiagram);
+}
+
+// ---------- Animation ----------
+let last=null;
+function frame(ts){
+  if(!S.playing) return;
+  if(last!==null){ S.t = Math.min(S.tEnd, S.t + (ts-last)/1000*S.speed); }
+  last=ts; render();
+  if(S.t>=S.tEnd){ setPlaying(false); return; }
+  requestAnimationFrame(frame);
+}
+function setPlaying(p){
+  S.playing=p; last=null;
+  $('play').textContent = p?'❚❚ Stopp':'▶ Start';
+  if(p){ if(S.t>=S.tEnd) S.t=0; requestAnimationFrame(frame); }
+}
+function readInputs(){
+  S.x0=+$('x0').value||0; S.v0=+$('v0').value||0; S.a=+$('a').value||0;
+  S.tEnd=Math.max(1, +$('tEnd').value||8); $('tslider').max=S.tEnd;
+  S.t=Math.min(S.t,S.tEnd); render();
+}
+['x0','v0','a','tEnd'].forEach(id=>$(id).addEventListener('input', readInputs));
+$('preset').addEventListener('change', e=>{
+  const [x0,v0,a,tEnd]=e.target.value.split(',');
+  $('x0').value=x0; $('v0').value=v0; $('a').value=a; $('tEnd').value=tEnd;
+  setPlaying(false); S.t=0; readInputs();
+});
+$('speed').addEventListener('change', e=>S.speed=+e.target.value);
+$('play').addEventListener('click', ()=>setPlaying(!S.playing));
+$('reset').addEventListener('click', ()=>{ setPlaying(false); S.t=0; render(); });
+$('tslider').addEventListener('input', e=>{ setPlaying(false); S.t=+e.target.value; render(); });
+document.addEventListener('keydown', e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  if(e.code==='Space'){ e.preventDefault(); setPlaying(!S.playing); }
+  if(e.code==='ArrowRight'){ setPlaying(false); S.t=Math.min(S.tEnd,S.t+0.5); render(); }
+  if(e.code==='ArrowLeft'){ setPlaying(false); S.t=Math.max(0,S.t-0.5); render(); }
+});
+// Zeit setzen durch Klicken/Ziehen im Diagramm
+diagrams.forEach(d=>{
+  const cv=$(d.id); let drag=false;
+  const setT = e=>{ const r=cv.getBoundingClientRect(); const f=(e.clientX-r.left-d.left)/d.plotW; S.t=Math.max(0,Math.min(S.tEnd,f*S.tEnd)); render(); };
+  cv.addEventListener('pointerdown', e=>{ drag=true; cv.setPointerCapture(e.pointerId); setPlaying(false); setT(e); });
+  cv.addEventListener('pointermove', e=>{ if(drag) setT(e); });
+  cv.addEventListener('pointerup', ()=>drag=false); cv.addEventListener('pointercancel', ()=>drag=false);
+});
+window.addEventListener('resize', render);
+readInputs();
+})();
+</script>
+</body>
+</html>
