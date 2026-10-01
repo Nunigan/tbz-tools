@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schiefe Ebene – Simulation</title>
+<!--
+  Eigenständige Simulation (keine Abhängigkeiten, läuft lokal im Browser)
+  zu Versuch 1 «Beschleunigung auf der schiefen Ebene»
+  (versuche/schiefe-ebene-phyphox.tex). Idealisiert: keine Reibung, kein
+  Luftwiderstand, Start aus der Ruhe. Einstellbar ist nur die Höhe h,
+  die Brettlänge ist fest L = 1.00 m (wie im Versuch).
+  Aufbau wie konstante-beschleunigung-animation.html: Szene oben, die drei
+  Diagramme s–t, v–t, a–t bauen sich mit der Zeit auf. Jede vollständige
+  Fahrt wird als Messpunkt ins Diagramm «a in Abhängigkeit von h»
+  eingetragen. Der Schalter «Zusammenhang zeigen» (Standard: aus) blendet
+  a = g·h/L = g·sin α, die Spalten h/L und a/g und die Zerlegung von g am
+  Wagen ein — erst nach der Auswertung zeigen (Didaktik des Versuchs:
+  a = g·sin α wird nicht vorweggenommen).
+  Selbst erstellt, 01.10.2026.
+-->
+<style>
+  :root{
+    --paper:#F6F7F4; --grid:#E3E7E0; --ink:#1E2A38; --ink-soft:#5B6878;
+    --rule:#9AA6B4; --blue:#005AC8; --blue-wash:#DCE4F5;
+    --x:#CC0000; --v:#008C00; --a:#D96D00;
+    --x-wash:rgba(204,0,0,.10); --v-wash:rgba(0,140,0,.16); --a-wash:rgba(217,109,0,.20);
+    --board:#8A5A2B; --wedge:#EDE4D6; --hcol:#005AC8; --gcol:#6B3FA0;
+    --ghost:#9AA6B4;
+    --font:"Avenir Next","Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:24px 24px}
+  body{padding:18px 22px 40px;max-width:1240px;margin:0 auto;font-size:15px;line-height:1.4}
+
+  header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 28px;border-bottom:1.5px solid var(--ink);padding-bottom:10px;margin-bottom:10px}
+  h1{font-size:22px;font-weight:600;margin:0;letter-spacing:-.01em}
+  h1 span{color:var(--blue);font-weight:500}
+  .formula{margin-left:auto;font-size:20px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .formula i{font-style:italic}
+  .cs{color:var(--x)} .cv{color:var(--v)} .ca{color:var(--a)} .ch{color:var(--hcol)} .cg{color:var(--gcol)}
+  .assume{display:inline-block;background:#fff;border:1.5px dashed var(--ink-soft);padding:4px 10px;margin:0 0 12px;font-size:14px}
+  .assume b{font-weight:600}
+
+  .controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-bottom:12px}
+  .controls label{display:flex;align-items:center;gap:6px;white-space:nowrap}
+  .controls input[type=number]{width:72px;font:inherit;padding:4px 6px;border:1px solid var(--rule);border-radius:3px;background:#fff;color:var(--ink);text-align:right}
+  .controls input[type=range]{width:220px;accent-color:var(--hcol)}
+  .controls select{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--rule);padding:4px 8px;border-radius:3px}
+  .controls .fixed{color:var(--ink-soft)}
+  button{font:inherit;padding:6px 14px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);border-radius:3px;cursor:pointer}
+  button.primary{background:var(--ink);color:#fff;min-width:96px}
+  button:hover{background:var(--blue-wash)} button.primary:hover{background:var(--blue)}
+  .timebar{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
+  .timebar input[type=range]{flex:1;accent-color:var(--blue)}
+  .timebar b{font-variant-numeric:tabular-nums;min-width:82px;font-size:18px}
+
+  .sheet{background:#fff;border:1.5px solid var(--ink);position:relative}
+  .sheet .title{position:absolute;left:0;top:0;background:var(--ink);color:#fff;font-size:12px;padding:3px 9px;letter-spacing:.02em;z-index:1}
+  canvas{display:block;width:100%;height:auto}
+  .diagrams canvas{cursor:col-resize;touch-action:none}
+
+  .readout{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:14px 0}
+  .tile{background:#fff;border:1.5px solid var(--rule);padding:8px 12px;font-variant-numeric:tabular-nums;line-height:1.2}
+  .tile small{display:block;color:var(--ink-soft);font-size:12px;margin-bottom:3px}
+  .tile b{font-size:22px;font-weight:600}
+  .tile.h{border-color:var(--hcol)} .tile.s{border-color:var(--x)} .tile.v{border-color:var(--v)} .tile.a{border-color:var(--a);border-width:2px}
+  .diagrams{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+
+  h2{font-size:18px;font-weight:600;margin:28px 0 10px;border-bottom:1.5px solid var(--ink);padding-bottom:6px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline}
+  h2 .tools{margin-left:auto;display:flex;gap:14px;align-items:center;font-size:15px;font-weight:400}
+  h2 .tools label{display:flex;align-items:center;gap:6px;cursor:pointer}
+  h2 .tools input{accent-color:var(--a);width:16px;height:16px}
+  .analysis{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:start}
+  table{border-collapse:collapse;width:100%;background:#fff;border:1.5px solid var(--ink);font-variant-numeric:tabular-nums;font-size:14px}
+  th,td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--grid)}
+  th{background:var(--ink);color:#fff;font-weight:500;font-size:13px}
+  td.empty{text-align:left;color:var(--ink-soft);padding:14px 10px;line-height:1.5}
+  .rev{display:none} body.reveal .rev{display:table-cell}
+  td.rev.same{color:var(--a);font-weight:600}
+  .question{background:#fff;border:1.5px solid var(--rule);border-left:5px solid var(--a);padding:8px 12px;margin-top:12px;font-size:14px}
+  .question p{margin:0 0 4px} .question p:last-child{margin:0}
+  .reveal-only{display:none} body.reveal .reveal-only{display:block}
+  body.reveal .question.pre{display:none}
+
+  @media (max-width:900px){.diagrams,.analysis{grid-template-columns:1fr}.readout{grid-template-columns:repeat(3,1fr)}.formula{margin-left:0}}
+  .hint{color:var(--ink-soft);font-size:13px;margin:10px 2px 0}
+  footer{margin-top:26px;color:var(--ink-soft);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Schiefe Ebene: <span>Wie hängt a von der Höhe h ab?</span></h1>
+  <div class="formula" id="formula"><i class="cs">s</i> = ½·<i class="ca">a</i>·<i>t</i>²&ensp; <i class="cv">v</i> = <i class="ca">a</i>·<i>t</i></div>
+</header>
+<div class="assume"><b>Idealisiert:</b> keine Reibung, kein Luftwiderstand, Start aus der Ruhe (ohne Schubs).
+Die Brettlänge ist fest <i>L</i> = 1.00 m, verändert wird nur die Höhe <i>h</i>.</div>
+
+<section class="controls">
+  <label><span class="ch">Höhe <i>h</i></span>
+    <input id="hslider" type="range" min="1" max="100" step="1" value="10">
+    <input id="h" type="number" min="1" max="100" step="1" value="10"> cm</label>
+  <span class="fixed">Brettlänge <i>L</i> = 1.00 m</span>
+  <label>Tempo <select id="speed"><option value="0.25">¼×</option><option value="0.5">½×</option><option value="1" selected>1×</option></select></label>
+  <button id="play" class="primary">▶ Start</button>
+  <button id="reset">↺ Zurück</button>
+</section>
+<div class="timebar">
+  <span><i>t</i> =</span><b id="tval">0.00 s</b>
+  <input id="tslider" type="range" min="0" max="1" step="0.005" value="0">
+</div>
+
+<section class="sheet"><span class="title">Schiefe Ebene (massstäblich)</span><canvas id="scene" height="340"></canvas></section>
+
+<section class="readout">
+  <div class="tile h"><small>Höhe h</small><b id="rh">10 cm</b></div>
+  <div class="tile"><small>Neigungswinkel α</small><b id="ralpha">5.7°</b></div>
+  <div class="tile s"><small>Weg s = ½·a·t²</small><b id="rs">0.00 m</b></div>
+  <div class="tile v"><small>Geschwindigkeit v = a·t</small><b id="rv">0.00 m/s</b></div>
+  <div class="tile a"><small>Beschleunigung a</small><b id="ra">0.98 m/s²</b></div>
+  <div class="tile"><small>Fahrzeit bis unten</small><b id="rT">1.43 s</b></div>
+</section>
+
+<main class="diagrams">
+  <section class="sheet"><span class="title">Zeit-Weg-Diagramm</span><canvas id="ds" height="280"></canvas></section>
+  <section class="sheet"><span class="title">Zeit-Geschwindigkeits-Diagramm</span><canvas id="dv" height="280"></canvas></section>
+  <section class="sheet"><span class="title">Zeit-Beschleunigungs-Diagramm</span><canvas id="da" height="280"></canvas></section>
+</main>
+<p class="hint">Leertaste: Start/Stopp · Pfeiltasten ←/→: Zeit schrittweise · ↑/↓: Höhe ±1 cm · in ein Diagramm klicken oder ziehen: Zeit setzen.
+Frühere Fahrten bleiben grau in den Diagrammen stehen.</p>
+
+<h2>Auswertung: Beschleunigung a in Abhängigkeit der Höhe h
+  <span class="tools">
+    <label><input id="reveal" type="checkbox"> Zusammenhang zeigen</label>
+    <button id="clear">Messreihe löschen</button>
+  </span>
+</h2>
+<section class="analysis">
+  <section class="sheet"><span class="title">h-a-Diagramm</span><canvas id="dah" height="340"></canvas></section>
+  <div>
+    <table>
+      <thead><tr><th>h (cm)</th><th>a (m/s²)</th><th>a / h (1/s²)</th><th class="rev">h / L</th><th class="rev">a / g</th></tr></thead>
+      <tbody id="runs"></tbody>
+    </table>
+    <div class="question pre">
+      <p><b>Jede vollständige Fahrt wird eingetragen.</b> Messen Sie mit mehreren Höhen (z.&nbsp;B. 5, 10, 20, 40 cm).</p>
+      <p>Wie sehen die Punkte aus? Was passiert mit <i>a</i>, wenn Sie <i>h</i> verdoppeln? Was zeigt die Spalte <i>a</i>/<i>h</i>?</p>
+      <p>Welche Beschleunigung erwarten Sie bei <i>h</i> = 100 cm, wenn das Brett senkrecht steht?</p>
+      <p>Schauen Sie das Dreieck an: Welche Winkelfunktion verbindet <i>h</i>, <i>L</i> und α?</p>
+    </div>
+    <div class="question reveal-only">
+      <p><i class="ca">a</i> ist proportional zu <i class="ch">h</i>: <b><i>a</i> = <i>g</i> · <i>h</i>/<i>L</i></b>.
+      Im Dreieck ist <i>h</i>/<i>L</i> = sin α (Gegenkathete durch Hypotenuse), also <b><i>a</i> = <i>g</i> · sin α</b>.</p>
+      <p>Senkrechtes Brett (α = 90°, sin α = 1): <i>a</i> = <i>g</i> = 9.81 m/s², freier Fall.
+      Waagrechtes Brett (α = 0°): <i>a</i> = 0.</p>
+      <p>Am Wagen: Von der Fallbeschleunigung <i class="cg">g</i> wirkt nur der Teil entlang dem Brett,
+      <i class="ca">g · sin α</i>. Das kleine Dreieck hat die gleiche Form wie die schiefe Ebene.</p>
+    </div>
+  </div>
+</section>
+<footer>Nur für den Unterrichtsgebrauch. M. Schmid, Technische Berufsschule Zürich.</footer>
+
+<script>
+(function(){
+'use strict';
+const S = {h:0.10, L:1.00, g:9.81, t:0, playing:false, speed:1, reveal:false, runs:[]};
+const A  = (h=S.h) => S.g*h/S.L;                 // a = g·h/L (ohne Reibung)
+const TT = (h=S.h) => Math.sqrt(2*S.L/A(h));      // Fahrzeit für die ganze Brettlänge
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const C = {};
+['--ink','--ink-soft','--rule','--grid','--blue','--x','--v','--a','--x-wash','--v-wash','--a-wash',
+ '--board','--wedge','--hcol','--gcol','--ghost'].forEach(n => C[n.slice(2)] = css(n));
+const $ = id => document.getElementById(id);
+const fmt = (n, d=1) => (Math.abs(n) < 5e-12 ? 0 : n).toFixed(d).replace('-', '−');
+const cm = h => Math.round(h*100);
+const font = (px, w) => (w?w+' ':'')+px+'px '+css('--font');
+
+// ---------- Skalen ----------
+function niceStep(range, target){
+  const raw = range/target, p = Math.pow(10, Math.floor(Math.log10(raw)));
+  for(const m of [1,2,2.5,5,10]) if(m*p >= raw) return m*p;
+  return 10*p;
+}
+function scale0(hi){                            // Skala von 0 bis hi (aufgerundet)
+  if(hi < 1e-9) hi = 1;
+  const st = niceStep(hi, 5);
+  return {lo:0, hi:Math.ceil(hi/st - 1e-9)*st, step:st};
+}
+
+// ---------- Canvas-Hilfen ----------
+function setup(cv, h){
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth;
+  cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
+  cv.style.height = h+'px';
+  const g = cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  g.font = font(13); g.lineJoin='round'; g.lineCap='round';
+  return {g, w, h};
+}
+function arrow(g, x1,y1,x2,y2, color, width, head){
+  head = head || 7;
+  g.strokeStyle=color; g.fillStyle=color; g.lineWidth=width;
+  const dx=x2-x1, dy=y2-y1, L=Math.hypot(dx,dy); if(L<0.5) return;
+  head = Math.min(head, L*0.8);
+  const ux=dx/L, uy=dy/L;
+  g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2-ux*head*0.6, y2-uy*head*0.6); g.stroke();
+  g.beginPath(); g.moveTo(x2,y2); g.lineTo(x2-ux*head-uy*head*0.45, y2-uy*head+ux*head*0.45);
+  g.lineTo(x2-ux*head+uy*head*0.45, y2-uy*head-ux*head*0.45); g.closePath(); g.fill();
+}
+function dashed(g, x1,y1,x2,y2, color, width){
+  g.save(); g.setLineDash([4,4]); g.strokeStyle=color; g.lineWidth=width||1;
+  g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke(); g.restore();
+}
+function halo(g, txt, x, y){ g.save(); g.lineWidth=4; g.strokeStyle='#fff'; g.strokeText(txt,x,y); g.restore(); g.fillText(txt,x,y); }
+
+// ---------- Szene: schiefe Ebene ----------
+function drawScene(){
+  const cv = $('scene'), {g,w,h} = setup(cv, 340);
+  const a = A(), T = TT(), t = Math.min(S.t, T), s = 0.5*a*t*t, v = a*t;
+  const sinA = S.h/S.L, alpha = Math.asin(sinA), cosA = Math.cos(alpha);
+  const base = S.L*cosA;
+  const left = 96, right = 60, top = 44, bottom = 72;
+  // Massstab: L möglichst breit; wird das Dreieck zu hoch, verkleinern (Form bleibt massstäblich)
+  const sc = Math.min((w-left-right)/S.L, (h-top-bottom)/S.h);
+  const yb = h-bottom;
+  const Cx = left, Cy = yb;                       // rechter Winkel
+  const Tx = left, Ty = yb - S.h*sc;              // oberes Brettende
+  const Bx = left + base*sc, By = yb;             // unteres Brettende
+  const Lpx = S.L*sc;
+  const ux = cosA, uy = sinA;                     // Richtung bergab (Canvas: y nach unten)
+  const nx = sinA, ny = -cosA;                    // Normale nach oben
+
+  // Tisch
+  g.strokeStyle=C.ink; g.lineWidth=2;
+  g.beginPath(); g.moveTo(24, yb); g.lineTo(w-20, yb); g.stroke();
+  g.fillStyle=C['ink-soft']; g.font=font(12); g.textAlign='right'; g.textBaseline='top';
+  g.fillText('Tisch', w-22, yb+5);
+
+  // Dreieck (Unterlage)
+  g.fillStyle=C.wedge;
+  g.beginPath(); g.moveTo(Cx,Cy); g.lineTo(Tx,Ty); g.lineTo(Bx,By); g.closePath(); g.fill();
+  // Höhe h
+  g.strokeStyle=C.hcol; g.lineWidth=2.5;
+  g.beginPath(); g.moveTo(Cx,Cy); g.lineTo(Tx,Ty); g.stroke();
+  // rechter Winkel
+  const q = Math.min(14, S.h*sc*0.4, base*sc*0.4);
+  if(q > 3){ g.strokeStyle=C.ink; g.lineWidth=1.2; g.beginPath(); g.moveTo(Cx+q,Cy); g.lineTo(Cx+q,Cy-q); g.lineTo(Cx,Cy-q); g.stroke();
+    g.fillStyle=C.ink; g.beginPath(); g.arc(Cx+q/2, Cy-q/2, 1.6, 0, Math.PI*2); g.fill(); }
+  // Masspfeil h
+  const hx = Cx-34;
+  dashed(g, Tx-4, Ty, hx-6, Ty, C.hcol);
+  if(S.h*sc > 16){ arrow(g, hx, (Cy+Ty)/2, hx, Ty, C.hcol, 1.5, 7); arrow(g, hx, (Cy+Ty)/2, hx, Cy, C.hcol, 1.5, 7); }
+  g.fillStyle=C.hcol; g.font=font(15,600); g.textAlign='right'; g.textBaseline='middle';
+  if(S.h*sc > 44){ halo(g, 'h', hx-8, (Cy+Ty)/2 - 9); g.font=font(13); halo(g, cm(S.h)+' cm', hx-8, (Cy+Ty)/2 + 9); }
+  else { g.textAlign='center'; g.textBaseline='bottom'; halo(g, 'h = '+cm(S.h)+' cm', hx, Ty-6); }
+
+  // Winkel α am unteren Ende
+  const flat = alpha < 0.35;
+  const ra = flat ? Math.min(90, Lpx*0.3) : Math.min(56, Lpx*0.28, base*sc*0.4+18);
+  g.fillStyle='rgba(217,109,0,.22)'; g.strokeStyle=C.ink; g.lineWidth=1.3;
+  g.beginPath(); g.moveTo(Bx,By); g.arc(Bx,By,ra,Math.PI,Math.PI+alpha); g.closePath(); g.fill();
+  g.beginPath(); g.arc(Bx,By,ra,Math.PI,Math.PI+alpha); g.stroke();
+  const am = Math.PI+alpha/2;
+  g.fillStyle=C.ink; g.font=font(16,600); g.textAlign='center'; g.textBaseline='middle';
+  if(flat){                                       // flaches Brett: α unter dem Tisch, mit Hinweislinie
+    const ax = Bx+Math.cos(am)*(ra-6), ay = By+Math.sin(am)*(ra-6);
+    g.strokeStyle=C.ink; g.lineWidth=1; g.beginPath(); g.moveTo(ax,ay); g.lineTo(ax-14, By+12); g.stroke();
+    halo(g, 'α = '+fmt(alpha*180/Math.PI)+'°', ax-30, By+22);
+  } else halo(g, 'α', Bx+Math.cos(am)*(ra+14), By+Math.sin(am)*(ra+14));
+
+  // Brett (Hypotenuse L)
+  g.strokeStyle=C.board; g.lineWidth=6; g.lineCap='butt';
+  g.beginPath(); g.moveTo(Tx,Ty); g.lineTo(Bx,By); g.stroke(); g.lineCap='round';
+  // Beschriftung L entlang dem Brett (auf der Unterseite, im Dreieck/unter dem Brett)
+  g.save();
+  const lo = S.h*sc < 50 ? 18 : -16;             // flaches Brett: Beschriftung über dem Brett
+  const mx = Tx+(Bx-Tx)*0.68 + nx*lo, my = Ty+(By-Ty)*0.68 + ny*lo;
+  g.translate(mx, my); g.rotate(alpha);
+  g.fillStyle=C.board; g.font=font(15,600); g.textAlign='center'; g.textBaseline='middle';
+  g.fillText(alpha < 1.2 ? 'L = 1.00 m (Brett)' : 'L = 1.00 m', 0, 0);
+  g.restore();
+  // Startmarke oben
+  g.strokeStyle=C.x; g.lineWidth=2;
+  g.beginPath(); g.moveTo(Tx+ux*2+nx*2, Ty+uy*2+ny*2); g.lineTo(Tx+ux*2+nx*14, Ty+uy*2+ny*14); g.stroke();
+
+  // Wagen
+  const cartL = 46, d = s/S.L*(Lpx-cartL)+cartL/2;
+  const Px = Tx+ux*d, Py = Ty+uy*d;
+  g.save(); g.translate(Px,Py); g.rotate(alpha);
+  g.fillStyle=C.ink; [-14,14].forEach(wx=>{ g.beginPath(); g.arc(wx,-8,5,0,Math.PI*2); g.fill(); });
+  g.fillStyle=C.x; g.fillRect(-23,-22,46,11);
+  g.fillStyle=C.blue; g.fillRect(-17,-27,34,5);
+  g.restore();
+  const Ox = Px+nx*16, Oy = Py+ny*16;            // Angriffspunkt (Wagenmitte)
+
+  // Geschwindigkeits- und Beschleunigungspfeil (entlang dem Brett, über dem Wagen)
+  const vPx = v*30, aPx = a*14;
+  const vb = 44, ab = 64;
+  g.font=font(14,600); g.textBaseline='middle'; g.textAlign='left';
+  if(vPx > 2){ arrow(g, Px+nx*vb, Py+ny*vb, Px+nx*vb+ux*vPx, Py+ny*vb+uy*vPx, C.v, 3, 8);
+    g.fillStyle=C.v; halo(g, 'v', Px+nx*vb+ux*vPx+6, Py+ny*vb+uy*vPx-6); }
+  if(aPx > 2){ arrow(g, Px+nx*ab, Py+ny*ab, Px+nx*ab+ux*aPx, Py+ny*ab+uy*aPx, C.a, 3, 8);
+    g.fillStyle=C.a; halo(g, 'a', Px+nx*ab+ux*aPx+6, Py+ny*ab+uy*aPx-6); }
+
+  // Zerlegung von g (nur mit «Zusammenhang zeigen»)
+  if(S.reveal){
+    const G = 80, Gx = Ox, Gy = Oy+G;            // Spitze von g
+    const Qx = Ox+ux*G*sinA, Qy = Oy+uy*G*sinA;  // Spitze von g·sin α
+    dashed(g, Qx,Qy, Gx,Gy, C['ink-soft'], 1.3);
+    arrow(g, Ox,Oy, Gx,Gy, C.gcol, 2.5, 8);
+    arrow(g, Ox,Oy, Qx,Qy, C.a, 2.5, 8);
+    // rechter Winkel bei Q, α bei der Spitze von g
+    const k = Math.min(7, G*sinA*0.4, G*cosA*0.4);
+    if(k > 2){ g.strokeStyle=C.ink; g.lineWidth=1;
+      g.beginPath(); g.moveTo(Qx-ux*k, Qy-uy*k); g.lineTo(Qx-ux*k-nx*k, Qy-uy*k-ny*k); g.lineTo(Qx-nx*k, Qy-ny*k); g.stroke(); }
+    g.strokeStyle=C.ink; g.lineWidth=1.2;
+    g.beginPath(); g.arc(Gx,Gy,20,-Math.PI/2,-Math.PI/2+alpha); g.stroke();
+    g.fillStyle=C.ink; g.font=font(13,600); g.textAlign='center'; g.textBaseline='middle';
+    const ga = -Math.PI/2+alpha/2; halo(g, 'α', Gx+Math.cos(ga)*32, Gy+Math.sin(ga)*32);
+    g.fillStyle=C.gcol; g.textAlign='right'; halo(g, 'g', Ox-7, Oy+G*0.55);
+    g.fillStyle=C.a; g.textAlign='left'; halo(g, 'g·sin α', Qx+8, Qy+12);
+
+    // Kasten oben rechts
+    const bx = w-right-200, by = 30;
+    g.fillStyle='rgba(255,255,255,.92)'; g.strokeStyle=C.a; g.lineWidth=1.5;
+    g.fillRect(bx,by,212,78); g.strokeRect(bx,by,212,78);
+    g.font=font(14); g.textAlign='left'; g.textBaseline='middle';
+    g.fillStyle=C.ink;  g.fillText('sin α = h / L = '+(sinA).toFixed(3), bx+12, by+18);
+    g.fillStyle=C.a;    g.fillText('a / g = '+fmt(a,2)+' / 9.81 = '+(a/S.g).toFixed(3), bx+12, by+40);
+    g.font=font(14,600); g.fillText('a = g · sin α', bx+12, by+62);
+  }
+}
+
+// ---------- Diagramme s–t, v–t, a–t ----------
+const diagrams = [
+  {id:'ds', f:(t,a)=>0.5*a*t*t, max:()=>S.L,                     color:'x', label:'s (m)',    unit:' m',    d:2, kind:'s'},
+  {id:'dv', f:(t,a)=>a*t,       max:r=>Math.max(...r.map(o=>o.a*o.T)), color:'v', label:'v (m/s)',  unit:' m/s',  d:2, kind:'v'},
+  {id:'da', f:(t,a)=>a,         max:r=>Math.max(...r.map(o=>o.a)),     color:'a', label:'a (m/s²)', unit:' m/s²', d:2, kind:'a'},
+];
+function allRuns(){ return [{h:S.h, a:A(), T:TT()}].concat(S.runs); }
+function drawDiagram(D){
+  const cv = $(D.id), {g,w,h} = setup(cv, 280);
+  const m = {l:52, r:44, t:40, b:38};
+  const a = A(), T = TT(), t = Math.min(S.t, T);
+  const runs = allRuns(), tEnd = Math.max(...runs.map(o=>o.T));
+  const sc = scale0(D.max(runs) * (D.kind==='s'?1:1.04));
+  const px = tt => m.l + tt/tEnd*(w-m.l-m.r);
+  const py = y  => h-m.b - (y-sc.lo)/(sc.hi-sc.lo)*(h-m.t-m.b);
+  const tStep = niceStep(tEnd, 6), y0 = py(0);
+  D.left = m.l; D.plotW = w-m.l-m.r; D.tEnd = tEnd;
+  const col = C[D.color];
+
+  // Raster
+  g.strokeStyle=C.grid; g.lineWidth=1;
+  for(let tt=0; tt<=tEnd+1e-9; tt+=tStep){ g.beginPath(); g.moveTo(px(tt),m.t); g.lineTo(px(tt),h-m.b); g.stroke(); }
+  for(let y=sc.lo; y<=sc.hi+1e-9; y+=sc.step){ g.beginPath(); g.moveTo(m.l,py(y)); g.lineTo(w-m.r,py(y)); g.stroke(); }
+
+  // Flächen bis zur aktuellen Zeit
+  if(D.kind==='v' && t>0){
+    g.fillStyle=C['v-wash'];
+    g.beginPath(); g.moveTo(px(0),y0); g.lineTo(px(t),py(a*t)); g.lineTo(px(t),y0); g.closePath(); g.fill();
+  }
+  if(D.kind==='a' && t>0){ g.fillStyle=C['a-wash']; g.fillRect(px(0), py(a), px(t)-px(0), y0-py(a)); }
+  if(D.kind==='s'){
+    dashed(g, px(0),py(S.L), w-m.r,py(S.L), C['ink-soft']);
+    g.fillStyle=C['ink-soft']; g.font=font(11); g.textAlign='right'; g.textBaseline='top';
+    g.fillText('Brettende (L = 1 m)', w-m.r-2, py(S.L)+3);
+  }
+
+  // Achsen
+  arrow(g, m.l,y0, w-m.r+14,y0, C.ink, 1.5, 8);
+  arrow(g, m.l,h-m.b, m.l,m.t-14, C.ink, 1.5, 8);
+  g.fillStyle=C.ink; g.font=font(13); g.textAlign='left'; g.textBaseline='middle';
+  g.fillText('t (s)', w-m.r+18, y0);
+  g.fillText(D.label, m.l+10, m.t-8);
+  g.textAlign='center'; g.textBaseline='top'; g.fillStyle=C['ink-soft']; g.font=font(12);
+  for(let tt=tStep; tt<=tEnd+1e-9; tt+=tStep) g.fillText(fmt(tt, tStep<1?1:0), px(tt), y0+4);
+  g.textAlign='right'; g.textBaseline='middle';
+  const yd = sc.step<0.1?2:sc.step<1?1:0;
+  for(let y=sc.lo; y<=sc.hi+1e-9; y+=sc.step) if(Math.abs(y)>1e-9) g.fillText(fmt(y, yd), m.l-6, py(y));
+  g.fillText('0', m.l-6, y0);
+
+  const curve = (aa,t1,t2,style,width) => {
+    g.strokeStyle=style; g.lineWidth=width; g.beginPath();
+    const n = 120;
+    for(let i=0;i<=n;i++){ const tt=t1+(t2-t1)*i/n; const xx=px(tt), yy=py(D.f(tt,aa)); i?g.lineTo(xx,yy):g.moveTo(xx,yy); }
+    g.stroke();
+  };
+  // frühere Fahrten (grau)
+  g.font=font(11); g.textBaseline='bottom';
+  const placed = [];
+  S.runs.forEach(r=>{
+    if(Math.abs(r.h-S.h) < 1e-9) return;
+    g.save(); g.globalAlpha=0.7; curve(r.a,0,r.T,C.ghost,1.5); g.restore();
+    const lx = px(r.T), ly = py(D.f(r.T,r.a))-2;
+    if(placed.some(([x,y]) => Math.abs(x-lx) < 38 && Math.abs(y-ly) < 12)) return;
+    placed.push([lx,ly]);
+    g.fillStyle=C['ink-soft']; g.textAlign = lx > w-m.r-30 ? 'right' : 'left';
+    g.fillText(cm(r.h)+' cm', lx + (g.textAlign==='left'?4:-2), ly);
+  });
+  // aktuelle Fahrt: ganz blass, bis t kräftig
+  g.save(); g.globalAlpha=0.28; curve(a,0,T,col,2); g.restore();
+  if(t>0) curve(a,0,t,col,3);
+
+  // Zeitmarke und Punkt
+  dashed(g, px(t),m.t, px(t),h-m.b, C.blue);
+  const yy = py(D.f(t,a));
+  g.fillStyle=col; g.beginPath(); g.arc(px(t),yy,5,0,Math.PI*2); g.fill();
+  g.strokeStyle='#fff'; g.lineWidth=1.5; g.stroke();
+  g.font=font(13,600); g.fillStyle=col; g.textBaseline='bottom';
+  const right = px(t) > w*0.6;
+  g.textAlign = right?'right':'left';
+  halo(g, fmt(D.f(t,a), D.d)+D.unit, px(t)+(right?-10:10), yy-6 < m.t+14 ? yy+18 : yy-6);
+}
+
+// ---------- Auswertung: h-a-Diagramm ----------
+function drawAnalysis(){
+  const cv = $('dah'), {g,w,h} = setup(cv, 340);
+  const m = {l:56, r:100, t:40, b:S.reveal?60:42};
+  const hMax = 100, aMax = 11;
+  const px = hc => m.l + hc/hMax*(w-m.l-m.r);
+  const py = a  => h-m.b - a/aMax*(h-m.t-m.b);
+  // Raster
+  g.strokeStyle=C.grid; g.lineWidth=1;
+  for(let x=0;x<=hMax;x+=10){ g.beginPath(); g.moveTo(px(x),m.t); g.lineTo(px(x),h-m.b); g.stroke(); }
+  for(let y=0;y<=aMax;y+=1){ g.beginPath(); g.moveTo(m.l,py(y)); g.lineTo(w-m.r,py(y)); g.stroke(); }
+  // Achsen
+  arrow(g, m.l,py(0), w-m.r+14,py(0), C.ink, 1.5, 8);
+  arrow(g, m.l,h-m.b, m.l,m.t-14, C.ink, 1.5, 8);
+  g.fillStyle=C.ink; g.font=font(13); g.textAlign='left'; g.textBaseline='middle';
+  g.fillText('h (cm)', w-m.r+18, py(0));
+  g.fillText('a (m/s²)', m.l+10, m.t-8);
+  g.fillStyle=C['ink-soft']; g.font=font(12); g.textAlign='center'; g.textBaseline='top';
+  for(let x=10;x<=hMax;x+=10) g.fillText(x, px(x), py(0)+4);
+  g.textAlign='right'; g.textBaseline='middle';
+  for(let y=0;y<=aMax;y+=2) g.fillText(y, m.l-6, py(y));
+
+  // aktuelle Höhe
+  dashed(g, px(cm(S.h)), m.t, px(cm(S.h)), py(0), C.hcol);
+  g.fillStyle=C.hcol; g.font=font(12,600); g.textAlign = cm(S.h) > 85 ? 'right':'left'; g.textBaseline='top';
+  g.fillText('h = '+cm(S.h)+' cm', px(cm(S.h)) + (cm(S.h) > 85 ? -5 : 5), py(0)-18);
+
+  if(S.reveal){
+    // zweite Beschriftung der h-Achse: h/L = sin α
+    g.fillStyle=C.a; g.font=font(12); g.textAlign='center'; g.textBaseline='top';
+    for(let x=10;x<=hMax;x+=10) g.fillText((x/100).toFixed(1), px(x), py(0)+21);
+    g.font=font(12,600); g.textAlign='left'; g.fillText('h/L = sin α', w-m.r+18, py(0)+21);
+    // g und Gerade a = g·h/L
+    dashed(g, m.l, py(S.g), w-m.r, py(S.g), C.gcol, 1.2);
+    g.fillStyle=C.gcol; g.font=font(12,600); g.textAlign='left'; g.textBaseline='bottom';
+    g.fillText('g = 9.81 m/s²', m.l+6, py(S.g)-3);
+    g.strokeStyle=C.a; g.lineWidth=2; g.setLineDash([7,5]);
+    g.beginPath(); g.moveTo(px(0),py(0)); g.lineTo(px(100),py(S.g)); g.stroke(); g.setLineDash([]);
+    g.save(); g.translate(px(52), py(S.g*0.52)); g.rotate(Math.atan2(py(S.g)-py(0), px(100)-px(0)));
+    g.fillStyle=C.a; g.font=font(14,600); g.textAlign='center'; g.textBaseline='bottom';
+    halo(g, 'a = g · h/L = g · sin α', 0, -6); g.restore();
+    g.fillStyle=C.ink; g.font=font(12); g.textAlign='right'; g.textBaseline='top';
+    halo(g, 'senkrecht: freier Fall', px(100)-8, py(S.g)+6);
+  }
+  // Messpunkte
+  S.runs.forEach(r=>{
+    const x = px(cm(r.h)), y = py(r.a);
+    g.fillStyle=C.a; g.beginPath(); g.arc(x,y,5.5,0,Math.PI*2); g.fill();
+    g.strokeStyle='#fff'; g.lineWidth=1.5; g.stroke();
+  });
+  if(!S.runs.length){
+    g.fillStyle=C['ink-soft']; g.font=font(14); g.textAlign='center'; g.textBaseline='middle';
+    g.fillText('Noch keine Messpunkte: Höhe einstellen und ▶ Start', px(62), py(2));
+  }
+}
+function renderTable(){
+  const tb = $('runs');
+  if(!S.runs.length){
+    tb.innerHTML = '<tr><td class="empty" colspan="5">Noch keine Fahrten. Jede Fahrt bis zum Brettende wird hier eingetragen (gleiche Höhe: ersetzt).</td></tr>';
+    return;
+  }
+  tb.innerHTML = S.runs.map(r =>
+    '<tr><td>'+cm(r.h)+'</td><td>'+fmt(r.a,2)+'</td><td>'+fmt(r.a/r.h,2)+'</td>'+
+    '<td class="rev same">'+(r.h/S.L).toFixed(3)+'</td><td class="rev same">'+(r.a/S.g).toFixed(3)+'</td></tr>').join('');
+}
+
+// ---------- Anzeige ----------
+function render(){
+  const a=A(), T=TT(), t=Math.min(S.t,T);
+  $('tval').textContent = fmt(t,2)+' s';
+  $('tslider').max = T; $('tslider').value = t;
+  $('rh').textContent = cm(S.h)+' cm';
+  $('ralpha').textContent = fmt(Math.asin(S.h/S.L)*180/Math.PI)+'°';
+  $('rs').textContent = fmt(0.5*a*t*t,2)+' m';
+  $('rv').textContent = fmt(a*t,2)+' m/s';
+  $('ra').textContent = fmt(a,2)+' m/s²';
+  $('rT').textContent = fmt(T,2)+' s';
+  $('formula').innerHTML = S.reveal
+    ? '<i class="ca">a</i> = <i class="cg">g</i> · <i class="ch">h</i>/<i>L</i> = <i class="cg">g</i> · sin α'
+    : '<i class="cs">s</i> = ½·<i class="ca">a</i>·<i>t</i>²&ensp; <i class="cv">v</i> = <i class="ca">a</i>·<i>t</i>';
+  drawScene(); diagrams.forEach(drawDiagram); drawAnalysis();
+}
+
+// ---------- Messreihe ----------
+function record(){
+  const r = {h:S.h, a:A(), T:TT()};
+  S.runs = S.runs.filter(o => Math.abs(o.h-r.h) > 1e-9).concat([r]).sort((p,q)=>p.h-q.h);
+  renderTable();
+}
+
+// ---------- Animation ----------
+let last=null;
+function frame(ts){
+  if(!S.playing) return;
+  const T = TT();
+  if(last!==null){ S.t = Math.min(T, S.t + (ts-last)/1000*S.speed); }
+  last=ts;
+  if(S.t>=T){ record(); setPlaying(false); render(); return; }
+  render(); requestAnimationFrame(frame);
+}
+function setPlaying(p){
+  S.playing=p; last=null;
+  $('play').textContent = p?'❚❚ Stopp':'▶ Start';
+  if(p){ if(S.t>=TT()) S.t=0; requestAnimationFrame(frame); }
+}
+function setH(hc){
+  hc = Math.max(1, Math.min(100, Math.round(+hc || 1)));
+  S.h = hc/100; $('h').value = hc; $('hslider').value = hc;
+  setPlaying(false); S.t = 0; render();
+}
+$('hslider').addEventListener('input', e=>setH(e.target.value));
+$('h').addEventListener('change', e=>setH(e.target.value));
+$('speed').addEventListener('change', e=>S.speed=+e.target.value);
+$('play').addEventListener('click', ()=>setPlaying(!S.playing));
+$('reset').addEventListener('click', ()=>{ setPlaying(false); S.t=0; render(); });
+$('tslider').addEventListener('input', e=>{ setPlaying(false); S.t=+e.target.value; render(); });
+$('reveal').addEventListener('change', e=>{ S.reveal=e.target.checked; document.body.classList.toggle('reveal', S.reveal); render(); });
+$('clear').addEventListener('click', ()=>{ S.runs=[]; renderTable(); render(); });
+document.addEventListener('keydown', e=>{
+  if(e.target.tagName==='INPUT' && e.target.type!=='checkbox' || e.target.tagName==='SELECT') return;
+  if(e.code==='Space'){ e.preventDefault(); setPlaying(!S.playing); }
+  if(e.code==='ArrowRight'){ setPlaying(false); S.t=Math.min(TT(),S.t+0.05); render(); }
+  if(e.code==='ArrowLeft'){ setPlaying(false); S.t=Math.max(0,S.t-0.05); render(); }
+  if(e.code==='ArrowUp'){ e.preventDefault(); setH(cm(S.h)+1); }
+  if(e.code==='ArrowDown'){ e.preventDefault(); setH(cm(S.h)-1); }
+});
+// Zeit setzen durch Klicken/Ziehen im Diagramm
+diagrams.forEach(D=>{
+  const cv=$(D.id); let drag=false;
+  const setT = e=>{ const r=cv.getBoundingClientRect(); const f=(e.clientX-r.left-D.left)/D.plotW;
+    S.t=Math.max(0,Math.min(TT(),f*D.tEnd)); render(); };
+  cv.addEventListener('pointerdown', e=>{ drag=true; cv.setPointerCapture(e.pointerId); setPlaying(false); setT(e); });
+  cv.addEventListener('pointermove', e=>{ if(drag) setT(e); });
+  cv.addEventListener('pointerup', ()=>drag=false); cv.addEventListener('pointercancel', ()=>drag=false);
+});
+window.addEventListener('resize', render);
+renderTable(); render();
+})();
+</script>
+</body>
+</html>
