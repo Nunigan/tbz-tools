@@ -12,10 +12,10 @@
   die Brettlänge ist fest L = 1.00 m (wie im Versuch).
   Aufbau wie konstante-beschleunigung-animation.html: Szene oben, die drei
   Diagramme s–t, v–t, a–t bauen sich mit der Zeit auf. Jede vollständige
-  Fahrt wird als Messpunkt ins Diagramm «a in Abhängigkeit von h»
-  eingetragen. Der Schalter «Zusammenhang zeigen» (Standard: aus) blendet
-  a = g·h/L = g·sin α, die Spalten h/L und a/g und die Zerlegung von g am
-  Wagen ein — erst nach der Auswertung zeigen (Didaktik des Versuchs:
+  Fahrt wird als Messpunkt ins h-a- und ins α-a-Diagramm eingetragen
+  (h-a: Gerade, α-a: Viertel-Sinuskurve). Der Schalter «Zusammenhang
+  zeigen» (Standard: aus) blendet a = g·h/L = g·sin α, die Sinuskurve, die
+  Spalten h/L und a/g und die Zerlegung von g am Wagen ein — erst nach der Auswertung zeigen (Didaktik des Versuchs:
   a = g·sin α wird nicht vorweggenommen).
   Selbst erstellt, 01.10.2026.
 -->
@@ -73,14 +73,14 @@
   h2 .tools{margin-left:auto;display:flex;gap:14px;align-items:center;font-size:15px;font-weight:400}
   h2 .tools label{display:flex;align-items:center;gap:6px;cursor:pointer}
   h2 .tools input{accent-color:var(--a);width:16px;height:16px}
-  .analysis{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:start}
+  .analysis{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin-bottom:16px}
   table{border-collapse:collapse;width:100%;background:#fff;border:1.5px solid var(--ink);font-variant-numeric:tabular-nums;font-size:14px}
   th,td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--grid)}
   th{background:var(--ink);color:#fff;font-weight:500;font-size:13px}
   td.empty{text-align:left;color:var(--ink-soft);padding:14px 10px;line-height:1.5}
   .rev{display:none} body.reveal .rev{display:table-cell}
   td.rev.same{color:var(--a);font-weight:600}
-  .question{background:#fff;border:1.5px solid var(--rule);border-left:5px solid var(--a);padding:8px 12px;margin-top:12px;font-size:14px}
+  .question{background:#fff;border:1.5px solid var(--rule);border-left:5px solid var(--a);padding:8px 12px;font-size:14px}
   .question p{margin:0 0 4px} .question p:last-child{margin:0}
   .reveal-only{display:none} body.reveal .reveal-only{display:block}
   body.reveal .question.pre{display:none}
@@ -131,28 +131,35 @@ Die Brettlänge ist fest <i>L</i> = 1.00 m, verändert wird nur die Höhe <i>h</
 <p class="hint">Leertaste: Start/Stopp · Pfeiltasten ←/→: Zeit schrittweise · ↑/↓: Höhe ±1 cm · in ein Diagramm klicken oder ziehen: Zeit setzen.
 Frühere Fahrten bleiben grau in den Diagrammen stehen.</p>
 
-<h2>Auswertung: Beschleunigung a in Abhängigkeit der Höhe h
+<h2>Auswertung: Beschleunigung a in Abhängigkeit von h und von α
   <span class="tools">
     <label><input id="reveal" type="checkbox"> Zusammenhang zeigen</label>
+    <button id="sample" title="trägt die Fahrten für h = 10, 20, …, 100 cm ein">Beispielreihe</button>
     <button id="clear">Messreihe löschen</button>
   </span>
 </h2>
 <section class="analysis">
   <section class="sheet"><span class="title">h-a-Diagramm</span><canvas id="dah" height="340"></canvas></section>
+  <section class="sheet"><span class="title">α-a-Diagramm</span><canvas id="dalpha" height="340"></canvas></section>
+</section>
+<section class="analysis">
+  <table>
+    <thead><tr><th>h (cm)</th><th>α</th><th>a (m/s²)</th><th>a / h (1/s²)</th><th class="rev">h / L</th><th class="rev">a / g</th></tr></thead>
+    <tbody id="runs"></tbody>
+  </table>
   <div>
-    <table>
-      <thead><tr><th>h (cm)</th><th>a (m/s²)</th><th>a / h (1/s²)</th><th class="rev">h / L</th><th class="rev">a / g</th></tr></thead>
-      <tbody id="runs"></tbody>
-    </table>
     <div class="question pre">
-      <p><b>Jede vollständige Fahrt wird eingetragen.</b> Messen Sie mit mehreren Höhen (z.&nbsp;B. 5, 10, 20, 40 cm).</p>
-      <p>Wie sehen die Punkte aus? Was passiert mit <i>a</i>, wenn Sie <i>h</i> verdoppeln? Was zeigt die Spalte <i>a</i>/<i>h</i>?</p>
+      <p><b>Jede vollständige Fahrt wird eingetragen</b>, in beide Diagramme. Messen Sie flache und steile Bretter (z.&nbsp;B. 5, 10, 20, 40, 70, 100 cm).</p>
+      <p><b>h-a-Diagramm:</b> Wie liegen die Punkte? Was passiert mit <i>a</i>, wenn Sie <i>h</i> verdoppeln? Was zeigt die Spalte <i>a</i>/<i>h</i>?</p>
+      <p><b>α-a-Diagramm:</b> Liegen die Punkte auch auf einer Geraden? Was passiert mit <i>a</i>, wenn Sie α verdoppeln, z.&nbsp;B. von 30° auf 60°?</p>
       <p>Welche Beschleunigung erwarten Sie bei <i>h</i> = 100 cm, wenn das Brett senkrecht steht?</p>
-      <p>Schauen Sie das Dreieck an: Welche Winkelfunktion verbindet <i>h</i>, <i>L</i> und α?</p>
+      <p>Schauen Sie das Dreieck an: Welche Winkelfunktion verbindet <i>h</i>, <i>L</i> und α? Welche Kurve kennen Sie, die so aussieht wie im α-a-Diagramm?</p>
     </div>
     <div class="question reveal-only">
-      <p><i class="ca">a</i> ist proportional zu <i class="ch">h</i>: <b><i>a</i> = <i>g</i> · <i>h</i>/<i>L</i></b>.
+      <p><b>h-a:</b> <i class="ca">a</i> ist proportional zu <i class="ch">h</i>: <b><i>a</i> = <i>g</i> · <i>h</i>/<i>L</i></b>, eine Gerade.
       Im Dreieck ist <i>h</i>/<i>L</i> = sin α (Gegenkathete durch Hypotenuse), also <b><i>a</i> = <i>g</i> · sin α</b>.</p>
+      <p><b>α-a:</b> Die Punkte liegen auf einem <b>Viertel der Sinuskurve</b> (0° bis 90°). Für kleine Winkel ist sie fast gerade,
+      gegen 90° wird sie flach: Von 30° auf 60° wird <i>a</i> nicht doppelt so gross (sin 30° = 0.5, sin 60° = 0.87).</p>
       <p>Senkrechtes Brett (α = 90°, sin α = 1): <i>a</i> = <i>g</i> = 9.81 m/s², freier Fall.
       Waagrechtes Brett (α = 0°): <i>a</i> = 0.</p>
       <p>Am Wagen: Von der Fallbeschleunigung <i class="cg">g</i> wirkt nur der Teil entlang dem Brett,
@@ -414,42 +421,60 @@ function drawDiagram(D){
   halo(g, fmt(D.f(t,a), D.d)+D.unit, px(t)+(right?-10:10), yy-6 < m.t+14 ? yy+18 : yy-6);
 }
 
-// ---------- Auswertung: h-a-Diagramm ----------
-function drawAnalysis(){
-  const cv = $('dah'), {g,w,h} = setup(cv, 340);
-  const m = {l:56, r:100, t:40, b:S.reveal?60:42};
-  const hMax = 100, aMax = 11;
-  const px = hc => m.l + hc/hMax*(w-m.l-m.r);
-  const py = a  => h-m.b - a/aMax*(h-m.t-m.b);
-  // Raster
+// ---------- Auswertung: h-a- und α-a-Diagramm ----------
+const deg = h => Math.asin(h/S.L)*180/Math.PI;
+function analysisFrame(id, xMax, xLabel, tick){
+  const cv = $(id), {g,w,h} = setup(cv, 340);
+  const m = {l:56, r:100, t:40, b:42}, aMax = 11;
+  const px = x => m.l + x/xMax*(w-m.l-m.r);
+  const py = a => h-m.b - a/aMax*(h-m.t-m.b);
   g.strokeStyle=C.grid; g.lineWidth=1;
-  for(let x=0;x<=hMax;x+=10){ g.beginPath(); g.moveTo(px(x),m.t); g.lineTo(px(x),h-m.b); g.stroke(); }
+  for(let x=0;x<=xMax;x+=10){ g.beginPath(); g.moveTo(px(x),m.t); g.lineTo(px(x),h-m.b); g.stroke(); }
   for(let y=0;y<=aMax;y+=1){ g.beginPath(); g.moveTo(m.l,py(y)); g.lineTo(w-m.r,py(y)); g.stroke(); }
-  // Achsen
   arrow(g, m.l,py(0), w-m.r+14,py(0), C.ink, 1.5, 8);
   arrow(g, m.l,h-m.b, m.l,m.t-14, C.ink, 1.5, 8);
   g.fillStyle=C.ink; g.font=font(13); g.textAlign='left'; g.textBaseline='middle';
-  g.fillText('h (cm)', w-m.r+18, py(0));
+  g.fillText(xLabel, w-m.r+18, py(0));
   g.fillText('a (m/s²)', m.l+10, m.t-8);
   g.fillStyle=C['ink-soft']; g.font=font(12); g.textAlign='center'; g.textBaseline='top';
-  for(let x=10;x<=hMax;x+=10) g.fillText(x, px(x), py(0)+4);
+  for(let x=10;x<=xMax;x+=10) g.fillText(tick(x), px(x), py(0)+4);
   g.textAlign='right'; g.textBaseline='middle';
   for(let y=0;y<=aMax;y+=2) g.fillText(y, m.l-6, py(y));
-
-  // aktuelle Höhe
-  dashed(g, px(cm(S.h)), m.t, px(cm(S.h)), py(0), C.hcol);
-  g.fillStyle=C.hcol; g.font=font(12,600); g.textAlign = cm(S.h) > 85 ? 'right':'left'; g.textBaseline='top';
-  g.fillText('h = '+cm(S.h)+' cm', px(cm(S.h)) + (cm(S.h) > 85 ? -5 : 5), py(0)-18);
-
+  return {g, w, h, m, px, py};
+}
+function marker(F, x, txt){                     // aktuelle Höhe bzw. aktueller Winkel
+  const {g, px, py} = F, right = x > 0.85*F.xMax;
+  dashed(g, px(x), F.m.t, px(x), py(0), C.hcol);
+  g.fillStyle=C.hcol; g.font=font(12,600); g.textAlign = right?'right':'left'; g.textBaseline='top';
+  g.fillText(txt, px(x) + (right?-5:5), py(0)-18);
+}
+function gLine(F){
+  const {g, m, w, py} = F;
+  dashed(g, m.l, py(S.g), w-m.r, py(S.g), C.gcol, 1.2);
+  g.fillStyle=C.gcol; g.font=font(12,600); g.textAlign='left'; g.textBaseline='bottom';
+  g.fillText('g = 9.81 m/s²', m.l+6, py(S.g)-3);
+}
+function points(F, xOf){
+  const {g, px, py} = F;
+  S.runs.forEach(r=>{
+    g.fillStyle=C.a; g.beginPath(); g.arc(px(xOf(r)),py(r.a),5.5,0,Math.PI*2); g.fill();
+    g.strokeStyle='#fff'; g.lineWidth=1.5; g.stroke();
+  });
+  if(!S.runs.length){
+    g.fillStyle=C['ink-soft']; g.font=font(14); g.textAlign='center'; g.textBaseline='middle';
+    g.fillText('Noch keine Messpunkte: Höhe einstellen und ▶ Start', px(0.52*F.xMax), py(2));
+  }
+}
+function drawAnalysisH(){
+  const F = analysisFrame('dah', 100, 'h (cm)', x => x); F.xMax = 100;
+  const {g, w, m, px, py} = F;
+  marker(F, cm(S.h), 'h = '+cm(S.h)+' cm');
   if(S.reveal){
     // zweite Beschriftung der h-Achse: h/L = sin α
     g.fillStyle=C.a; g.font=font(12); g.textAlign='center'; g.textBaseline='top';
-    for(let x=10;x<=hMax;x+=10) g.fillText((x/100).toFixed(1), px(x), py(0)+21);
+    for(let x=10;x<=100;x+=10) g.fillText((x/100).toFixed(1), px(x), py(0)+21);
     g.font=font(12,600); g.textAlign='left'; g.fillText('h/L = sin α', w-m.r+18, py(0)+21);
-    // g und Gerade a = g·h/L
-    dashed(g, m.l, py(S.g), w-m.r, py(S.g), C.gcol, 1.2);
-    g.fillStyle=C.gcol; g.font=font(12,600); g.textAlign='left'; g.textBaseline='bottom';
-    g.fillText('g = 9.81 m/s²', m.l+6, py(S.g)-3);
+    gLine(F);
     g.strokeStyle=C.a; g.lineWidth=2; g.setLineDash([7,5]);
     g.beginPath(); g.moveTo(px(0),py(0)); g.lineTo(px(100),py(S.g)); g.stroke(); g.setLineDash([]);
     g.save(); g.translate(px(52), py(S.g*0.52)); g.rotate(Math.atan2(py(S.g)-py(0), px(100)-px(0)));
@@ -458,25 +483,39 @@ function drawAnalysis(){
     g.fillStyle=C.ink; g.font=font(12); g.textAlign='right'; g.textBaseline='top';
     halo(g, 'senkrecht: freier Fall', px(100)-8, py(S.g)+6);
   }
-  // Messpunkte
-  S.runs.forEach(r=>{
-    const x = px(cm(r.h)), y = py(r.a);
-    g.fillStyle=C.a; g.beginPath(); g.arc(x,y,5.5,0,Math.PI*2); g.fill();
-    g.strokeStyle='#fff'; g.lineWidth=1.5; g.stroke();
-  });
-  if(!S.runs.length){
-    g.fillStyle=C['ink-soft']; g.font=font(14); g.textAlign='center'; g.textBaseline='middle';
-    g.fillText('Noch keine Messpunkte: Höhe einstellen und ▶ Start', px(62), py(2));
+  points(F, r => cm(r.h));
+}
+function drawAnalysisAlpha(){
+  const F = analysisFrame('dalpha', 90, 'α', x => x+'°'); F.xMax = 90;
+  const {g, px, py} = F;
+  marker(F, deg(S.h), 'α = '+fmt(deg(S.h))+'°');
+  if(S.reveal){
+    gLine(F);
+    // Vergleich: wäre a proportional zu α, läge alles auf dieser Geraden
+    g.strokeStyle=C.ghost; g.lineWidth=1.5; g.setLineDash([5,5]);
+    g.beginPath(); g.moveTo(px(0),py(0)); g.lineTo(px(90),py(S.g)); g.stroke(); g.setLineDash([]);
+    g.save(); g.translate(px(62), py(S.g*62/90)); g.rotate(Math.atan2(py(S.g)-py(0), px(90)-px(0)));
+    g.fillStyle=C['ink-soft']; g.font=font(12); g.textAlign='center'; g.textBaseline='top';
+    halo(g, 'Gerade: a proportional zu α (falsch)', 0, 5); g.restore();
+    // Viertel-Sinuskurve
+    g.strokeStyle=C.a; g.lineWidth=2.5; g.beginPath();
+    for(let i=0;i<=90;i++){ const x=px(i), y=py(S.g*Math.sin(i*Math.PI/180)); i?g.lineTo(x,y):g.moveTo(x,y); }
+    g.stroke();
+    g.fillStyle=C.a; g.font=font(14,600); g.textAlign='right'; g.textBaseline='bottom';
+    halo(g, 'a = g · sin α', px(40), py(S.g*Math.sin(40*Math.PI/180))-8);
+    g.fillStyle=C.ink; g.font=font(12); g.textAlign='right'; g.textBaseline='top';
+    halo(g, 'senkrecht: freier Fall', px(90)-8, py(S.g)+6);
   }
+  points(F, r => deg(r.h));
 }
 function renderTable(){
   const tb = $('runs');
   if(!S.runs.length){
-    tb.innerHTML = '<tr><td class="empty" colspan="5">Noch keine Fahrten. Jede Fahrt bis zum Brettende wird hier eingetragen (gleiche Höhe: ersetzt).</td></tr>';
+    tb.innerHTML = '<tr><td class="empty" colspan="6">Noch keine Fahrten. Jede Fahrt bis zum Brettende wird hier eingetragen (gleiche Höhe: ersetzt).</td></tr>';
     return;
   }
   tb.innerHTML = S.runs.map(r =>
-    '<tr><td>'+cm(r.h)+'</td><td>'+fmt(r.a,2)+'</td><td>'+fmt(r.a/r.h,2)+'</td>'+
+    '<tr><td>'+cm(r.h)+'</td><td>'+fmt(deg(r.h))+'°</td><td>'+fmt(r.a,2)+'</td><td>'+fmt(r.a/r.h,2)+'</td>'+
     '<td class="rev same">'+(r.h/S.L).toFixed(3)+'</td><td class="rev same">'+(r.a/S.g).toFixed(3)+'</td></tr>').join('');
 }
 
@@ -494,12 +533,12 @@ function render(){
   $('formula').innerHTML = S.reveal
     ? '<i class="ca">a</i> = <i class="cg">g</i> · <i class="ch">h</i>/<i>L</i> = <i class="cg">g</i> · sin α'
     : '<i class="cs">s</i> = ½·<i class="ca">a</i>·<i>t</i>²&ensp; <i class="cv">v</i> = <i class="ca">a</i>·<i>t</i>';
-  drawScene(); diagrams.forEach(drawDiagram); drawAnalysis();
+  drawScene(); diagrams.forEach(drawDiagram); drawAnalysisH(); drawAnalysisAlpha();
 }
 
 // ---------- Messreihe ----------
-function record(){
-  const r = {h:S.h, a:A(), T:TT()};
+function record(h=S.h){
+  const r = {h, a:A(h), T:TT(h)};
   S.runs = S.runs.filter(o => Math.abs(o.h-r.h) > 1e-9).concat([r]).sort((p,q)=>p.h-q.h);
   renderTable();
 }
@@ -531,6 +570,7 @@ $('play').addEventListener('click', ()=>setPlaying(!S.playing));
 $('reset').addEventListener('click', ()=>{ setPlaying(false); S.t=0; render(); });
 $('tslider').addEventListener('input', e=>{ setPlaying(false); S.t=+e.target.value; render(); });
 $('reveal').addEventListener('change', e=>{ S.reveal=e.target.checked; document.body.classList.toggle('reveal', S.reveal); render(); });
+$('sample').addEventListener('click', ()=>{ for(let c=10;c<=100;c+=10) record(c/100); render(); });
 $('clear').addEventListener('click', ()=>{ S.runs=[]; renderTable(); render(); });
 document.addEventListener('keydown', e=>{
   if(e.target.tagName==='INPUT' && e.target.type!=='checkbox' || e.target.tagName==='SELECT') return;
