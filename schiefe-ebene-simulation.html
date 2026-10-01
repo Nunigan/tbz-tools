@@ -112,7 +112,7 @@ Die Brettlänge ist fest <i>L</i> = 1.00 m, verändert wird nur die Höhe <i>h</
   <input id="tslider" type="range" min="0" max="1" step="0.005" value="0">
 </div>
 
-<section class="sheet"><span class="title">Schiefe Ebene (massstäblich)</span><canvas id="scene" height="340"></canvas></section>
+<section class="sheet"><span class="title">Schiefe Ebene (massstäblich)</span><canvas id="scene" height="380"></canvas></section>
 
 <section class="readout">
   <div class="tile h"><small>Höhe h</small><b id="rh">10 cm</b></div>
@@ -223,11 +223,11 @@ function halo(g, txt, x, y){ g.save(); g.lineWidth=4; g.strokeStyle='#fff'; g.st
 
 // ---------- Szene: schiefe Ebene ----------
 function drawScene(){
-  const cv = $('scene'), {g,w,h} = setup(cv, 340);
+  const cv = $('scene'), {g,w,h} = setup(cv, 380);
   const a = A(), T = TT(), t = Math.min(S.t, T), s = 0.5*a*t*t, v = a*t;
   const sinA = S.h/S.L, alpha = Math.asin(sinA), cosA = Math.cos(alpha);
   const base = S.L*cosA;
-  const left = 96, right = 60, top = 44, bottom = 72;
+  const left = 96, right = 60, top = 84, bottom = 72;
   // Massstab: L möglichst breit; wird das Dreieck zu hoch, verkleinern (Form bleibt massstäblich)
   const sc = Math.min((w-left-right)/S.L, (h-top-bottom)/S.h);
   const yb = h-bottom;
@@ -274,7 +274,10 @@ function drawScene(){
     const ax = Bx+Math.cos(am)*(ra-6), ay = By+Math.sin(am)*(ra-6);
     g.strokeStyle=C.ink; g.lineWidth=1; g.beginPath(); g.moveTo(ax,ay); g.lineTo(ax-14, By+12); g.stroke();
     halo(g, 'α = '+fmt(alpha*180/Math.PI)+'°', ax-30, By+22);
-  } else halo(g, 'α', Bx+Math.cos(am)*(ra+14), By+Math.sin(am)*(ra+14));
+  } else {                                        // steiles Brett: α am Bogen, Wert unter dem Tisch
+    halo(g, 'α', Bx+Math.cos(am)*(ra+14), By+Math.sin(am)*(ra+14));
+    halo(g, 'α = '+fmt(alpha*180/Math.PI)+'°', Bx-ra*0.6, By+22);
+  }
 
   // Brett (Hypotenuse L)
   g.strokeStyle=C.board; g.lineWidth=6; g.lineCap='butt';
