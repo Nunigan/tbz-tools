@@ -855,7 +855,7 @@ const STATIONEN = [
       const v=pick([36,54,72,90,108]), h=rd(ri(5,30)/10,1);
       return { auftrag:`Speichere ${code("v:="+v+"_km/_hr")} (Einheit mit ctrl + ␣). Wandle um: ${code("v▸_m/_s")}. Dann die Strecke in ${dn(h)} h: ${code("v*"+h+"_hr▸_km")}.`,
         felder:[{label:"v =", einheit:"m/s", wert:v/3.6, tol:{rel:1e-3}},{label:"s =", einheit:"km", wert:v*h, tol:{rel:1e-3}}],
-        tipps:[`Die Einheit reist mit der Variablen mit. Der Pfeil ▸ liegt auf der Taste ${K("π")} (π▸, links neben H).`, T.einh] };
+        tipps:[`Die Einheit reist mit der Variablen mit. Der Pfeil ▸ steht im ${K("Katalog")} ▸ Reiter 3 (Einheiten) ▸ ganz oben «Umrechnungssymbol».`, T.einh] };
     },
   ],
   [
@@ -1014,7 +1014,7 @@ const STATIONEN = [
       const v = pick([18,27,36,45,54,63,72,90,99,108,126,144]);
       return { auftrag:"Rechne in m/s um.", formel:`${v} km/h`,
         felder:[{label:"=", einheit:"m/s", wert:v/3.6, tol:{rel:1e-3}, fehler:[{wert:v*3.6, msg:"Falsche Richtung: m/s ist die kleinere Zahl (÷ 3.6)."}]}],
-        tipps:[`Einheiten beginnen mit ${code("_")} (${KK("ctrl","␣")}). Umrechnen mit dem Pfeil ▸ (Taste ${K("π")}) zur Zieleinheit. Stunde heisst ${code("_hr")}.`, T.einh] };
+        tipps:[`Einheiten beginnen mit ${code("_")} (${KK("ctrl","␣")}). Umrechnen mit dem Pfeil ▸ (${K("Katalog")} ▸ Reiter 3 ▸ Umrechnungssymbol) zur Zieleinheit. Stunde heisst ${code("_hr")}.`, T.einh] };
     },
     () => {
       const t = ri(1,24)/4;
@@ -1242,7 +1242,7 @@ trig: [
   [
     SK("Physik Übungen 1", { auftrag:"Rechne um: 142° ins Bogenmass und 3 rad in Grad.",
       felder:[{label:"142° =", einheit:"rad", wert:142*Math.PI/180, tol:{abs:0.002}},{label:"3 rad =", einheit:"°", wert:3*180/Math.PI, tol:{abs:0.01}}],
-      tipps:[`Bogenmass = Grad · π/180. Oder im Grad-Modus: ${code("142°▸Rad")} (▸ von der Taste ${K("π")}, ° aus dem Symbolkatalog ${KK("ctrl","Katalog")}).`, SCR("Rechner · Grad",[["142·π/180 &nbsp;≈","2.47837"],["3·180/π &nbsp;≈","171.887"]])] }),
+      tipps:[`Bogenmass = Grad · π/180. Oder im Grad-Modus: ${code("142°▸Rad")} (▸ im ${K("Katalog")} ▸ Reiter 3 (Einheiten) ▸ ganz oben «Umrechnungssymbol», ° aus dem Symbolkatalog ${KK("ctrl","Katalog")}).`, SCR("Rechner · Grad",[["142·π/180 &nbsp;≈","2.47837"],["3·180/π &nbsp;≈","171.887"]])] }),
   ],[],[],
 ],
 graphs: [
@@ -1599,7 +1599,7 @@ einheiten: [
   { titel:"Einheiten tippen",
     text:`Eine Einheit beginnt mit einem Unterstrich (${KK("ctrl","␣")}): ${code("_m")}, ${code("_km")}, ${code("_s")}, ${code("_hr")} (Stunde), ${code("_kg")}, ${code("_N")}. <b>Achtung:</b> ${code("_g")} ist die Fallbeschleunigung 9.80665 m/s², das Gramm heisst ${code("_gm")}.` },
   { titel:"Umrechnen",
-    text:`Mit dem Pfeil ▸ und der Zieleinheit: ${code("72_km/_hr")} ▸ ${code("_m/_s")}. Der Pfeil liegt auf der Taste ${K("π")} (sie heisst π▸ – links neben H); zur Not auch im Symbolkatalog ${KK("ctrl","Katalog")}. Alle Einheitennamen und die Konstanten (${code("_c")} Lichtgeschwindigkeit, ${code("_g")} …) findest du im Katalog ${K("Katalog")} im Reiter Einheiten – auswählen und ${K("enter")} fügt sie ein.`,
+    text:`Mit dem Pfeil ▸ und der Zieleinheit: ${code("72_km/_hr")} ▸ ${code("_m/_s")}. Den Pfeil holst du im ${K("Katalog")} ▸ Reiter 3 (Einheiten) ▸ ganz oben «Umrechnungssymbol» – im selben Reiter stehen auch alle Einheitennamen, ${K("enter")} fügt ein. Alle Einheitennamen und die Konstanten (${code("_c")} Lichtgeschwindigkeit, ${code("_g")} …) findest du im Katalog ${K("Katalog")} im Reiter Einheiten – auswählen und ${K("enter")} fügt sie ein.`,
     bild:T.einh,
     probier:{ auftrag:"Rechne um.", formel:"108 km/h", felder:[{label:"=", einheit:"m/s", wert:30, tol:{rel:1e-3}, fehler:[{wert:388.8, msg:"Falsche Richtung."}]}] } },
   { titel:"Der automatische Einheitentest",
@@ -1686,9 +1686,9 @@ const KEYINFO = Object.assign(Object.fromEntries(TASTEN), {
   "x²":"Quadrat. <b>ctrl + x²</b>: Wurzel √.",
   "(":"Klammer auf – bei (−3)² und um ganze Terme. Mit ctrl: [ ].", ")":"Klammer zu. Mit ctrl: { } für Listen.",
   "Vorlagen":"Vorlagen: Bruch, Wurzel, Potenz, Betrag, Gleichungssystem. Mit tab von Feld zu Feld. <b>ctrl + Vorlagen</b> tippt := zum Speichern.",
-  "Katalog":"Alle Befehle von A bis Z, mit Syntaxhilfe am unteren Rand. <b>ctrl + Katalog</b>: Symbolpalette (∞, °, ▸ …).",
+  "Katalog":"Alle Befehle von A bis Z, mit Syntaxhilfe am unteren Rand. Reiter 3: Einheiten und das Umrechnungssymbol ▸. <b>ctrl + Katalog</b>: Symbolpalette (∞, ° …).",
   "⚑":"Markierung setzen.", "↵":"Zeilenumbruch (z. B. in Notes).",
-  "π":"Öffnet eine kleine Palette mit π und dem Umwandlungspfeil ▸ – für Einheiten (▸_m/_s) und ▸Decimal.",
+  "π":"Pi. (Der Umrechnungspfeil ▸ für Einheiten steht nicht hier, sondern im Katalog, Reiter 3.)",
   "var":"Liste der gespeicherten Variablen. <b>ctrl + var</b>: Speicherpfeil sto→ (9.81→g).",
   "eˣ":"e hoch x; mit ctrl: ln.", "10ˣ":"10 hoch x; mit ctrl: log.",
   "?!":"Satzzeichen und Sonderzeichen.", ",":"Komma trennt Argumente: round(x,2).",
