@@ -477,7 +477,7 @@ const datenTabelle = (kopf, spalten, stellen) =>   // stellen: Nachkommastellen 
 
 /* Feste Tipp-Beispiele (immer aus dem Heft, nie die aktuelle Aufgabe) */
 const T = {
-  bruch: SCR("Rechner",[[`7/8+5/12`, fr(31,24)],[`7/8+5/12 &nbsp;${CK("≈")}`,"1.29167"]]),
+  bruch: SCR("Rechner",[["2/3 &nbsp;<span style='color:#888;font-size:11px'>getippt mit ÷</span>", fr(2,3)],[`${fr(2,3)} &nbsp;<span style='color:#888;font-size:11px'>Vorlage ctrl+÷</span>`, fr(2,3)],[`${fr(7,8)}+${fr(5,12)}`, fr(31,24)],[`${fr(7,8)}+${fr(5,12)} &nbsp;${CK("≈")}`,"1.29167"]],"Zeile oder Vorlage – das Resultat ist dasselbe"),
   vorz:  SCR("Rechner",[["(−3)<sup>2</sup>","9"],["−3<sup>2</sup>","−9"]]),
   ee:    SCR("Rechner",[["3.4E5·2E−3","680."]]),
   round: SCR("Rechner",[["round(π,3)","3.142"]]),
@@ -1426,9 +1426,12 @@ start: [
 ],
 rechnen: [
   { titel:"Exakt oder dezimal",
-    text:`Der CAS-Rechner antwortet <b>exakt</b>: mit Brüchen, Wurzeln und π. Ein Dezimalresultat gibt ${KK("ctrl","enter")} (orange: ${CK("≈")}). Steht irgendwo ein Dezimalpunkt in der Eingabe, rechnet er von selbst dezimal.`,
+    text:`Der CAS-Rechner antwortet <b>exakt</b>: mit Brüchen, Wurzeln und π. Ein Dezimalresultat gibt ${KK("ctrl","enter")} (orange: ${CK("≈")}). Steht irgendwo ein Dezimalpunkt in der Eingabe, rechnet er von selbst dezimal.
+      <p>Brüche kannst du auf zwei Arten eintippen:</p>
+      <ul><li><b>in der Zeile</b>: ${code("2")} ${K("÷")} ${code("3")} – schnell, aber bei zusammengesetzten Brüchen brauchst du Klammern: ${code("1/(2+3)")}</li>
+      <li><b>als Vorlage</b>: ${KK("ctrl","÷")} öffnet ${fr("□","□")} – Zähler tippen, ${K("tab")} oder ${K("▼")} in den Nenner, ${K("▶")} wieder hinaus. Sieht aus wie auf dem Papier, und Klammern kannst du nicht vergessen.</li></ul>`,
     bild:T.bruch,
-    probier:{ auftrag:"Berechne exakt und dezimal.", formel:`${fr(2,3)} + ${fr(4,5)}`,
+    probier:{ auftrag:"Berechne exakt und dezimal – einmal in der Zeile getippt, einmal mit der Bruchvorlage. Beides muss dasselbe geben.", formel:`${fr(2,3)} + ${fr(4,5)}`,
       felder:[{label:"exakt", bruch:[22,15]},{label:"≈", wert:22/15, tol:{rel:1e-4}}] } },
   { titel:"Zwei Minuszeichen",
     text:`Der Rechner hat zwei Minus-Tasten, und sie sind nicht austauschbar:
