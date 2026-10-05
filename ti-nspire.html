@@ -504,7 +504,7 @@ const T = {
 T.praez = SCR("Rechner",[["1/7 &nbsp;≈","0.142857"],["a:=1/7",fr(1,7)],["a·7000","1000"],["0.143·7000","1001."]],"gespeichert bleibt alles exakt – abgetippt fehlt der Rest");
 T.wege = SCR("Rechner",[["g:=9.81","9.81"],["2.5→m","2.5"],["m·g","24.525"],["m·g | g=1.62","4.05"]],"| setzt nur einmal ein, g bleibt 9.81");
 T.solvevar = SCR("Rechner",[["solve(x<sup>2</sup>=49,x)","x=−7 or x=7"],["x+1","x+1"],["zeros(x<sup>2</sup>−49,x)","{−7,7}"],["x+1 | x=7","8"]]);
-T.aufraeumen = SCR("Rechner",[["t","8"],["solve(s=1/2·a·t<sup>2</sup>,t)","s=32·a"],["DelVar t","Fertig"],["solve(s=1/2·a·t<sup>2</sup>,t)",`t=−${fr("√2·√s","√a")} or t=${fr("√2·√s","√a")}`]],"mit t=8 wird nicht umgestellt, sondern eingesetzt");
+T.aufraeumen = SCR("Rechner",[["t","8"],["solve(s=1/2·a·t<sup>2</sup>,t)","s=32·a"],["DelVar t","Fertig"],["ClearAZ","Fertig"],["solve(s=1/2·a·t<sup>2</sup>,t)",`t=−${fr("√2·√s","√a")} or t=${fr("√2·√s","√a")}`]],"mit t=8 wird nicht umgestellt, sondern eingesetzt");
 T.funk = SCR("Rechner",[["f(x):=12x−4.9x<sup>2</sup>","Fertig"],["f(1)","7.1"],["solve(f(x)=0,x)","x=0. or x=2.44898"],["t:={3.12,2.98,3.21}","{3.12,2.98,3.21}"],["2·0.9/mean(t)<sup>2</sup>","0.186879"]]);
 T.rezept = SCR("Rechner",[["solve(s=1/2·a·t<sup>2</sup>,t)",`t=−${fr("√2·√s","√a")} or t=${fr("√2·√s","√a")}`],["s:=75","75"],["a:=2.4","2.4"],["√(2s/a)","7.90569"],["DelVar s,a","Fertig"]],"1 umstellen · 2 speichern · 3 einsetzen · 4 Einheit · 5 runden · 6 aufräumen");
 const MERKE_DELVAR = `Gespeicherte Variablen stören solve: vorher ${code("DelVar t")} (bzw. ${M("1 Aktionen","3 Variable löschen")}).`;
@@ -838,7 +838,7 @@ const STATIONEN = [
         {html:code("t:=0"), warum:"Dann ist t immer noch eine Zahl (0) statt einer Unbekannten."},
         {html:"Rechner aus- und einschalten", warum:"Variablen überleben das Ausschalten. Nur DelVar, Variable löschen oder ein neues Problem/Dokument räumt auf."}]);
       return { auftrag:`Aus der letzten Aufgabe ist noch ${code("t:="+v)} gespeichert. Jetzt soll ${code("solve(s=1/2*a*t^2,t)")} die Formel nach t umstellen. Was tust du zuerst?`, mc:opts,
-        tipps:[`${K("var")} zeigt, was gespeichert ist. Löschen mit ${code("DelVar")} oder ${M("1 Aktionen","3 Variable löschen")}.`, T.aufraeumen] };
+        tipps:[`${K("var")} zeigt, was gespeichert ist. Löschen mit ${code("DelVar t")}, alle Ein-Buchstaben-Variablen mit ${code("ClearAZ")}.`, T.aufraeumen] };
     },
     () => {
       const v0=ri(8,20);
@@ -1626,8 +1626,8 @@ variablen: [
   { titel:"Aufräumen",
     text:`Gespeicherte Variablen überleben Ausschalten und Seitenwechsel – und stören die nächste Aufgabe: Ist ${code("t:=8")} noch da, stellt ${code("solve(s=½·a·t²,t)")} nichts mehr um, sondern setzt 8 ein.
       <ul><li>${K("var")} zeigt, was gespeichert ist.</li>
-      <li>${code("DelVar t")} oder ${code("DelVar s,a,t")} löscht gezielt; ${M("1 Aktionen","3 Variable löschen")} macht dasselbe per Menü.</li>
-      <li>Ein <b>neues Problem</b> (${K("doc")} ▸ Einfügen ▸ Problem) oder ein neues Dokument startet mit leerem Speicher. Das Scratchpad hat seine eigenen Variablen.</li></ul>`,
+      <li>${code("DelVar t")} oder ${code("DelVar s,a,t")} löscht gezielt (auch über ${M("1 Aktionen")}). ${code("ClearAZ")} löscht auf einen Schlag alle Variablen mit einem Buchstaben – a, g, m, s, t, v … – im aktuellen Problem.</li>
+      <li>Ein <b>neues Problem</b> (${K("doc")} ▸ 4 Einfügen ▸ 1 Problem) oder ein neues Dokument startet mit leerem Speicher – Variablennamen sind wieder frei. Das Scratchpad hat seine eigenen Variablen.</li></ul>`,
     bild:T.aufraeumen,
     probier:{ auftrag:"Du willst in einem Dokument mit vielen gespeicherten Variablen eine neue Aufgabe sauber beginnen. Schnellster Weg?",
       mc:[{html:"Neues Problem einfügen", ok:true},{html:"Alle Variablen einzeln mit DelVar löschen", warum:"Geht, dauert aber – ein neues Problem ist ein Tastendruck."},{html:"Rechner aus und wieder ein", warum:"Variablen überleben das."}] } },
@@ -1691,7 +1691,7 @@ einheiten: [
   { titel:"Einheiten tippen",
     text:`Eine Einheit beginnt mit einem Unterstrich (${KK("ctrl","␣")}): ${code("_m")}, ${code("_km")}, ${code("_s")}, ${code("_hr")} (Stunde), ${code("_kg")}, ${code("_N")}. <b>Achtung:</b> ${code("_g")} ist die Fallbeschleunigung 9.80665 m/s², das Gramm heisst ${code("_gm")}.` },
   { titel:"Umrechnen",
-    text:`Mit dem Pfeil ▸ und der Zieleinheit: ${code("72_km/_hr")} ▸ ${code("_m/_s")}. Den Pfeil holst du im ${K("Katalog")} ▸ Reiter 3 (Einheiten) ▸ ganz oben «Umrechnungssymbol» – im selben Reiter stehen auch alle Einheitennamen, ${K("enter")} fügt ein. Alle Einheitennamen und die Konstanten (${code("_c")} Lichtgeschwindigkeit, ${code("_g")} …) findest du im Katalog ${K("Katalog")} im Reiter Einheiten – auswählen und ${K("enter")} fügt sie ein.`,
+    text:`Mit dem Pfeil ▸ und der Zieleinheit: ${code("72_km/_hr")} ▸ ${code("_m/_s")}. Den Pfeil holst du im ${K("Katalog")} ▸ Reiter 3 (Einheiten) ▸ ganz oben «Umrechnungssymbol» – im selben Reiter stehen auch alle Einheitennamen, ${K("enter")} fügt ein. Dort gibt es auch einen <b>Umrechnungsassistenten</b>: Kategorie, Von- und Nach-Einheit wählen, und er schreibt z. B. ${code("_min▸_hr")} für dich in die Zeile. Alle Einheitennamen und die Konstanten (${code("_c")} Lichtgeschwindigkeit, ${code("_g")} …) findest du im Katalog ${K("Katalog")} im Reiter Einheiten – auswählen und ${K("enter")} fügt sie ein.`,
     bild:T.einh,
     probier:{ auftrag:"Rechne um.", formel:"108 km/h", felder:[{label:"=", einheit:"m/s", wert:30, tol:{rel:1e-3}, fehler:[{wert:388.8, msg:"Falsche Richtung."}]}] } },
   { titel:"Der automatische Einheitentest",
