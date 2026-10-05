@@ -1528,24 +1528,16 @@ rechnen: [
     bild:SCR("Rechner",[["5−(−3)","8"],["−5−3","−8"],["(−3)<sup>2</sup>","9"],["−3<sup>2</sup>","−9"],["2<sup>−3</sup>",fr(1,8)]]),
     probier:{ auftrag:"Tippe beide ein – mit den richtigen Minus-Tasten.", formel:"(−2)<sup>4</sup> &nbsp;&nbsp;&nbsp; −2<sup>4</sup>",
       felder:[{label:"(−2)<sup>4</sup> =", wert:16, tol:{abs:1e-9}, fehler:[{wert:-16, msg:"Mit Klammer: (−2)·(−2)·(−2)·(−2) = +16."}]},{label:"−2<sup>4</sup> =", wert:-16, tol:{abs:1e-9}, fehler:[{wert:16, msg:"Ohne Klammer: −(2⁴) = −16."}]}] } },
-  { titel:"Zehnerpotenzen: drei Wege hinein",
+  { titel:"Zehnerpotenzen eingeben",
     text:`3.4·10<sup>4</sup> kannst du auf drei Arten eingeben – alle liefern dasselbe:
       <ul><li>${code("3.4")} ${K("EE")} ${code("4")} – EE heisst «mal zehn hoch» (kürzester Weg)</li>
       <li>${code("3.4")} ${K("×")} ${code("10")} ${K("^")} ${code("4")}</li>
       <li>ausgeschrieben: ${code("34000")}</li></ul>
-      Für 4·10<sup>−4</sup> steht im Exponenten ein <b>Vorzeichen</b>: ${code("4")} ${K("EE")} ${K("(−)")} ${code("4")} – nicht ${K("−")}! Oder einfach ${code("0.0004")}.`,
+      Für 4·10<sup>−4</sup> steht im Exponenten ein <b>Vorzeichen</b>: ${code("4")} ${K("EE")} ${K("(−)")} ${code("4")} – nicht ${K("−")}! Oder einfach ${code("0.0004")}.
+      <p>Die Anzeige lassen wir auf <b>Normal</b> (Dokumenteinstellungen ▸ Exponentialformat): kleine und grosse Zahlen zeigt der Rechner dann von selbst mit E, z. B. ${code("1.5E11")}.</p>`,
     bild:SCR("Rechner",[["3.4E4","34000"],["3.4·10<sup>4</sup>","34000"],["34000","34000"],["4E−4","0.0004"],["0.0004","0.0004"]]),
     probier:{ auftrag:"Berechne einmal mit EE und einmal mit ×10^ – das Resultat muss beide Male gleich sein.", formel:`${zp(2.5,-3)} · ${zp(4,8)}`,
       felder:[{label:"=", wert:1e6, tol:{rel:1e-6}, ph:"z. B. 1E6 oder 1000000"}] } },
-  { titel:"Zehnerpotenzen: drei Anzeigen heraus",
-    text:`Wie der Rechner Resultate <b>anzeigt</b>, stellst du in den Dokumenteinstellungen unter <b>Exponentialformat</b> ein:
-      <ul><li><b>Normal</b>: 34000 und 0.0004 – Zehnerpotenz nur bei sehr grossen oder kleinen Zahlen</li>
-      <li><b>Wissenschaftlich</b>: immer 3.4E4 – eine Stelle vor dem Punkt</li>
-      <li><b>Technisch</b>: 34.E3 – Exponent in Dreierschritten, passend zu k, M, m, µ</li></ul>
-      Für die Physik ist Normal praktisch; Technisch hilft beim Umrechnen in Vorsilben.`,
-    bild:SCR("Dokumenteinstellungen",[["Exponentialformat","Normal ▾"]],"Normal: 34000 · Wissenschaftlich: 3.4E4 · Technisch: 34.E3"),
-    probier:{ auftrag:"Stell auf Technisch und rechne 123456 · 10. Was zeigt der Rechner? Danach zurück auf Normal.",
-      mc:[{html:"1.23456E6", ok:true},{html:"1234560", warum:"Das ist die Anzeige Normal."},{html:"12.3456E5", warum:"Technisch nimmt Exponenten in Dreierschritten: 6, nicht 5."}] } },
   { titel:"Vorlagen statt Klammerwald",
     text:`${K("Vorlagen")} öffnet Bruch, Wurzel, n-te Wurzel, Potenz, Betrag. Mit ${K("tab")} springst du von Feld zu Feld, mit ${K("▶")} aus der Vorlage hinaus. Direkt geht es auch: Bruch ${KK("ctrl","÷")}, Wurzel ${KK("ctrl","x²")}, Potenz ${K("^")}.`,
     bild:T.wurzel,
