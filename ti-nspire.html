@@ -1335,6 +1335,17 @@ messreihen: [
 };
 STATIONEN.forEach(s => (SKRIPT[s.id]||[]).forEach((arr,l) => s.stufen[l].push(...arr)));
 
+/* Gleichungen: Loesungen als Liste speichern und weiterverwenden */
+STATIONEN.find(s=>s.id==="gleichungen").stufen[1].push(
+  () => {
+    let r1,r2; do { r1=ri(-9,9); r2=ri(-9,9); } while(r1>=r2 || !r1 || !r2);
+    const b=-(r1+r2), c=r1*r2;
+    return { auftrag:`Speichere die Lösungen als Liste: ${code("l:=zeros("+poly([1,b,c]).replace(/<sup>2<\/sup>/,"^2").replace(/ /g,"").replace(/−/g,"-")+",x)")}. Lies l[1] und l[2] ab und berechne l[1]·l[2].`,
+      formel:poly([1,b,c]),
+      felder:[{label:"l[1] =", wert:r1, tol:{abs:1e-9}, ph:"kleinere"},{label:"l[2] =", wert:r2, tol:{abs:1e-9}, ph:"grössere"},{label:"l[1]·l[2] =", wert:c, tol:{abs:1e-9}, fehler:[{wert:r1+r2, msg:"Das ist die Summe. Das Produkt der Lösungen ist immer das konstante Glied (Vieta)."}]}],
+      tipps:[`${code("zeros(Term,x)")} löst Term = 0 und gibt eine Liste. Eckige Klammern für das Element: ${code("l[1]")}. Fällt dir auf: l[1]·l[2] = ${c}, das konstante Glied.`, SCR("Rechner",[["l:=zeros(x<sup>2</sup>−5x+6,x)","{2,3}"],["l[1]","2"],["l[1]·l[2]","6"]])] };
+  });
+
 /* Doppelbrueche (Rechnen): exakte Bruchantworten, typischer Fehler = ohne Klammern */
 const kuerze = (z,n) => { if(n<0){z=-z;n=-n;} const g=gcd(z,n)||1; return [z/g, n/g]; };
 T.doppel = SCR("Rechner",[[fr(fr(1,2),fr(3,4)), fr(2,3)],["(1/2)/(3/4)", fr(2,3)],["1/2/3/4 &nbsp;<span style='color:#B3402F;font-size:11px'>ohne Klammern!</span>", fr(1,24)]],"Vorlage in Vorlage, oder Klammern um Zähler und Nenner");
@@ -1378,7 +1389,7 @@ STATIONEN[0].stufen[1].push(
     let n,x; do { n=ri(3,5); x=ri(10,500); } while(Number.isInteger(Math.round(x**(1/n)*1e9)/1e9));
     return { auftrag:`Berechne die ${n}. Wurzel auf 4 Nachkommastellen.`, formel:nrt(n,x),
       felder:[{label:"≈", wert:x**(1/n), tol:{abs:6e-5}, fehler:[{wert:x/n, tol:{rel:1e-4}, msg:"Wurzel ziehen ist nicht durch n teilen."},{wert:Math.sqrt(x), tol:{rel:1e-4}, msg:"Das ist die Quadratwurzel – gefragt ist die "+n+". Wurzel."},{wert:x**n, tol:{rel:1e-4}, msg:"Das ist x hoch n – der Exponent muss 1/n sein."}]}],
-      tipps:[`Vorlage ${KK("ctrl","^")}: Index ${n}, dann die Zahl. Oder ${code(`${x}^(1/${n})`)} – Klammer um 1/${n}!`, T.pot] };
+      tipps:[`Vorlage ${KK("ctrl","^")}: Index ${n}, dann die Zahl. Oder ${code(`${x}^(1/${n})`)} – Klammer um 1/${n}! Oder ${code(`root(${x},${n})`)}.`, T.pot] };
   },
   () => {
     let b,n,m,a; do { b=ri(2,5); n=pick([2,3]); m=pick([1,2,3].filter(k=>k!==n)); a=b**n; } while(a**m/n === b**m);   // ohne Klammer darf nicht zufaellig stimmen
@@ -1551,7 +1562,8 @@ rechnen: [
     text:`<ul><li>Potenz: ${K("^")} öffnet ein Exponentenfeld – ${code("2^10")}. Quadrat direkt mit ${K("x²")}.</li>
       <li>Quadratwurzel: ${KK("ctrl","x²")}. Die Vorlage wächst mit, bis du mit ${K("▶")} hinausgehst – so steht die ganze Summe unter der Wurzel.</li>
       <li><b>n-te Wurzel</b>: ${KK("ctrl","^")} öffnet die ⁿ√-Vorlage: oben der Index, unten die Zahl.</li>
-      <li>Oder als Potenz mit Bruch-Exponent: ${code("8^(1/3)")} ist dasselbe wie ³√8. <b>Klammer um den Bruch</b> – ${code("8^1/3")} wäre 8 ÷ 3.</li></ul>
+      <li>Oder als Potenz mit Bruch-Exponent: ${code("8^(1/3)")} ist dasselbe wie ³√8. <b>Klammer um den Bruch</b> – ${code("8^1/3")} wäre 8 ÷ 3.</li>
+      <li>Getippt geht auch ${code("root(8,3)")}: erst die Zahl, dann der Wurzelexponent.</li></ul>
       Exakt zieht der CAS heraus, was geht (√50 = 5·√2); dezimal wie immer mit ${KK("ctrl","enter")}.`,
     bild:T.pot,
     probier:{ auftrag:"Berechne – einmal mit der ⁿ√-Vorlage, einmal als Potenz mit Bruch-Exponent.", formel:`${nrt(3,216)} &nbsp;&nbsp; und &nbsp;&nbsp; 32<sup>(2/5)</sup>`,
@@ -1605,6 +1617,14 @@ gleichungen: [
   { titel:"Zwei Lösungen",
     text:`Quadratische Gleichungen haben oft zwei Lösungen. Der Rechner zeigt beide, verbunden mit <b>or</b>.`,
     probier:{ auftrag:"Löse.", formel:"x<sup>2</sup> = 49", felder:[{label:"x₁ =", wert:-7, tol:{abs:1e-9}, ph:"kleinere"},{label:"x₂ =", wert:7, tol:{abs:1e-9}, ph:"grössere"}] } },
+  { titel:"Lösungen als Liste: zeros und polyRoots",
+    text:`${code("solve")} zeigt Lösungen als Text (<i>x=2 or x=3</i>) – damit kannst du nicht weiterrechnen. Zwei Befehle liefern sie als <b>Liste</b>:
+      <ul><li>${code("zeros(x²−5x+6,x)")} → ${code("{2,3}")} – für jeden Term, gelöst wird Term = 0 (das «= 0» lässt du weg).</li>
+      <li>${code("polyRoots(x²−5x+6,x)")} → ${code("{2,3}")} – nur für Polynome; gibt es keine reelle Lösung, kommt ${code("{ }")}.</li></ul>
+      Die Liste kannst du speichern und einzelne Lösungen abrufen: ${code("l:=zeros(…)")}, dann ${code("l[1]")}, ${code("l[2]")}.`,
+    bild:SCR("Rechner",[["solve(x<sup>2</sup>−5x+6=0,x)","x=2 or x=3"],["zeros(x<sup>2</sup>−5x+6,x)","{2,3}"],["polyRoots(x<sup>2</sup>−5x+6,x)","{2,3}"],["l:=zeros(x<sup>2</sup>−5x+6,x)","{2,3}"],["l[1]·l[2]","6"]]),
+    probier:{ auftrag:`Speichere ${code("l:=zeros(x^2-49,x)")}. Was sind l[1] und l[2]?`,
+      felder:[{label:"l[1] =", wert:-7, tol:{abs:1e-9}},{label:"l[2] =", wert:7, tol:{abs:1e-9}}] } },
   { titel:"Numerisch lösen",
     text:`Findet ${code("solve")} nichts oder wird die exakte Lösung unübersichtlich, hilft ${code("nSolve(Gleichung,x)")} (${M("3 Algebra","6 Numerisches Lösen")}). Es liefert <b>eine</b> Dezimallösung, mit Startwert in dessen Nähe: ${code("nSolve(x^2=10,x=-3)")}.`,
     bild:T.nsolve,
