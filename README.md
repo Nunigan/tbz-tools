@@ -13,3 +13,9 @@ dort hierher kopiert.
 - `konstante-beschleunigung-animation.html` – Physik Kap. 2, Bewegung
   mit konstanter Beschleunigung: Fahrzeug, Zerlegung
   x = x₀ + v₀·t + ½·a·t² und die drei Diagramme x–t, v–t, a–t.
+- `schiefe-ebene-simulation.html` – Physik Versuch 1, Wagen auf der
+  schiefen Ebene ohne Reibung, Höhe einstellbar; Diagramme s–t, v–t,
+  a–t und Messreihe a(h) bzw. a(α).
+- `ti-nspire.html` – Physik/Algebra Kap. 0, TI-Nspire CX II-T CAS:
+  Tutorial und Trainer in zehn Stationen (Lernen mit Tastenfeld und
+  Bildschirm-Nachbau, Üben in drei Stufen mit Aufgaben aus den Skripten).

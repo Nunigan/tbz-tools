@@ -1,0 +1,1983 @@
+<!DOCTYPE html>
+<!--
+  TI-Nspire CX II-T CAS -- Tutorial und Trainer (Physik/Algebra, Kapitel 0).
+  Ersetzt das fruehere Papierheft 00-ti-nspire.tex (Entscheid 05.10.2026);
+  auf Papier gibt es nur noch den Spickzettel ti-nspire-spickzettel.tex.
+
+  Jede Station hat zwei Teile:
+    Lernen  kurze Schritte mit Tasten, Bildschirm-Nachbau und einer
+            «Probier's»-Aufgabe mit festen Zahlen (zaehlt nicht)
+    Ueben   Trainer mit drei Stufen (Basis, Standard, Profi). 3 Aufgaben
+            hintereinander auf Anhieb und ohne Tipp -> naechste Stufe.
+            Basis/Standard: Zufallszahlen; Profi: Physik-Aufgaben.
+  Start und Sensoren haben nur den Lernteil.
+  Rechts (ab 1100 px) bzw. als Einblendung ("Rechner"-Knopf) ein Panel mit
+  Bildschirm-Nachbau und Tastatur (Array KP, Positionen und Groessen nach
+  Foto des Geraets vom 05.10.2026): Tasten, die im Schritt/Tipp vorkommen,
+  leuchten; Tippen zeigt die Funktion der Taste.
+  Fortschritt im localStorage des Browsers ('tbz-nspire-trainer').
+
+  SELBST VERFASST (05.10.2026), alle Loesungen werden im Skript berechnet.
+  Tastenwege/Menuepfade aus dem TI-Handbuch, NICHT am Geraet geprueft
+  (s. TODO.md). Eine Datei, keine Abhaengigkeiten, laeuft offline.
+  Verteilung: Kopie in ~/Documents/tbz-tools (GitHub Pages).
+-->
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TI-Nspire Tutorial</title>
+<style>
+  :root{
+    --paper:#F6F7F4;
+    --grid:#E3E7E0;
+    --ink:#1E2A38;
+    --ink-soft:#5B6878;
+    --rule:#9AA6B4;
+    --blue:#005AC8;
+    --blue-wash:#DCE4F5;
+    --ok:#2E7D4F;
+    --ok-wash:#DDEFE3;
+    --bad:#B3402F;
+    --bad-wash:#F5DDD8;
+    --gold:#B07A00;
+    --ctrl:#E0661A;   /* Zweitbelegung (ctrl): auf dem CX II-T orange */
+    --font:"Avenir Next","Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:24px 24px}
+  body{padding:20px 16px 40px;max-width:1260px;margin:0 auto;font-size:15px;line-height:1.45}
+
+  header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 28px;border-bottom:1.5px solid var(--ink);padding-bottom:10px;margin-bottom:16px}
+  h1{font-size:22px;font-weight:600;margin:0;letter-spacing:-.01em}
+  h1 span{color:var(--blue);font-weight:500}
+  .stats{display:flex;gap:22px;margin-left:auto;font-variant-numeric:tabular-nums}
+  .stat{display:flex;flex-direction:column;line-height:1.1}
+  .stat b{font-size:20px;font-weight:600}
+  .stat small{color:var(--ink-soft);font-size:12px}
+
+  .howto{background:#fff;border:1.5px solid var(--rule);border-radius:3px;padding:8px 14px;margin:0 0 16px;font-size:14px}
+  .howto summary{cursor:pointer;font-weight:600;color:var(--blue)}
+  .howto ul{margin:8px 0 4px;padding-left:20px}
+  .howto li{margin:4px 0}
+
+  .layout{display:grid;grid-template-columns:200px minmax(0,1fr) 300px;gap:18px;align-items:start}
+  @media (max-width:1100px){.layout{grid-template-columns:200px minmax(0,1fr)}}
+  @media (max-width:860px){.layout{grid-template-columns:1fr}}
+
+  /* Rechner-Panel: Bildschirm + schematische Tastatur */
+  .device{position:sticky;top:12px;background:#2E323A;border-radius:14px;padding:10px 10px 8px;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+  .device .dev-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#AEB6C2;display:flex;justify-content:space-between;margin:0 2px 6px}
+  .device .dev-screen .screen{max-width:none;margin:0 0 8px;border-color:#111;color:var(--ink);min-height:60px}
+  .kp{position:relative;width:100%;aspect-ratio:660/1025;container-type:inline-size}
+  .kp .k{position:absolute;background:#3A3F47;color:#F2F4F6;border-radius:9%/16%;font:600 11px/1 var(--font);font-size:3.4cqw;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;border:1px solid #1C1F24;user-select:none;box-shadow:0 1px 0 #111}
+  .kp .k.num{background:#B9BEC6;color:#1E2A38;font-size:4.4cqw}
+  .kp .k.ctrl{background:#D8322E;color:#fff}
+  .kp .k.abc{font-size:3cqw;border-radius:12%/22%}
+  .kp .k .c{position:absolute;left:0;bottom:100%;margin-bottom:1px;font-size:2.4cqw;color:#F6A25A;font-weight:700;line-height:1;white-space:nowrap}
+  .kp .tp{position:absolute;background:#2A2E35;border-radius:9%;border:1px solid #555}
+  .kp .tp span{position:absolute;color:#DDE1E6;font-size:3.4cqw;cursor:pointer;padding:2px}
+  .kp .tp span.lit{color:#FFD866;text-shadow:0 0 5px #FFD866}
+  .kp .tp i{position:absolute;left:50%;top:50%;width:26%;height:32%;transform:translate(-50%,-50%);border-radius:14%;border:1px solid #777}
+  .kp .lit{background:#FFD866 !important;color:#1E2A38 !important;border-color:#B07A00 !important;box-shadow:0 0 0 2px rgba(255,216,102,.45)}
+  .kp .lit .c{color:#9A4A00}
+  .kp .hot{background:#FFB020 !important;color:#1E2A38 !important}
+  .kp .on{outline:2px solid #fff;outline-offset:-2px}
+  .dev-info{margin-top:8px;font-size:12px;color:#E6E9ED;min-height:34px;line-height:1.35}
+  .dev-info .key{vertical-align:0}
+  .dev-hint{font-size:10px;color:#AEB6C2;margin-top:4px}
+  .hinweis-rechts{display:none;font-size:12px;color:var(--ink-soft);margin:4px 0}
+  #devToggle{display:none}
+  @media (min-width:1101px){
+    .sch-bild .screen,.tipp .screen{display:none}
+    .hinweis-rechts{display:block}
+  }
+  @media (max-width:1100px){
+    .device{position:fixed;top:auto;left:0;right:0;bottom:0;border-radius:14px 14px 0 0;max-height:72vh;overflow:auto;transform:translateY(102%);transition:transform .2s;z-index:20;max-width:420px;margin:0 auto}
+    .device.open{transform:none}
+    #devToggle{display:block;position:fixed;right:14px;bottom:14px;z-index:21;border-radius:20px;padding:9px 14px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+    @media (prefers-reduced-motion:reduce){.device{transition:none}}
+  }
+
+  /* Stationen */
+  .stations{display:flex;flex-direction:column;gap:6px}
+  @media (max-width:860px){.stations{display:grid;grid-template-columns:repeat(3,1fr)}}
+  @media (max-width:520px){.stations{grid-template-columns:repeat(2,1fr)}}
+  .st{font:inherit;color:var(--ink);background:#fff;border:1.5px solid var(--rule);border-radius:3px;padding:6px 9px;text-align:left;cursor:pointer;display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 6px}
+  .st:hover{border-color:var(--ink)}
+  .st.on{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue);background:var(--blue-wash)}
+  .st .nm{font-weight:600;font-size:14px;line-height:1.2}
+  .st .nm small{font-weight:400;color:var(--ink-soft);font-size:11px;margin-right:4px}
+  .st .mark{font-size:12px;color:var(--ink-soft);text-align:right;white-space:nowrap}
+  .st .mark .badge{color:var(--gold);font-size:15px}
+  .st .mark .gel{color:var(--ok)}
+  .pips{display:flex;gap:3px;grid-column:1/-1}
+  .pips i{display:block;width:16px;height:4px;border-radius:1px;background:#C9D1DA}
+  .pips i.reached{background:var(--blue)}
+
+  .sheet{background:#fff;border:1.5px solid var(--ink);position:relative;padding:40px 20px 20px;min-width:0}
+  .sheet .title{position:absolute;left:0;top:0;background:var(--ink);color:#fff;font-size:12px;padding:3px 9px;letter-spacing:.02em}
+  .tabs{position:absolute;right:8px;top:6px;display:flex;gap:4px}
+  .tab{font:inherit;font-size:13px;border:1px solid var(--rule);background:#fff;color:var(--ink-soft);padding:2px 12px;border-radius:3px;cursor:pointer}
+  .tab.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600}
+  .tab:disabled{display:none}
+
+  /* Lernen */
+  .schritte{display:flex;gap:6px;align-items:center;margin-bottom:10px;font-size:12px;color:var(--ink-soft);flex-wrap:wrap}
+  .schritte button{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--rule);background:#fff;font:600 11px var(--font);color:var(--ink-soft);cursor:pointer;padding:0}
+  .schritte button.on{border-color:var(--blue);background:var(--blue);color:#fff}
+  .schritte button.ok{border-color:var(--ok);color:var(--ok)}
+  .schritte button.on.ok{background:var(--ok);color:#fff}
+  h2.sch{font-size:19px;margin:4px 0 8px}
+  .sch-text{font-size:15px;max-width:640px}
+  .sch-text ul{padding-left:20px;margin:6px 0}
+  .sch-text li{margin:4px 0}
+  .sch-bild{margin:12px 0}
+  .probier{margin-top:16px;border:1.5px solid var(--rule);border-radius:3px;padding:10px 14px 12px;background:#FBFCFD}
+  .probier>b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin-bottom:4px}
+  .probier.geloest{border-color:var(--ok);background:var(--ok-wash)}
+  .sch-nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px;flex-wrap:wrap}
+  .tasten{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}
+  .tasten button{font:inherit;background:none;border:0;padding:0;cursor:pointer}
+  .tasten button .key{font-size:14px;padding:3px 9px}
+  .tasten button.on .key{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .kinfo{min-height:44px;border-left:3px solid var(--blue);background:#F7F9FC;padding:8px 12px;max-width:520px}
+
+  /* Ueben */
+  .uebenkopf{display:flex;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap;margin-bottom:12px}
+  .levels{display:flex;gap:4px}
+  .lv{font:inherit;font-size:12px;border:1px solid var(--rule);background:#fff;color:var(--ink-soft);padding:2px 8px;border-radius:3px;cursor:pointer}
+  .lv.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  .lv:disabled{opacity:.4;cursor:default}
+  .serie{display:flex;gap:5px;align-items:center;font-size:12px;color:var(--ink-soft)}
+  .serie i{display:block;width:11px;height:11px;border-radius:50%;border:1.5px solid var(--rule)}
+  .serie i.full{background:var(--ok);border-color:var(--ok)}
+
+  .quelle{font-size:11px;color:var(--blue);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+  .auftrag{font-size:17px;font-weight:600;margin:0 0 8px}
+  .formel{font-size:20px;margin:6px 0 14px;font-variant-numeric:tabular-nums}
+  .formel.klein{font-size:16px}
+  .bild{margin:4px 0 12px}
+  .bild svg,.sch-bild svg{max-width:100%;height:auto}
+  table.daten{border-collapse:collapse;margin:4px 0 14px;font-variant-numeric:tabular-nums}
+  table.daten th,table.daten td{border:1px solid var(--rule);padding:3px 10px;text-align:right}
+  table.daten th{background:var(--paper);font-weight:600}
+
+  .fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;line-height:1.1;margin:0 2px}
+  .fr>span:first-child{border-bottom:1.3px solid currentColor;padding:0 3px}
+  .fr>span:last-child{padding:0 3px}
+  code{font-family:"DejaVu Sans Mono",Consolas,monospace;font-size:.92em;background:#EEF1F5;padding:1px 4px;border-radius:2px}
+
+  .felder{display:flex;flex-direction:column;gap:9px;margin:4px 0 12px}
+  .feld{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .feld label{min-width:64px;text-align:right;font-weight:600}
+  .feld input{font:inherit;font-size:17px;width:170px;padding:5px 8px;border:1.5px solid var(--rule);border-radius:3px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .feld input:focus{outline:none;border-color:var(--blue)}
+  .feld input.ok{border-color:var(--ok);background:var(--ok-wash)}
+  .feld input.bad{border-color:var(--bad);background:var(--bad-wash)}
+  .feld .unit{color:var(--ink-soft)}
+
+  .options{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:4px 0 12px}
+  @media (max-width:520px){.options{grid-template-columns:1fr}}
+  .opt{background:#fff;border:1.5px solid var(--rule);border-radius:3px;padding:10px 12px;cursor:pointer;font:inherit;font-size:17px;color:var(--ink);text-align:left;transition:transform .12s}
+  .opt:hover{border-color:var(--ink)}
+  .opt:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+  .opt.wrong{border-color:var(--bad);background:var(--bad-wash);animation:shake .35s;cursor:not-allowed}
+  .opt.right{border-color:var(--ok);background:var(--ok-wash)}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  @media (prefers-reduced-motion:reduce){.opt.wrong{animation:none}}
+
+  .aktionen{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  button.primary{font:inherit;font-weight:600;background:var(--ink);color:#fff;border:0;padding:9px 16px;border-radius:3px;cursor:pointer}
+  button.primary:hover{background:var(--blue)}
+  button.ghost{font:inherit;background:transparent;color:var(--ink-soft);border:1px solid var(--rule);padding:6px 11px;border-radius:3px;cursor:pointer}
+  button.ghost:hover{color:var(--ink);border-color:var(--ink)}
+  button.ghost.offen{color:var(--blue);border-color:var(--blue)}
+
+  .meldung{min-height:22px;margin:10px 0 0;font-size:14px}
+  .meldung.bad{color:var(--bad)}
+  .meldung.ok{color:var(--ok);font-weight:600}
+
+  .tipp{display:none;margin-top:12px;border-left:3px solid var(--blue);background:#F7F9FC;padding:8px 12px;font-size:14px}
+  .tipp.show{display:block}
+  .tipp b.t{color:var(--blue);font-size:12px;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:3px}
+
+  .done{display:none;margin-top:16px;padding:12px 14px;border:1.5px solid var(--ok);background:var(--ok-wash);align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .done.show{display:flex}
+  .done.aufgegeben{border-color:var(--rule);background:var(--paper)}
+  .done .info{flex:1;min-width:200px}
+  .done .up{font-weight:700;color:var(--blue)}
+
+  /* Tastenkappen und Bildschirm (wie tbznspire.sty) */
+  .key{display:inline-block;min-width:1.6em;text-align:center;font:700 12px/1.5 var(--font);color:var(--ink);background:#F0F0F0;border:1px solid #666;border-radius:4px;padding:0 5px;box-shadow:0 1px 0 #888;white-space:nowrap;vertical-align:1px}
+  .key.c{color:var(--ctrl);border-color:var(--ctrl);box-shadow:0 1px 0 var(--ctrl)}
+  .pfad{white-space:nowrap}
+  .pfad i{font-style:normal;color:var(--ink-soft);font-size:11px;margin:0 3px}
+  .pfad span{font-family:var(--font);font-size:13px}
+  .screen{max-width:380px;border:2px solid #333;border-radius:7px;background:#FAFAFA;overflow:hidden;margin:8px 0 2px;font-size:13px}
+  .screen .bar{background:#DCE6F2;padding:2px 8px;font-size:11px;display:flex;justify-content:space-between}
+  .screen .row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 14px;padding:4px 8px;border-bottom:1px solid #D4D7DB}
+  .screen .row span:last-child{margin-left:auto}
+  .screen .note{padding:4px 8px;color:#777;font-size:12px}
+  .screen table{border-collapse:collapse;margin:4px 8px}
+  .screen td,.screen th{border:1px solid #ccc;padding:1px 8px;text-align:right}
+
+  footer{margin-top:28px;font-size:12px;color:var(--ink-soft)}
+  footer button{margin:0 0 0 8px}
+  @media (max-width:520px){
+    body{padding:14px 12px 30px}
+    .stats{margin-left:0}
+    .sheet{padding:40px 14px 16px}
+    .feld label{min-width:0;text-align:left}
+    footer button{margin:4px 0}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>TI-Nspire <span>· Tutorial &amp; Trainer</span></h1>
+  <div class="stats">
+    <div class="stat"><b id="punkte">0</b><small>Punkte</small></div>
+    <div class="stat"><b id="abzeichen">0/7</b><small>Stationen ★</small></div>
+  </div>
+</header>
+
+<details class="howto">
+  <summary>So funktioniert's</summary>
+  <ul>
+    <li>Leg den <b>Taschenrechner</b> neben dich – alles wird am Gerät gemacht, hier nur nachgeschaut und eingetippt.</li>
+    <li>Jede Station hat zwei Teile: <b>Lernen</b> zeigt in kurzen Schritten, wie es geht (mit einer Probier-Aufgabe pro Schritt). <b>Üben</b> ist der Trainer.</li>
+    <li>Im Trainer startest du auf <b>Basis</b>. Drei Aufgaben hintereinander auf Anhieb und ohne Tipp: weiter zu <b>Standard</b>, dann <b>Profi</b>. Zwei Profi-Aufgaben gelöst: Station geschafft ★.</li>
+    <li>Eingabe: Dezimalpunkt oder Komma, beides geht; <code>6.8E-7</code> für 6.8·10<sup>−7</sup>; Brüche als <code>31/24</code>.</li>
+  </ul>
+</details>
+
+<div class="layout">
+<nav class="stations" id="stations"></nav>
+
+<section class="sheet" id="karte">
+  <div class="title" id="kartentitel"></div>
+  <div class="tabs">
+    <button class="tab" id="tabLernen">Lernen</button>
+    <button class="tab" id="tabUeben">Üben</button>
+  </div>
+
+  <div id="lernen">
+    <div class="schritte" id="schritte"></div>
+    <div id="schritt"></div>
+    <div class="sch-nav">
+      <button class="ghost" id="zurueck">← Zurück</button>
+      <button class="primary" id="vor">Weiter →</button>
+    </div>
+  </div>
+
+  <div id="ueben">
+    <div class="uebenkopf">
+      <div class="serie" id="serie"></div>
+      <div class="levels" id="levels"></div>
+    </div>
+    <div id="aufgabe"></div>
+    <div class="aktionen">
+      <button class="primary" id="pruefen">Prüfen</button>
+      <button class="ghost" id="tipp1">Tipp 1</button>
+      <button class="ghost" id="tipp2">Tipp 2</button>
+      <button class="ghost" id="loesung" hidden>Lösung zeigen</button>
+      <button class="ghost" id="ueberspringen">Andere Aufgabe</button>
+    </div>
+    <div class="meldung" id="meldung" aria-live="polite"></div>
+    <div class="tipp" id="tippbox1"></div>
+    <div class="tipp" id="tippbox2"></div>
+    <div class="done" id="done">
+      <div class="info" id="doneinfo"></div>
+      <div class="aktionen">
+        <button class="ghost" id="tiefer" hidden></button>
+        <button class="primary" id="weiter">Nächste Aufgabe</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<aside class="device" id="device" aria-label="Rechner">
+  <div class="dev-label"><span>TI-Nspire CX II-T CAS</span><span>Tastenfeld</span></div>
+  <div class="dev-screen" id="devScreen"></div>
+  <div class="kp" id="kp"></div>
+  <div class="dev-info" id="devInfo">Tippe auf eine Taste, um zu sehen, wofür sie da ist.</div>
+  <div class="dev-hint">Gelb: Tasten, die im aktuellen Schritt oder Tipp vorkommen. Orange klein: Zweitbelegung mit ctrl.</div>
+</aside>
+</div>
+<button class="primary" id="devToggle">⌨ Rechner</button>
+
+<footer>
+  Fortschritt bleibt in diesem Browser gespeichert.
+  <button class="ghost" id="reset">Fortschritt zurücksetzen</button>
+  <br>Nur für den Unterrichtsgebrauch. M. Schmid, Technische Berufsschule Zürich.
+</footer>
+
+<script>
+"use strict";
+/* ===================================================================
+   Hilfsfunktionen
+   =================================================================== */
+const ri = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const rnz = (a,b) => { let x; do { x = ri(a,b); } while(!x); return x; };   // ganze Zahl ohne 0
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a; };
+const gcd = (a,b) => { a=Math.abs(a); b=Math.abs(b); while(b){[a,b]=[b,a%b]} return a; };
+const rd = (x,d) => Math.round(x*10**d)/10**d;
+const deg = Math.PI/180;
+const sind = a => Math.sin(a*deg), cosd = a => Math.cos(a*deg), tand = a => Math.tan(a*deg);
+const asind = v => Math.asin(v)/deg, acosd = v => Math.acos(v)/deg, atand = v => Math.atan(v)/deg;
+
+// Zahl fuer die Anzeige: echtes Minuszeichen, max. 6 signifikante Stellen wie das Geraet
+const dn = x => String(typeof x === "number" ? +x.toPrecision(6) : x).replace(/-/g,"−");
+// Bruch (HTML) und Code
+const fr = (z,n) => `<span class="fr"><span>${z}</span><span>${n}</span></span>`;
+const frz = (z,n) => (z<0?"−":"") + fr(Math.abs(z),n);
+const code = s => `<code>${String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;")}</code>`;
+const sup = (b,e) => `${b}<sup>${dn(e)}</sup>`;
+const zp = (m,e) => `${dn(m)}·10<sup>${dn(e)}</sup>`;
+// dieselbe Zahl zufaellig als Zehnerpotenz oder ausgeschrieben (nur bei kleinen Exponenten)
+const zform = (m,e) => (e>=-4 && e<=4 && Math.random()<.5) ? dn(+(m*10**e).toPrecision(8)) : zp(m,e);
+
+// Polynom aus Koeffizienten (hoechste Potenz zuerst) als HTML
+function poly(cs, v="x"){
+  let out = ""; const n = cs.length-1;
+  cs.forEach((c,i) => {
+    if(!c) return;
+    const p = n-i;
+    const vs = p===0 ? "" : p===1 ? v : `${v}<sup>${p}</sup>`;
+    const a = Math.abs(c);
+    const k = (a===1 && p>0) ? "" : dn(a);
+    out += (c<0 ? (out ? " − " : "−") : (out ? " + " : "")) + k + vs;
+  });
+  return out || "0";
+}
+const lin = r => r>0 ? `(x − ${r})` : `(x + ${-r})`;   // Linearfaktor zur Nullstelle r
+
+// Tastenkappen, Menuepfade, Bildschirm-Nachbau
+const K = (...ks) => ks.map(k => `<span class="key">${k}</span>`).join(" ");
+const CK = k => `<span class="key c">${k}</span>`;
+const KK = (a,b) => `<span class="pfad">${K(a)}+${K(b)}</span>`;                       // zwei Tasten nacheinander
+const M = (...p) => `<span class="pfad">${K("menu")}${p.map(x=>`<i>▸</i><span>${x}</span>`).join("")}</span>`;
+function SCR(titel, rows, note){
+  return `<div class="screen"><div class="bar"><span>${titel}</span></div>` +
+    rows.map(([a,b]) => `<div class="row"><span>${a}</span><span>${b}</span></div>`).join("") +
+    (note ? `<div class="note">${note}</div>` : "") + `</div>`;
+}
+
+/* ===================================================================
+   Eingaben lesen und pruefen
+   =================================================================== */
+function norm(s){
+  return String(s).trim()
+    .replace(/[’'\s]/g,"").replace(/,/g,".").replace(/[−–]/g,"-")
+    .replace(/^[A-Za-zα-ω][A-Za-z0-9_α-ω₀-₉]*(=|≈)/,"").replace(/^≈/,"")
+    .replace(/[·*×]10\^\(?([-+]?\d+)\)?/,"e$1");
+}
+function parseNum(s){
+  s = norm(s);
+  let m = s.match(/^(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)$/);
+  if(m){ const n = +m[2]; return n ? +m[1]/n : null; }
+  m = s.match(/^[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/);
+  return m ? parseFloat(m[0]) : null;
+}
+function parseBruch(s){
+  s = norm(s);
+  let m = s.match(/^(-?\d+)\/(-?\d+)$/);
+  if(m && +m[2] !== 0) return [+m[1], +m[2]];
+  m = s.match(/^-?\d+$/);
+  return m ? [+m[0], 1] : null;
+}
+function nah(v, w, tol){
+  tol = tol || {rel:0.002};
+  const d = Math.abs(v-w);
+  return tol.abs !== undefined ? d <= tol.abs + 1e-12 : d <= Math.abs(w)*tol.rel + 1e-12;
+}
+// Ergebnis: {status:'ok'|'falsch'|'leer'|'format', msg?}
+function pruefeFeld(f, s){
+  if(f.bruch){
+    const b = parseBruch(s);
+    if(!b) return parseNum(s) !== null
+      ? {status:"format", msg:"Gesucht ist das exakte Resultat als Bruch, z. B. 31/24 – also ohne ctrl+enter."}
+      : {status:"leer"};
+    if(b[0]*f.bruch[1] === f.bruch[0]*b[1]) return {status:"ok"};
+    for(const e of f.fehler||[]) if(b[0]*e.bruch[1] === e.bruch[0]*b[1]) return {status:"falsch", msg:e.msg};
+    return {status:"falsch"};
+  }
+  const v = parseNum(s);
+  if(v === null) return {status:"leer"};
+  if(nah(v, f.wert, f.tol)) return {status:"ok"};
+  for(const e of f.fehler||[]) if(nah(v, e.wert, e.tol || f.tol)) return {status:"falsch", msg:e.msg};
+  return {status:"falsch"};
+}
+function loesungText(f){
+  return f.bruch ? (f.bruch[1]===1 ? String(f.bruch[0]) : `${f.bruch[0]}/${f.bruch[1]}`) : dn(f.wert).replace("−","-");
+}
+
+/* Statistik */
+const mean = a => a.reduce((s,x)=>s+x,0)/a.length;
+const stdS = a => { const m=mean(a); return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1)); };
+const stdP = a => { const m=mean(a); return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/a.length); };
+function linreg(xs, ys){
+  const mx=mean(xs), my=mean(ys);
+  let sxy=0, sxx=0, syy=0;
+  xs.forEach((x,i)=>{ sxy+=(x-mx)*(ys[i]-my); sxx+=(x-mx)**2; syy+=(ys[i]-my)**2; });
+  const m = sxy/sxx;
+  return {m, b:my-m*mx, r2:sxy*sxy/(sxx*syy)};
+}
+function quadreg(xs, ys){            // y = a x^2 + b x + c, Normalgleichungen
+  const S = k => xs.reduce((s,x)=>s+x**k,0), T = k => xs.reduce((s,x,i)=>s+x**k*ys[i],0);
+  const A = [[S(4),S(3),S(2),T(2)],[S(3),S(2),S(1),T(1)],[S(2),S(1),xs.length,T(0)]];
+  for(let i=0;i<3;i++) for(let j=i+1;j<3;j++){ const f=A[j][i]/A[i][i]; for(let k=i;k<4;k++) A[j][k]-=f*A[i][k]; }
+  const r=[0,0,0];
+  for(let i=2;i>=0;i--){ let s=A[i][3]; for(let k=i+1;k<3;k++) s-=A[i][k]*r[k]; r[i]=s/A[i][i]; }
+  return {a:r[0], b:r[1], c:r[2]};
+}
+function bisekt(f, a, b){ for(let i=0;i<200;i++){ const m=(a+b)/2; (f(a)*f(m)<=0) ? b=m : a=m; } return (a+b)/2; }
+
+/* Bilder (SVG) */
+function svgDreieck(l){   // l: {a: Gegenkathete, b: Ankathete, c: Hypotenuse, al: Winkel}
+  return `<svg viewBox="0 0 300 150" width="300" height="150" font-family="inherit" font-size="14">
+    <polygon points="30,125 250,125 250,25" fill="#F3F6FA" stroke="#1E2A38" stroke-width="2"/>
+    <path d="M238,125 v-12 h12" fill="none" stroke="#1E2A38"/>
+    <path d="M78,125 A48,48 0 0 0 73.7,105.1" fill="none" stroke="#1E2A38"/>
+    <text x="84" y="119">${l.al||"α"}</text>
+    <text x="140" y="144" text-anchor="middle">${l.b||""}</text>
+    <text x="258" y="80">${l.a||""}</text>
+    <text x="128" y="64" text-anchor="end">${l.c||""}</text>
+  </svg>`;
+}
+function svgEbene(al){
+  return `<svg viewBox="0 0 320 170" width="320" height="170" font-family="inherit" font-size="13">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E2A38"/></marker></defs>
+    <polygon points="20,150 300,150 300,40" fill="#F3F6FA" stroke="#1E2A38" stroke-width="2"/>
+    <path d="M70,150 A50,50 0 0 0 66.5,131.7" fill="none" stroke="#1E2A38"/>
+    <text x="76" y="144">${al}</text>
+    <g transform="translate(170,99) rotate(-21.4)"><rect x="-22" y="-26" width="44" height="26" fill="#fff" stroke="#1E2A38" stroke-width="1.5"/></g>
+    <line x1="175" y1="82" x2="175" y2="150" stroke="#B3402F" stroke-width="2" marker-end="url(#ar)"/>
+    <text x="181" y="146" fill="#B3402F">F<tspan font-size="10" dy="3">G</tspan></text>
+  </svg>`;
+}
+function svgGraphBeispiel(){
+  return `<svg viewBox="0 0 230 150" width="230" height="150" font-family="inherit" font-size="11">
+    <line x1="20" y1="130" x2="220" y2="130" stroke="#999"/><line x1="20" y1="130" x2="20" y2="8" stroke="#999"/>
+    <line x1="20" y1="130" x2="140" y2="16" stroke="#1F5FA8" stroke-width="2"/>
+    <line x1="20" y1="92" x2="210" y2="44" stroke="#B3402F" stroke-width="2"/>
+    <circle cx="100" cy="73" r="3.5" fill="#1E2A38"/><text x="106" y="88">(4, 6)</text>
+    <text x="142" y="22" fill="#1F5FA8">f1</text><text x="196" y="40" fill="#B3402F">f2</text>
+  </svg>`;
+}
+const datenTabelle = (kopf, spalten, stellen) =>   // stellen: Nachkommastellen pro Spalte
+  `<table class="daten"><tr>${kopf.map(k=>`<th>${k}</th>`).join("")}</tr>` +
+  spalten[0].map((_,i)=>`<tr>${spalten.map((s,j)=>`<td>${s[i].toFixed(stellen[j])}</td>`).join("")}</tr>`).join("") + `</table>`;
+
+/* Feste Tipp-Beispiele (immer aus dem Heft, nie die aktuelle Aufgabe) */
+const T = {
+  bruch: SCR("Rechner",[[`7/8+5/12`, fr(31,24)],[`7/8+5/12 &nbsp;${CK("≈")}`,"1.29167"]]),
+  vorz:  SCR("Rechner",[["(−3)<sup>2</sup>","9"],["−3<sup>2</sup>","−9"]]),
+  ee:    SCR("Rechner",[["3.4E5·2E−3","680."]]),
+  round: SCR("Rechner",[["round(π,3)","3.142"]]),
+  exact: SCR("Rechner",[["exact(0.375)",fr(3,8)]]),
+  wurzel:SCR("Rechner",[["√(50)","5·√2"]]),
+  expand:SCR("Rechner",[["expand((x+3)<sup>2</sup>)","x<sup>2</sup>+6·x+9"]]),
+  factor:SCR("Rechner",[["factor(x<sup>2</sup>−5x+6)","(x−3)·(x−2)"]]),
+  comden:SCR("Rechner",[[`comDenom(1/x+1/(2x))`,fr(3,"2·x")]]),
+  mit:   SCR("Rechner",[["(a+b)<sup>2</sup> | a=2 and b=5","49"]]),
+  solve: SCR("Rechner",[["solve(3x−7=11,x)","x=6"],["solve(x<sup>2</sup>−5x+6=0,x)","x=2 or x=3"]]),
+  system:SCR("Rechner",[["solve(2x+y=7 and x−y=2,{x,y})","x=3 and y=1"]]),
+  unglei:SCR("Rechner",[["solve(2x+3>11,x)","x>4"]]),
+  nsolve:SCR("Rechner",[["nSolve(x<sup>3</sup>+x=10,x)","2."]]),
+  formel:SCR("Rechner",[["solve(v=s/t,t)",`t=${fr("s","v")}`]]),
+  physik:SCR("Rechner",[["solve(s=1/2·a·t<sup>2</sup>,t) | s=100 and a=9.81","t=−4.51524 or t=4.51524"]],"negative Zeit streichen"),
+  trig:  SCR("Rechner · Grad",[[`tan(60) &nbsp;${CK("≈")}`,"1.73205"],["50·sin(25)","21.1309"]]),
+  invtrig:SCR("Rechner · Grad",[["sin<sup>−1</sup>(0.5)","30"],[`tan<sup>−1</sup>(3/4) &nbsp;${CK("≈")}`,"36.8699"]]),
+  graph: SCR("Graphs",[[svgGraphBeispiel(),""]],"f1(x)=1.5·x &nbsp; f2(x)=0.5·x+4 &nbsp;→ Schnittpunkt (4, 6)"),
+  einh:  SCR("Rechner",[["72·_km/_hr ▸ _m/_s","20.·_m/_s"],["2.5·_hr ▸ _s","9000.·_s"]]),
+  mean:  SCR("Rechner",[["mean({12.3,12.5,12.4})","12.4"],["stDevSamp({12.3,12.5,12.4})","0.1"]]),
+  linreg:SCR("Rechner",[["LinRegMx {0,1,2,3,4},{0,2.1,3.9,6.2,7.9}","Fertig"]],"stat.m = 1.99 &nbsp; stat.b = 0.04 &nbsp; stat.r² = 0.998"),
+};
+T.praez = SCR("Rechner",[["1/7 &nbsp;≈","0.142857"],["a:=1/7",fr(1,7)],["a·7000","1000"],["0.143·7000","1001."]],"gespeichert bleibt alles exakt – abgetippt fehlt der Rest");
+T.wege = SCR("Rechner",[["g:=9.81","9.81"],["2.5→m","2.5"],["m·g","24.525"],["m·g | g=1.62","4.05"]],"| setzt nur einmal ein, g bleibt 9.81");
+T.solvevar = SCR("Rechner",[["solve(x<sup>2</sup>=49,x)","x=−7 or x=7"],["x+1","x+1"],["zeros(x<sup>2</sup>−49,x)","{−7,7}"],["x+1 | x=7","8"]]);
+T.aufraeumen = SCR("Rechner",[["t","8"],["solve(s=1/2·a·t<sup>2</sup>,t)","s=32·a"],["DelVar t","Fertig"],["solve(s=1/2·a·t<sup>2</sup>,t)",`t=−${fr("√2·√s","√a")} or t=${fr("√2·√s","√a")}`]],"mit t=8 wird nicht umgestellt, sondern eingesetzt");
+T.funk = SCR("Rechner",[["f(x):=12x−4.9x<sup>2</sup>","Fertig"],["f(1)","7.1"],["solve(f(x)=0,x)","x=0. or x=2.44898"],["t:={3.12,2.98,3.21}","{3.12,2.98,3.21}"],["2·0.9/mean(t)<sup>2</sup>","0.186879"]]);
+T.rezept = SCR("Rechner",[["solve(s=1/2·a·t<sup>2</sup>,t)",`t=−${fr("√2·√s","√a")} or t=${fr("√2·√s","√a")}`],["s:=75","75"],["a:=2.4","2.4"],["√(2s/a)","7.90569"],["DelVar s,a","Fertig"]],"1 umstellen · 2 speichern · 3 einsetzen · 4 Einheit · 5 runden · 6 aufräumen");
+const MERKE_DELVAR = `Gespeicherte Variablen stören solve: vorher ${code("DelVar t")} (bzw. ${M("1 Aktionen","3 Variable löschen")}).`;
+
+/* ===================================================================
+   Aufgaben: pro Station drei Stufen, jede Stufe eine Liste von Generatoren.
+   Ein Generator liefert {auftrag, formel?, bild?, felder|mc, tipps:[t1,t2]}.
+   felder: [{label, einheit?, wert, tol?, fehler?:[{wert,msg}]}] oder {label, bruch:[z,n]}
+   mc:     [{html, ok?, warum?}]
+   =================================================================== */
+const STATIONEN = [
+/* ---------------------------------------------------------------- 1 */
+{ id:"rechnen", name:"Rechnen", video:"", stufen:[
+  [ // Basis
+    () => {
+      let b,d,a,c,z,n;
+      do { b=ri(2,12); d=ri(2,12); a=ri(1,b-1); c=ri(1,d-1); z=a*d+c*b; n=b*d; const g=gcd(z,n); z/=g; n/=g; } while(b===d || n===1);
+      return { auftrag:"Berechne exakt (als Bruch).", formel:`${fr(a,b)} + ${fr(c,d)}`,
+        felder:[{label:"=", bruch:[z,n]}],
+        tipps:[`Einfach eintippen und ${K("enter")} drücken: Der CAS-Rechner rechnet exakt. Bruch mit ${K("÷")} oder der Vorlage ${KK("ctrl","÷")}.`, T.bruch] };
+    },
+    () => {
+      let b,d,a,c;
+      do { b=ri(3,13); d=ri(3,13); a=ri(1,b-1); c=ri(1,d-1); } while(b===d || ((a*d+c*b)*1e6) % (b*d) === 0);
+      return { auftrag:"Berechne als Dezimalzahl.", formel:`${fr(a,b)} + ${fr(c,d)}`,
+        felder:[{label:"≈", wert:a/b+c/d, tol:{rel:1e-4}}],
+        tipps:[`Das Dezimalresultat gibt ${KK("ctrl","enter")} (die orange Zweitbelegung ${CK("≈")}).`, T.bruch] };
+    },
+    () => {
+      const a=ri(2,9), n=pick([2,3,4,5]);
+      return { auftrag:"Zwei Minuszeichen, zwei Resultate. Die Zahl negativ machen heisst (−), nicht −.", formel:`(−${a})<sup>${n}</sup> &nbsp;&nbsp;&nbsp; −${a}<sup>${n}</sup>`,
+        felder:[{label:`(−${a})<sup>${n}</sup> =`, wert:(-a)**n, tol:{abs:1e-9}, fehler: n%2 ? [] : [{wert:-(a**n), msg:"Mit Klammer wird die negative Zahl potenziert – bei geradem Exponenten wird das positiv."}]},
+                {label:`−${a}<sup>${n}</sup> =`, wert:-(a**n), tol:{abs:1e-9}, fehler:[{wert:a**n, msg:"Ohne Klammer gilt: zuerst potenzieren, dann das Minus davor – also negativ."}]}],
+        tipps:[`Vorzeichen mit ${K("(−)")} (unten beim Ziffernblock), Klammern mit ${K("(")} ${K(")")}. Die Klammer entscheidet, was potenziert wird.`, T.vorz] };
+    },
+    () => {
+      const a=ri(2,12), b=ri(2,12), c=ri(2,9);
+      const v = pick([
+        {f:`${a} − (−${b})`, w:a+b, fe:[{wert:a-b, msg:"Minus minus gibt plus: a − (−b) = a + b. Das innere Minus ist das Vorzeichen (−)."}]},
+        {f:`−${a} − ${b}`, w:-a-b, fe:[{wert:-a+b, msg:"Beide negativ: −a − b = −(a + b)."},{wert:a+b, msg:"Das erste Minus ist ein Vorzeichen: das Resultat ist negativ."}]},
+        {f:`−${a} · (−${b})`, w:a*b, fe:[{wert:-a*b, msg:"Negativ mal negativ gibt positiv."}]},
+        {f:`${a} − ${b} · (−${c})`, w:a+b*c, fe:[{wert:a-b*c, msg:"b · (−c) ist negativ, und minus negativ gibt plus."},{wert:(a-b)*(-c), msg:"Punkt vor Strich: zuerst b · (−c)."}]},
+      ]);
+      return { auftrag:"Rechne – achte darauf, welches Minus die Vorzeichentaste (−) ist und welches die Rechenoperation −.", formel:v.f,
+        felder:[{label:"=", wert:v.w, tol:{abs:1e-9}, fehler:v.fe}],
+        tipps:[`Vor einer Zahl (am Anfang, nach einer Klammer, nach · oder ^): ${K("(−)")}. Zwischen zwei Zahlen: ${K("−")}.`, SCR("Rechner",[["5−(−3)","8"],["−5−3","−8"],["−5·(−3)","15"]])] };
+    },
+    () => {
+      const m=rd(ri(11,99)/10,1), e=ri(2,9), neg=Math.random()<.6;
+      const ex = neg ? `−${e}` : `${e}`;
+      const falsch = neg ? `${m} ${K("EE")} ${K("−")} ${e}` : `${m} ${K("×")} ${K("1")}${K("0")} ${K("EE")} ${e}`;
+      const opts = shuffle([
+        {html:falsch, ok:true},
+        {html:`${m} ${K("EE")} ${neg?K("(−)")+" ":""}${e}`, warum:"Das ist richtig: EE heisst «mal zehn hoch», das Vorzeichen des Exponenten mit (−)."},
+        {html:`${m} ${K("×")} ${K("1")}${K("0")} ${K("^")} ${neg?K("(−)")+" ":""}${e}`, warum:"Das ist richtig – ausgeschrieben mit Potenz."},
+        {html:code(neg ? (m*10**-e).toFixed(e+1) : String(m*10**e)), warum:"Das ist richtig – einfach ausgeschrieben."},
+      ]);
+      return { auftrag:"Welche Tastenfolge ergibt NICHT " + zp(m, neg?-e:e) + "?", mc:opts,
+        tipps:[neg ? `Im Exponenten steht ein Vorzeichen – dafür gibt es nur ${K("(−)")}. Mit ${K("−")} rechnet der Taschenrechner eine Subtraktion.` : `EE ersetzt «mal zehn hoch» ganz – wer noch ×10 davor tippt, hat einen Faktor 10 zu viel.`,
+               SCR("Rechner",[["3.4E4","34000"],["3.4·10<sup>4</sup>","34000"],["4E−4","0.0004"],["4E−4 &nbsp;(mit − getippt)","Fehler oder 4E − 4 = 0"]])] };
+    },
+  ],
+  [ // Standard
+    () => {
+      const m1=rd(ri(11,99)/10,1), e1=rnz(-9,9), m2=rd(ri(11,99)/10,1), e2=rnz(-9,9), mal=Math.random()<.6;
+      const w = mal ? m1*10**e1*m2*10**e2 : m1*10**e1/(m2*10**e2);
+      return { auftrag:"Berechne mit Zehnerpotenzen – tippe jede Zahl so ein, wie es dir am schnellsten geht (EE, ×10^ oder ausgeschrieben).", formel:`${zform(m1,e1)} ${mal?"·":":"} ${zform(m2,e2)}`,
+        felder:[{label:"≈", wert:w, tol:{rel:1e-4}, ph:"z. B. 6.8E-7"}],
+        tipps:[`Taste ${K("EE")} heisst «mal zehn hoch»: ${code("3.4E5")} ist 3.4·10<sup>5</sup>. Minus im Exponenten mit ${K("(−)")}.`, T.ee] };
+    },
+    () => {
+      const a=ri(2,5), n=pick([2,3]);
+      return { auftrag:"Negativ und hoch minus – was zeigt der Rechner exakt?", formel:`(−${a})<sup>−${n}</sup>`,
+        felder:[{label:"=", bruch:[(-1)**n, a**n], fehler:[{bruch:[-((-1)**n), a**n], msg:"Vorzeichen: (−a)ⁿ ist bei geradem n positiv, bei ungeradem negativ – der negative Exponent ändert daran nichts."}]}],
+        tipps:[`Klammer um −${a} (mit ${K("(−)")}), dann ${K("^")} und wieder ${K("(−)")} für den Exponenten. Hoch minus heisst Kehrwert.`, SCR("Rechner",[["(−2)<sup>−3</sup>",frz(-1,8)],["2<sup>−3</sup>",fr(1,8)]])] };
+    },
+    () => {
+      const a=ri(2,6), b=ri(2,5);
+      return { auftrag:"Rechne – jedes Minus genau anschauen.", formel:`−(−${a})<sup>2</sup> − (−${b})<sup>3</sup>`,
+        felder:[{label:"=", wert:-(a*a)+b**3, tol:{abs:1e-9}, fehler:[{wert:a*a+b**3, msg:"−(−a)² ist negativ: erst quadrieren (positiv), dann das Minus davor."},{wert:-(a*a)-b**3, msg:"(−b)³ ist negativ, und minus negativ gibt plus."},{wert:a*a-b**3, msg:"Beide Vorzeichen falsch herum."}]}],
+        tipps:[`Drei Vorzeichen-Minus (${K("(−)")}) und ein Rechen-Minus (${K("−")}). Tipp: zuerst die beiden Potenzen einzeln rechnen.`, T.vorz] };
+    },
+    () => {
+      let p,q,k;
+      do { q=pick([3,6,7,9,11,12,13]); p=ri(1,4*q); k=ri(2,4); } while(Number.isInteger(rd(p/q*10**k, 9)));  // muss wirklich gerundet werden
+      const w = Math.round(p/q*10**k)/10**k;
+      return { auftrag:`Runde auf ${k} Nachkommastellen.`, formel:code(`round(${p}/${q},${k})`),
+        felder:[{label:"=", wert:w, tol:{abs:1e-9}, fehler:[{wert:p/q, tol:{rel:1e-4}, msg:`Noch runden: round(Wert, ${k}).`}]}],
+        tipps:[`Befehl ${code("round(Wert,Stellen)")} eintippen. Die Schreibweise zeigt auch der Katalog ${K("Katalog")}.`, T.round] };
+    },
+    () => {
+      let z,n;
+      do { n=pick([4,5,8,16,20,25,40,50]); z=ri(1,n-1); } while(gcd(z,n)!==1);
+      return { auftrag:"Wandle in einen Bruch um.", formel:code(`exact(${z/n})`),
+        felder:[{label:"=", bruch:[z,n]}],
+        tipps:[`${code("exact(Zahl)")} macht aus einer Dezimalzahl einen Bruch.`, T.exact] };
+    },
+    () => {
+      let a,b; do { a=ri(2,6); b=pick([2,3,5,6,7,10]); } while(a===b);
+      const opts = [{html:`${a}·√${b}`, ok:true},
+        {html:`${b}·√${a}`, warum:"Probe: quadriere – das gibt nicht die Zahl unter der Wurzel."},
+        {html:`${a*a}·√${b}`, warum:`Die ${a*a} wird beim Herausziehen zu ${a}.`},
+        {html:`${a}·√${a*b}`, warum:"Zu viel unter der Wurzel geblieben."}];
+      return { auftrag:"Was zeigt der Rechner exakt an?", formel:`√${a*a*b}`, mc:shuffle(opts),
+        tipps:[`Wurzel mit ${KK("ctrl","x²")}. Der CAS-Rechner zieht ab, was geht.`, T.wurzel] };
+    },
+  ],
+  [ // Profi
+    () => {
+      let a,b,c,d,z,n;
+      do { b=ri(2,9); d=ri(2,9); a=ri(1,b+2); c=ri(1,d+2); z=a*d-c*b; n=b*d; const g=gcd(z,n); z/=g; n/=g; } while(b===d || z===0 || n===1);
+      return { auftrag:"Berechne exakt (als Bruch).", formel:`(${fr(a,b)} − ${fr(c,d)})<sup>2</sup>`,
+        felder:[{label:"=", bruch:[z*z,n*n], fehler:[{bruch:[-z*z,n*n], msg:"Ein Quadrat ist nie negativ – Klammer um den ganzen Bruch-Term gesetzt?"}]}],
+        tipps:[`Die ganze Klammer eintippen, dann ${K("x²")} oder ${K("^")} 2. Kontrolle: Resultat positiv?`, SCR("Rechner",[["(1/2−3/4)<sup>2</sup>",fr(1,16)]])] };
+    },
+    () => {
+      const z = pick([{n:"zum Mond",d:3.84e8,u:"s"},{n:"von der Sonne zur Erde",d:1.496e11,u:"min"},{n:"vom Mars zur Erde (geringster Abstand)",d:5.46e10,u:"min"},{n:"vom Jupiter zur Erde (Mittel)",d:7.8e11,u:"min"}]);
+      const t = z.d/3e8, w = z.u==="min" ? t/60 : t;
+      return { auftrag:`Wie lange braucht das Licht ${z.n}?`, formel:`<span class="formel klein">s = ${zp(+(z.d/10**Math.floor(Math.log10(z.d))).toFixed(3), Math.floor(Math.log10(z.d)))} m, &nbsp; c = 3·10<sup>8</sup> m/s</span>`,
+        felder:[{label:"t ≈", einheit:z.u, wert:w, tol:{rel:0.003}, fehler: z.u==="min" ? [{wert:t, msg:"Das sind Sekunden – gesucht sind Minuten (÷ 60)."}] : []}],
+        tipps:[`t = s / c. Zehnerpotenzen mit ${K("EE")}.`, SCR("Rechner",[["1.5E11/3E8","500."],["500/60","8.33333"]])] };
+    },
+    () => {
+      const a=rd(ri(12,95)/10,1), e1=rnz(-6,6), b=rd(ri(12,95)/10,1), e2=rnz(-6,6);
+      const w = (a*10**e1)**2/(b*10**e2);
+      return { auftrag:"Berechne.", formel:`${fr(`(${zp(a,e1)})<sup>2</sup>`, zp(b,e2))}`,
+        felder:[{label:"≈", wert:w, tol:{rel:1e-4}, fehler:[{wert:a*a*10**e1/(b*10**e2), tol:{rel:1e-4}, msg:"Die Zehnerpotenz muss mit ins Quadrat: Klammer um den ganzen Zähler."}], ph:"z. B. 2.5E9"}],
+        tipps:[`Klammer um ${code("(4.2E3)^2")}, dann Bruch-Vorlage ${KK("ctrl","÷")} oder ${K("÷")}.`, T.ee] };
+    },
+  ],
+]},
+/* ---------------------------------------------------------------- 2 */
+{ id:"terme", name:"Terme (CAS)", video:"", stufen:[
+  [
+    () => {
+      const a = pick([1,2,3,4,5,6,7,8,9]) * pick([1,-1]);
+      const opts = [{html:poly([1,2*a,a*a]), ok:true},
+        {html:poly([1,0,a*a]), warum:"Das Mittelglied 2·a·x fehlt – (a+b)² ist nicht a²+b²."},
+        {html:poly([1,a,a*a]), warum:"Das Mittelglied ist doppelt so gross: 2·a·x."},
+        {html:poly([1,-2*a,a*a]), warum:"Vorzeichen des Mittelglieds falsch."}];
+      return { auftrag:"Was liefert der Rechner?", formel:code(`expand((x${a>0?"+":"-"}${Math.abs(a)})^2)`), mc:shuffle(opts),
+        tipps:[`${code("expand( )")} multipliziert aus. Eintippen oder ${M("3 Algebra")} ▸ Entwickle.`, T.expand] };
+    },
+    () => {
+      const b=ri(-9,9), c=ri(-9,9), k=ri(-5,6);
+      return { auftrag:"Setze den Wert mit dem «mit»-Operator ein.", formel:code(`x^2${b<0?"":"+"}${b}x${c<0?"":"+"}${c}|x=${k}`).replace(/\+0x|\+0(?=\|)/g,""),
+        felder:[{label:"=", wert:k*k+b*k+c, tol:{abs:1e-9}}],
+        tipps:[`Der senkrechte Strich ${code("|")} heisst «mit». Er steht in der Palette ${KK("ctrl","=")}. Kein Speichern nötig.`, T.mit] };
+    },
+  ],
+  [
+    () => {
+      let r1,r2; do { r1=ri(-9,9); r2=ri(-9,9); } while(!r1 || !r2 || r1===r2 || r1===-r2);
+      const opts = [{html:lin(r1)+lin(r2), ok:true},
+        {html:lin(-r1)+lin(-r2), warum:"Vorzeichen vertauscht: Setze die Nullstellen ein – der Term muss 0 werden."},
+        {html:lin(r1)+lin(-r2), warum:"Ausmultipliziert stimmt das Mittelglied nicht."},
+        {html:lin(-r1)+lin(r2), warum:"Ausmultipliziert stimmt das Mittelglied nicht."}];
+      return { auftrag:"Faktorisiere mit dem Rechner.", formel:poly([1,-(r1+r2),r1*r2]), mc:shuffle(opts),
+        tipps:[`${code("factor( )")} zerlegt in Faktoren.`, T.factor] };
+    },
+    () => {
+      let a,b,c,d; do { a=ri(1,4); c=ri(1,4); b=ri(-9,9); d=ri(-9,9); } while(!b || !d || a*d+b*c===0 || a*d-b*c===0);
+      const opts = [{html:poly([a*c,a*d+b*c,b*d]), ok:true},
+        {html:poly([a*c,0,b*d]), warum:"Die gemischten Produkte fehlen: jedes Glied mit jedem multiplizieren."},
+        {html:poly([a*c,a*d-b*c,b*d]), warum:"Vorzeichen bei einem gemischten Produkt falsch."},
+        {html:poly([a*c,a*d+b*c,-b*d]), warum:"Vorzeichen des konstanten Glieds falsch."}];
+      return { auftrag:"Was liefert der Rechner?", formel:`(${poly([a,b])})(${poly([c,d])})`, mc:shuffle(opts),
+        tipps:[`${code("expand( )")}. Malzeichen zwischen den Klammern darf fehlen.`, T.expand] };
+    },
+    () => {
+      let p,q,k; do { k=ri(2,5); p=ri(1,5); q=ri(1,5); } while(gcd(q,k)!==1);
+      const opts = [{html:fr(p*k+q,`${k}x`), ok:true},
+        {html:fr(p+q,`${k}x`), warum:`Der erste Bruch muss mit ${k} erweitert werden.`},
+        {html:fr(p+q,`${k+1}x`), warum:"Brüche addiert man nicht, indem man Zähler und Nenner addiert."},
+        {html:fr(p*k+q,`${k}x<sup>2</sup>`), warum:"Der gemeinsame Nenner ist das kgV, nicht das Produkt."}];
+      return { auftrag:"Bringe auf einen gemeinsamen Nenner.", formel:`${fr(p,"x")} + ${fr(q,`${k}x`)}`, mc:shuffle(opts),
+        tipps:[`${code("comDenom( )")} – unter ${M("3 Algebra")} ▸ Bruchwerkzeuge oder eintippen.`, T.comden] };
+    },
+  ],
+  [
+    () => {
+      const a=ri(2,5), b=ri(1,9);
+      const opts = [{html:poly([a*a,-2*a*b,b*b]), ok:true},
+        {html:poly([a*a,0,-b*b]), warum:"Das ist Lisas Fehler: (a−b)² ist nicht a²−b²."},
+        {html:poly([a*a,2*a*b,b*b]), warum:"Vorzeichen des Mittelglieds: bei (…−…)² ist es negativ."},
+        {html:poly([a,-2*a*b,b*b]), warum:`Auch der Faktor ${a} wird quadriert.`}];
+      return { auftrag:`Lisa schreibt: (${a}x − ${b})² = ${poly([a*a,0,-b*b])}. Kontrolliere mit dem CAS. Was ist richtig?`,
+        formel:`(${a}x − ${b})<sup>2</sup>`, mc:shuffle(opts),
+        tipps:[`Kontrolle mit ${code("expand( )")}. Der Rechner zeigt keinen Weg – den schreibst du auf Papier.`, T.expand] };
+    },
+    () => {
+      let g,m,n; do { g=ri(2,6); m=ri(2,5); n=ri(1,9)*pick([1,-1]); } while(gcd(m,Math.abs(n))!==1);
+      const inner = (k) => `(${m}x ${k<0?"−":"+"} ${Math.abs(k)})`;
+      const opts = [{html:`${g}x·${inner(n)}`, ok:true},
+        {html:`${g}x·${inner(g*n)}`, warum:`Ausmultipliziert gibt das ${g*g}·${Math.abs(n)}x im zweiten Glied.`},
+        {html:`x·(${g*m}x ${n<0?"−":"+"} ${Math.abs(n)})`, warum:`Der gemeinsame Faktor ${g} fehlt beim zweiten Glied.`},
+        {html:`${g}x<sup>2</sup>·(${m} ${n<0?"−":"+"} ${Math.abs(n)}x)`, warum:"Ausmultiplizieren ergibt x³ – zu viel x herausgezogen."}];
+      return { auftrag:"Faktorisiere vollständig.", formel:poly([g*m,g*n,0]), mc:shuffle(opts),
+        tipps:[`${code("factor( )")} zieht auch gemeinsame Faktoren aus.`, T.factor] };
+    },
+    () => {
+      const k=ri(2,5), a=ri(1,9);
+      const opts = [{html:`${k}·${lin(a)}${lin(-a)}`, ok:true},
+        {html:`${k}·${lin(a)}<sup>2</sup>`, warum:"Das gäbe ein Mittelglied mit x."},
+        {html:`(${k}x − ${a})(${k}x + ${a})`, warum:`Ausmultipliziert gibt das ${k*k}x² – zu gross.`},
+        {html:`(x − ${k*a})(x + ${k*a})`, warum:`Der Faktor ${k} vor x² fehlt.`}];
+      return { auftrag:"Faktorisiere mit dem Rechner.", formel:poly([k,0,-k*a*a]), mc:shuffle(opts),
+        tipps:[`${code("factor( )")}.`, SCR("Rechner",[["factor(2x<sup>2</sup>−8)","2·(x−2)·(x+2)"]])] };
+    },
+  ],
+]},
+/* ---------------------------------------------------------------- 3 */
+{ id:"gleichungen", name:"Gleichungen", video:"", stufen:[
+  [
+    () => {
+      let a,x,b; do { a=ri(2,9)*pick([1,-1]); x=ri(-9,9); b=ri(-20,20); } while(!b);
+      return { auftrag:"Löse nach x auf.", formel:`${poly([a,b])} = ${dn(a*x+b)}`,
+        felder:[{label:"x =", wert:x, tol:{abs:1e-6}}],
+        tipps:[`${code("solve(Gleichung,x)")} – das Gleichheitszeichen ist die Taste ${K("=")}.`, T.solve] };
+    },
+    () => {
+      let a,c,b,x; do { a=ri(-9,9); c=ri(-9,9); b=ri(-15,15); x=ri(-9,9); } while(!a || !c || a===c);
+      return { auftrag:"Löse nach x auf.", formel:`${poly([a,b])} = ${poly([c,(a-c)*x+b])}`,
+        felder:[{label:"x =", wert:x, tol:{abs:1e-6}}],
+        tipps:[`${code("solve(Gleichung,x)")}, oder ${M("3 Algebra","1 Löse")}.`, T.solve] };
+    },
+  ],
+  [
+    () => {
+      let r1,r2; do { r1=ri(-9,9); r2=ri(-9,9); } while(r1>=r2);
+      return { auftrag:"Löse die quadratische Gleichung.", formel:`${poly([1,-(r1+r2),r1*r2])} = 0`,
+        felder:[{label:"x₁ =", wert:r1, tol:{abs:1e-6}, ph:"kleinere"},{label:"x₂ =", wert:r2, tol:{abs:1e-6}, ph:"grössere"}],
+        tipps:[`${code("solve( ,x)")} gibt beide Lösungen, verbunden mit «or».`, T.solve] };
+    },
+    () => {
+      let x,y,a1,b1,a2,b2; do { x=ri(-6,6); y=ri(-6,6); a1=ri(-5,5); b1=ri(-5,5); a2=ri(-5,5); b2=ri(-5,5); }
+        while(!a1 || !b1 || !a2 || !b2 || a1*b2-a2*b1===0);
+      const gl = (a,b) => `${poly([a,0])}${b<0?" − ":" + "}${Math.abs(b)===1?"":Math.abs(b)}y = ${dn(a*x+b*y)}`;
+      return { auftrag:"Löse das Gleichungssystem.", formel:`<span class="formel klein">${gl(a1,b1)}<br>${gl(a2,b2)}</span>`,
+        felder:[{label:"x =", wert:x, tol:{abs:1e-6}},{label:"y =", wert:y, tol:{abs:1e-6}}],
+        tipps:[`Beide Gleichungen mit ${code("and")} verbinden, Variablen in geschweiften Klammern: ${code("solve(… and …,{x,y})")}.`, T.system] };
+    },
+    () => {
+      let a,b,k; do { b=ri(2,6); k=ri(-6,6); a=ri(-10,15); } while(!k);
+      const c = a - b*k;    // a − b·x ≤ c  ⇔  x ≥ k
+      const opts = [{html:`x ≥ ${dn(k)}`, ok:true},
+        {html:`x ≤ ${dn(k)}`, warum:"Beim Teilen durch eine negative Zahl kehrt das Zeichen – der Rechner macht das richtig."},
+        {html:`x ≥ ${dn(-k)}`, warum:"Vorzeichen der Grenze falsch."},
+        {html:`x ≤ ${dn(-k)}`, warum:"Grenze und Richtung falsch."}];
+      return { auftrag:"Löse die Ungleichung.", formel:`${dn(a)} − ${b}x ≤ ${dn(c)}`, mc:shuffle(opts),
+        tipps:[`Auch Ungleichungen gehen mit ${code("solve")}. ≤ tippst du als ${code("<=")} oder aus der Palette ${KK("ctrl","=")}.`, T.unglei] };
+    },
+    () => {
+      const c = rd(ri(30,400)/10,1);
+      const w = bisekt(x => x**3+x-c, 0, 10);
+      if(Math.abs(w-Math.round(w))<1e-6) return null;
+      return { auftrag:"Löse numerisch.", formel:`x<sup>3</sup> + x = ${dn(c)}`,
+        felder:[{label:"x ≈", wert:w, tol:{rel:2e-4}}],
+        tipps:[`${code("nSolve(Gleichung,x)")} liefert eine Dezimallösung (${M("3 Algebra","6 Numerisches Lösen")}).`, T.nsolve] };
+    },
+  ],
+  [
+    () => {
+      const F = pick([
+        {f:"v = v<sub>0</sub> + a·t", g:"t", opts:[fr("v − v<sub>0</sub>","a"), `${fr("v","a")} − v<sub>0</sub>`, fr("v + v<sub>0</sub>","a"), fr("a","v − v<sub>0</sub>")]},
+        {f:`s = ${fr(1,2)}·a·t<sup>2</sup>`, g:"a", opts:[fr("2s","t<sup>2</sup>"), fr("s","2t<sup>2</sup>"), fr("2s","t"), fr("s·t<sup>2</sup>",2)]},
+        {f:`E = ${fr(1,2)}·m·v<sup>2</sup>`, g:"v (positiv)", opts:[`√(${fr("2E","m")})`, fr("2E","m"), `√(${fr("E","2m")})`, "√(2E·m)"]},
+        {f:"F = m·a", g:"m", opts:[fr("F","a"), "F·a", fr("a","F"), "F − a"]},
+        {f:`p = ${fr("F","A")}`, g:"A", opts:[fr("F","p"), "p·F", fr("p","F"), "F − p"]},
+        {f:`ρ = ${fr("m","V")}`, g:"V", opts:[fr("m","ρ"), "ρ·m", fr("ρ","m"), "m − ρ"]},
+      ]);
+      const opts = F.opts.map((h,i) => i===0 ? {html:h, ok:true} : {html:h, warum:"Setz zur Probe Zahlen ein – die Formel stimmt dann nicht mehr."});
+      return { auftrag:`Stelle die Formel nach ${F.g} um.`, formel:F.f, mc:shuffle(opts),
+        tipps:[`${code("solve(Formel,Grösse)")} stellt jede Formel um. Zwischen Buchstaben gehört ein Malzeichen: ${code("a*t")}, nicht ${code("at")}. ${MERKE_DELVAR}`, T.formel] };
+    },
+    () => {
+      const a = rd(ri(15,40)/10,1), s = ri(40,150), t = Math.sqrt(2*s/a);
+      return { auftrag:"Ein Auto beschleunigt aus dem Stand gleichmässig. Wie lange braucht es für die Strecke?",
+        formel:`<span class="formel klein">s = ${fr(1,2)}·a·t<sup>2</sup> &nbsp; mit &nbsp; a = ${dn(a)} m/s², &nbsp; s = ${s} m</span>`,
+        felder:[{label:"t ≈", einheit:"s", wert:t, tol:{rel:0.003}, fehler:[{wert:2*s/a, msg:"Das ist t² – noch die Wurzel ziehen bzw. solve nach t."}]}],
+        tipps:[`Formel mit ${code("solve( ,t)")} umstellen, Zahlen mit dem mit-Operator ${code("|")} einsetzen. Negative Zeit streichen. ${MERKE_DELVAR}`, T.physik] };
+    },
+    () => {
+      const v0 = ri(2,6), a = rd(ri(2,15)/10,1), v = v0 + ri(3,10);
+      return { auftrag:"Ein Velo beschleunigt gleichmässig. Wann erreicht es die Endgeschwindigkeit?",
+        formel:`<span class="formel klein">v = v<sub>0</sub> + a·t &nbsp; mit &nbsp; v<sub>0</sub> = ${v0} m/s, &nbsp; v = ${v} m/s, &nbsp; a = ${dn(a)} m/s²</span>`,
+        felder:[{label:"t ≈", einheit:"s", wert:(v-v0)/a, tol:{rel:0.003}, fehler:[{wert:v/a, msg:"Die Anfangsgeschwindigkeit v₀ nicht vergessen."}]}],
+        tipps:[`${code("solve(v=v0+a*t,t)")} und dann einsetzen. ${MERKE_DELVAR}`, T.physik] };
+    },
+  ],
+]},
+/* ---------------------------------------------------------------- 4 */
+{ id:"variablen", name:"Variablen", video:"", stufen:[
+  [
+    () => {
+      const m=rd(ri(5,120)/10,1), g=pick([9.81,1.62,3.71]), ort={9.81:"Erde",1.62:"Mond",3.71:"Mars"}[g];
+      return { auftrag:`Speichere ${code("m:="+m)} und ${code("g:="+g)} (${ort}). Was liefert ${code("m*g")}? Danach ${code("m*g*2")}?`,
+        felder:[{label:"m·g =", wert:m*g, tol:{rel:1e-4}},{label:"m·g·2 =", wert:2*m*g, tol:{rel:1e-4}}],
+        tipps:[`${code(":=")} tippst du mit ${KK("ctrl","Vorlagen")}. Danach rechnet der Rechner mit dem Namen weiter – zweimal.`, T.wege] };
+    },
+    () => {
+      const q=pick([7,13,17,19,23]), r=rd(1/q,3);
+      return { auftrag:`Rechne ${code("1/"+q)} dezimal, speichere den Wert als ${code("a")}. Vergleiche: ${code("a*"+q+"000")} gegen die abgetippte, gerundete Zahl ${code(r+"*"+q+"000")}.`,
+        felder:[{label:`a·${q}000 =`, wert:1000, tol:{abs:1e-6}, fehler:[{wert:r*q*1000, tol:{abs:1e-6}, msg:"Das ist der Wert mit der gerundeten Zahl – gespeichert bleibt 1/"+q+" exakt."}]},
+                {label:`${r}·${q}000 =`, wert:r*q*1000, tol:{abs:1e-6}}],
+        tipps:[`${code("a:=1/"+q)} oder nach der Rechnung ${code("a:=ans")}. Gespeichert wird der exakte Wert, nicht die Anzeige.`, T.praez] };
+    },
+    () => {
+      const a=ri(2,9), b=ri(1,9), opts=shuffle([
+        {html:`${code("m*g | g="+a+"."+b)}`, ok:true},
+        {html:`${code("g:="+a+"."+b)}`, warum:"Das speichert dauerhaft (Doppelpunkt-Gleich, ctrl + Vorlagen)."},
+        {html:`${code(a+"."+b+"→g")}`, warum:"Das speichert dauerhaft (Speicherpfeil, ctrl + var)."}]);
+      return { auftrag:"Welche Eingabe setzt den Wert nur für diese eine Rechnung ein und speichert nichts?", mc:opts,
+        tipps:[`Der senkrechte Strich «mit» (${KK("ctrl","=")}) ist eine Einmal-Einsetzung.`, T.wege] };
+    },
+    () => {
+      const r=ri(2,9), opts=shuffle([
+        {html:code("x+1"), ok:true},
+        {html:dn(r+1), warum:"solve zeigt die Lösung nur an – x bleibt eine unbekannte Variable."},
+        {html:`${dn(-r+1)} or ${dn(r+1)}`, warum:"solve speichert nichts, auch keine Liste."},
+        {html:"Fehlermeldung", warum:"Kein Fehler: x+1 ist ein gültiger Term mit unbekanntem x."}]);
+      return { auftrag:`Du tippst ${code("solve(x^2="+r*r+",x)")} und in der nächsten Zeile ${code("x+1")}. Was zeigt der Rechner?`, mc:opts,
+        tipps:[`solve speichert <b>nichts</b>. Willst du mit der Lösung weiterrechnen: ${code("x+1 | x="+r)} oder ${code("zeros(x^2-"+r*r+",x)")} für die Liste.`, T.solvevar] };
+    },
+  ],
+  [
+    () => {
+      const v=ri(2,8), opts=shuffle([
+        {html:code("DelVar t"), ok:true},
+        {html:"Nichts – solve ignoriert gespeicherte Werte", warum:"Im Gegenteil: solve setzt den gespeicherten Wert ein, und die Formel wird nicht umgestellt."},
+        {html:code("t:=0"), warum:"Dann ist t immer noch eine Zahl (0) statt einer Unbekannten."},
+        {html:"Rechner aus- und einschalten", warum:"Variablen überleben das Ausschalten. Nur DelVar, Variable löschen oder ein neues Problem/Dokument räumt auf."}]);
+      return { auftrag:`Aus der letzten Aufgabe ist noch ${code("t:="+v)} gespeichert. Jetzt soll ${code("solve(s=1/2*a*t^2,t)")} die Formel nach t umstellen. Was tust du zuerst?`, mc:opts,
+        tipps:[`${K("var")} zeigt, was gespeichert ist. Löschen mit ${code("DelVar")} oder ${M("1 Aktionen","3 Variable löschen")}.`, T.aufraeumen] };
+    },
+    () => {
+      const v0=ri(8,20);
+      return { auftrag:`Definiere die Wurfhöhe als Funktion: ${code("f(x):="+v0+"x-4.9x^2")}. Berechne f(1) und f(2).`,
+        felder:[{label:"f(1) =", wert:v0-4.9, tol:{abs:1e-6}},{label:"f(2) =", wert:2*v0-19.6, tol:{abs:1e-6}}],
+        tipps:[`${code("f(x):=…")} speichert eine Funktion. Danach ${code("f(1)")} wie beim Taschenrechner-Button. Auch ${code("solve(f(x)=0,x)")} geht.`, T.funk] };
+    },
+    () => {
+      const b=rd(ri(15,40)/10,1), ts=Array.from({length:3},()=>rd(b+ri(-15,15)/100,2)), x=pick([0.8,0.9,1.0]);
+      return { auftrag:`Speichere die Fahrzeiten als Liste ${code("t:={"+ts.join(",")+"}")}. Berechne ${code("mean(t)")} und daraus a = 2·x/mean(t)² mit x = ${dn(x)} m.`,
+        felder:[{label:"mean(t) ≈", einheit:"s", wert:mean(ts), tol:{rel:2e-3}},{label:"a ≈", einheit:"m/s²", wert:2*x/mean(ts)**2, tol:{rel:3e-3}}],
+        tipps:[`Geschweifte Klammern mit ${KK("ctrl",")")}. Eine Liste ist eine Variable wie jede andere: ${code("mean(t)")}, ${code("t*2")}, ${code("max(t)")}.`, T.funk] };
+    },
+    () => {
+      const v=pick([36,54,72,90,108]), h=rd(ri(5,30)/10,1);
+      return { auftrag:`Speichere ${code("v:="+v+"_km/_hr")} (Einheit mit ctrl + ␣). Wandle um: ${code("v▸_m/_s")}. Dann die Strecke in ${dn(h)} h: ${code("v*"+h+"_hr▸_km")}.`,
+        felder:[{label:"v =", einheit:"m/s", wert:v/3.6, tol:{rel:1e-3}},{label:"s =", einheit:"km", wert:v*h, tol:{rel:1e-3}}],
+        tipps:[`Die Einheit reist mit der Variablen mit. Pfeil ▸ aus dem Symbolkatalog ${KK("ctrl","Katalog")}.`, T.einh] };
+    },
+  ],
+  [
+    () => {
+      const F = pick([
+        {f:"s = ½·a·t²", code:"s=1/2*a*t^2", g:"t", vars:{s:ri(40,150), a:rd(ri(15,40)/10,1)}, calc:v=>Math.sqrt(2*v.s/v.a), e:"s", txt:v=>`Ein Auto beschleunigt aus dem Stand mit a = ${dn(v.a)} m/s² über s = ${v.s} m. Wie lange?`},
+        {f:"v = v0 + a·t", code:"v=v0+a*t", g:"a", vars:{v0:ri(2,8), v:ri(12,30), t:ri(4,12)}, calc:v=>(v.v-v.v0)/v.t, e:"m/s²", txt:v=>`Ein Velo beschleunigt in t = ${v.t} s von v0 = ${v.v0} m/s auf v = ${v.v} m/s. Beschleunigung?`},
+        {f:"v² = v0² + 2·a·s", code:"v^2=v0^2+2*a*s", g:"s", vars:{v0:ri(15,35), v:0, a:-rd(ri(30,80)/10,1)}, calc:v=>-v.v0*v.v0/(2*v.a), e:"m", txt:v=>`Ein Auto bremst von v0 = ${v.v0} m/s mit a = ${dn(v.a)} m/s² bis zum Stillstand (v = 0). Bremsweg?`},
+      ]);
+      const w = F.calc(F.vars), vs = Object.entries(F.vars).map(([k,v])=>code(k+":="+v)).join(", ");
+      return { auftrag:`Nach Rezept: ${F.txt(F.vars)}`, formel:`<span class="formel klein">${F.f} &nbsp; → &nbsp; ① ${code("solve("+F.code+","+F.g+")")} &nbsp; ② ${vs} &nbsp; ③ einsetzen &nbsp; ⑥ ${code("DelVar")}</span>`,
+        felder:[{label:F.g+" ≈", einheit:F.e, wert:w, tol:{rel:3e-3}}],
+        tipps:[`Erst die Formel symbolisch umstellen (noch nichts gespeichert!), dann die Werte speichern, dann die umgestellte Formel nochmals aufrufen (${K("▲")}) – die Werte sind jetzt drin. Negative Lösung streichen.`, T.rezept] };
+    },
+    () => {
+      const vk=pick([50,60,80,90,100,120]), a=rd(ri(40,80)/10,1), tr=rd(ri(8,15)/10,1), v=vk/3.6;
+      return { auftrag:`Anhalteweg: Ein Auto fährt ${vk} km/h. Reaktionszeit ${dn(tr)} s, dann Bremsen mit ${dn(a)} m/s². Speichere v (in m/s!), tr und a – und rechne Reaktionsweg, Bremsweg und Bremszeit.`,
+        formel:`<span class="formel klein">s<sub>R</sub> = v·t<sub>r</sub> &nbsp;&nbsp; s<sub>B</sub> = ${fr("v²","2a")} &nbsp;&nbsp; t<sub>B</sub> = ${fr("v","a")}</span>`,
+        felder:[{label:"s_R ≈", einheit:"m", wert:v*tr, tol:{rel:3e-3}, fehler:[{wert:vk*tr, tol:{rel:3e-3}, msg:"v ist noch in km/h – zuerst ÷3.6 speichern."}]},
+                {label:"s_B ≈", einheit:"m", wert:v*v/(2*a), tol:{rel:3e-3}, fehler:[{wert:vk*vk/(2*a), tol:{rel:3e-3}, msg:"v in km/h quadriert – in m/s speichern."}]},
+                {label:"t_B ≈", einheit:"s", wert:v/a, tol:{rel:3e-3}}],
+        tipps:[`${code("v:="+vk+"/3.6")} speichert gleich die umgerechnete Zahl. Dann drei kurze Zeilen: ${code("v*tr")}, ${code("v^2/(2a)")}, ${code("v/a")}.`, T.rezept] };
+    },
+  ],
+]},
+/* ---------------------------------------------------------------- 5 */
+{ id:"trig", name:"Trigonometrie", video:"", stufen:[
+  [
+    () => {
+      const f = pick(["sin","cos","tan"]);
+      let a; do { a=ri(5,80); } while([30,45,60].includes(a));
+      const F = {sin:sind, cos:cosd, tan:tand}[f], Fr = {sin:Math.sin, cos:Math.cos, tan:Math.tan}[f];
+      return { auftrag:"Berechne auf 3 Nachkommastellen.", formel:`${f}(${a}°)`,
+        felder:[{label:"≈", wert:F(a), tol:{abs:6e-4}, fehler:[{wert:Fr(a), tol:{abs:6e-4}, msg:"Der Rechner steht auf Bogenmass! Winkel in den Dokumenteinstellungen auf Grad stellen."}]}],
+        tipps:[`Taste ${K("trig")} für sin, cos, tan. Steht nur ${code(f+"("+a+")")} da, hilft ${KK("ctrl","enter")}.`, T.trig] };
+    },
+    () => {
+      const f = pick(["sin","cos","tan"]);
+      const v = f==="tan" ? rd(ri(10,300)/100,2) : rd(ri(10,95)/100,2);
+      const F = {sin:asind, cos:acosd, tan:atand}[f], Fr = {sin:Math.asin, cos:Math.acos, tan:Math.atan}[f];
+      return { auftrag:"Berechne den Winkel in Grad (1 Nachkommastelle).", formel:`${f}<sup>−1</sup>(${dn(v)})`,
+        felder:[{label:"≈", einheit:"°", wert:F(v), tol:{abs:0.06}, fehler:[{wert:Fr(v), tol:{abs:0.006}, msg:"Bogenmass! Winkel auf Grad stellen."}]}],
+        tipps:[`Die Umkehrfunktionen sin<sup>−1</sup>, cos<sup>−1</sup>, tan<sup>−1</sup> sind ebenfalls unter ${K("trig")}.`, T.invtrig] };
+    },
+  ],
+  [
+    () => {
+      const c = rd(ri(30,150)/10,1), al = pick([ri(15,40), ri(50,75)]), geg = Math.random()<.5;   // nicht 45°: sin = cos
+      const w = geg ? c*sind(al) : c*cosd(al), f = geg ? c*cosd(al) : c*sind(al);
+      return { auftrag:`Berechne die ${geg?"Gegenkathete a":"Ankathete b"}.`,
+        bild:svgDreieck({c:`c = ${dn(c)} cm`, al:`α = ${al}°`, a:geg?"a = ?":"", b:geg?"":"b = ?"}),
+        felder:[{label:geg?"a ≈":"b ≈", einheit:"cm", wert:w, tol:{rel:0.003}, fehler:[{wert:f, msg:"sin und cos verwechselt? sin α = Gegenkathete/Hypotenuse."}]}],
+        tipps:[`sin α = ${fr("Gegenkathete","Hypotenuse")}, &nbsp; cos α = ${fr("Ankathete","Hypotenuse")}. Also z. B. a = c·sin α.`, T.trig] };
+    },
+    () => {
+      const a = rd(ri(15,90)/10,1), b = rd(ri(15,90)/10,1);
+      return { auftrag:"Berechne den Winkel α.",
+        bild:svgDreieck({a:`a = ${dn(a)} m`, b:`b = ${dn(b)} m`, al:"α = ?"}),
+        felder:[{label:"α ≈", einheit:"°", wert:atand(a/b), tol:{abs:0.06}, fehler: Math.abs(a-b)>0.2 ? [{wert:atand(b/a), msg:"Das ist der andere spitze Winkel. tan α = Gegenkathete/Ankathete."}] : []}],
+        tipps:[`tan α = ${fr("Gegenkathete","Ankathete")} → α = tan<sup>−1</sup>(a/b).`, T.invtrig] };
+    },
+    () => {
+      let L,h; do { L = rd(ri(25,80)/10,1); h = rd(ri(3, Math.floor(L*4))/10,1); } while(atand(h/L) < 8);   // flach: sin ≈ tan
+      return { auftrag:`Eine Rampe ist ${dn(L)} m lang (schräg gemessen) und überwindet ${dn(h)} m Höhe. Wie steil ist sie?`,
+        felder:[{label:"α ≈", einheit:"°", wert:asind(h/L), tol:{abs:0.06}, fehler:[{wert:atand(h/L), msg:"Die Länge ist schräg gemessen, also die Hypotenuse → sin, nicht tan."}]}],
+        tipps:[`Skizze! Die Rampe ist die Hypotenuse, die Höhe die Gegenkathete.`, T.invtrig] };
+    },
+  ],
+  [
+    () => {
+      const FG = ri(20,800), al = ri(8,40);
+      return { auftrag:"Kiste auf der schiefen Ebene: Zerlege die Gewichtskraft.",
+        formel:`<span class="formel klein">F<sub>G</sub> = ${FG} N, &nbsp; α = ${al}°</span>`, bild:svgEbene(`${al}°`),
+        felder:[{label:"F_H ≈", einheit:"N (Hangabtrieb)", wert:FG*sind(al), tol:{rel:0.003}, fehler:[{wert:FG*cosd(al), msg:"Vertauscht: F_H = F_G·sin α."}]},
+                {label:"F_N ≈", einheit:"N (Normalkraft)", wert:FG*cosd(al), tol:{rel:0.003}, fehler:[{wert:FG*sind(al), msg:"Vertauscht: F_N = F_G·cos α."}]}],
+        tipps:[`F<sub>H</sub> = F<sub>G</sub>·sin α, &nbsp; F<sub>N</sub> = F<sub>G</sub>·cos α. Kontrolle: F<sub>H</sub> ist bei flacher Ebene klein.`, T.trig] };
+    },
+    () => {
+      const F = ri(50,400), al = pick([ri(10,38), ri(52,60)]);   // nicht 45°: sin = cos
+      return { auftrag:`Ein Seil zieht einen Schlitten mit ${F} N unter ${al}° zur Horizontalen. Zerlege die Kraft.`,
+        felder:[{label:"F_x ≈", einheit:"N (horizontal)", wert:F*cosd(al), tol:{rel:0.003}, fehler:[{wert:F*sind(al), msg:"Vertauscht: der horizontale Anteil ist die Ankathete → cos."}]},
+                {label:"F_y ≈", einheit:"N (vertikal)", wert:F*sind(al), tol:{rel:0.003}, fehler:[{wert:F*cosd(al), msg:"Vertauscht: der vertikale Anteil ist die Gegenkathete → sin."}]}],
+        tipps:[`Kraft = Hypotenuse. F<sub>x</sub> = F·cos α, F<sub>y</sub> = F·sin α.`, T.trig] };
+    },
+    () => {
+      const d = ri(20,120), al = ri(10,55);
+      return { auftrag:`Du stehst ${d} m vor einem Turm und siehst die Spitze unter ${al}° (Augenhöhe 1.6 m). Wie hoch ist der Turm?`,
+        felder:[{label:"h ≈", einheit:"m", wert:d*tand(al)+1.6, tol:{rel:0.003}, fehler:[{wert:d*tand(al), msg:"Fast: die Augenhöhe kommt noch dazu."},{wert:d*sind(al)+1.6, msg:"Die Distanz ist die Ankathete → tan."}]}],
+        tipps:[`tan α = Höhe über Auge / Distanz. Am Schluss 1.6 m addieren.`, T.trig] };
+    },
+  ],
+]},
+/* ---------------------------------------------------------------- 5 */
+{ id:"graphs", name:"Graphs", video:"", stufen:[
+  [
+    () => {
+      let m1,m2,xs; do { m1=pick([1,1.5,2,2.5,3]); m2=pick([0.25,0.5,0.75,1,1.5]); xs=ri(2,8); } while(m2>=m1);
+      const b = (m1-m2)*xs;
+      return { auftrag:"Zeichne beide Geraden und bestimme den Schnittpunkt.", formel:`<span class="formel klein">f1(x) = ${dn(m1)}·x &nbsp;&nbsp; f2(x) = ${dn(m2)}·x + ${dn(b)}</span>`,
+        felder:[{label:"x =", wert:xs, tol:{abs:0.01}},{label:"y =", wert:m1*xs, tol:{abs:0.01}}],
+        tipps:[`Graphs öffnen (${K("scratch")} zweimal), ${code("f1(x)=…")} ${K("enter")}, dann f2. Schnittpunkt: ${M("6 Graph analysieren","4 Schnittpunkt")}, links und rechts davon klicken.`, T.graph] };
+    },
+    () => {
+      const a = pick([-0.5,0.5,1,1.5,2,-1]), b = ri(-6,6), c = ri(-9,9), k = ri(-4,6);
+      return { auftrag:`Lies den Funktionswert in der Wertetabelle ab.`, formel:`f(x) = ${poly([a,b,c])} &nbsp; → &nbsp; f(${dn(k)}) = ?`,
+        felder:[{label:`f(${dn(k)}) =`, wert:a*k*k+b*k+c, tol:{abs:0.01}}],
+        tipps:[`Funktion zeichnen, dann ${KK("ctrl","T")}: Die Wertetabelle erscheint daneben.`, `Im Rechner geht's auch: ${code("f1(5)")} rechnet den Wert aus, wenn f1 definiert ist.`] };
+    },
+  ],
+  [
+    () => {
+      let b,c; do { b=ri(-6,6); c=ri(1,20); } while(Number.isInteger(Math.sqrt(b*b+4*c)));
+      const x = (-b + Math.sqrt(b*b+4*c))/2;
+      return { auftrag:"Bestimme die positive Nullstelle.", formel:`f(x) = ${poly([1,b,-c])}`,
+        felder:[{label:"x ≈", wert:x, tol:{rel:5e-4}}],
+        tipps:[`${M("6 Graph analysieren","1 Nullstelle")}, dann untere und obere Grenze anklicken.`, `Kontrolle im Rechner: ${code("solve(f1(x)=0,x)")}.`] };
+    },
+    () => {
+      const v0 = ri(8,20), T0 = v0/4.9;
+      return { auftrag:"Ein Ball wird senkrecht hochgeworfen. Wann ist er wieder unten, und wie hoch ist er nach 1 s?",
+        formel:`h(t) = ${v0}t − 4.9t<sup>2</sup>`,
+        felder:[{label:"t ≈", einheit:"s (Landung)", wert:T0, tol:{rel:0.003}},{label:"h(1) =", einheit:"m", wert:v0-4.9, tol:{abs:0.01}}],
+        tipps:[`Zeichne ${code(`f1(x)=${v0}x-4.9x^2`)} (x ist hier die Zeit). Fenster: ${M("4 Fenster/Zoom","1 Fenstereinstellungen")}, x von 0 bis ${Math.ceil(T0)}, y von 0 bis ${Math.ceil(v0*v0/19.6)+1}.`,
+               `Landung: ${M("6 Graph analysieren","1 Nullstelle")}. Höhe nach 1 s: ${M("5 Spur","1 Graphspur")}, dann ${K("1")} ${K("enter")} tippen.`] };
+    },
+    () => {
+      let c; do { c=ri(1,12); } while(Number.isInteger(Math.sqrt(1+4*c)));
+      const x = (1+Math.sqrt(1+4*c))/2;
+      return { auftrag:"Bestimme den Schnittpunkt mit positivem x.", formel:`<span class="formel klein">f1(x) = x<sup>2</sup> &nbsp;&nbsp; f2(x) = x + ${c}</span>`,
+        felder:[{label:"x ≈", wert:x, tol:{rel:5e-4}},{label:"y ≈", wert:x*x, tol:{rel:5e-4}}],
+        tipps:[`${M("6 Graph analysieren","4 Schnittpunkt")}, Grenzen rechts der y-Achse wählen.`, T.graph] };
+    },
+  ],
+  [
+    () => {
+      let vA,vB,d; do { vA=rd(ri(12,30)/10,1); vB=rd(ri(3,20)/10,1); d=ri(2,12); } while(vA-vB<0.4);
+      const t = d/(vA-vB);
+      return { auftrag:`Fahrzeug A startet bei 0 m mit ${dn(vA)} m/s. Fahrzeug B hat ${d} m Vorsprung und fährt mit ${dn(vB)} m/s. Wann und wo holt A das Fahrzeug B ein?`,
+        felder:[{label:"t ≈", einheit:"s", wert:t, tol:{rel:0.003}},{label:"s ≈", einheit:"m", wert:vA*t, tol:{rel:0.003}}],
+        tipps:[`Weg-Zeit-Funktionen: f1(x) = v<sub>A</sub>·x, f2(x) = v<sub>B</sub>·x + Vorsprung. Dann Schnittpunkt.`, T.graph] };
+    },
+    () => {
+      const h0 = ri(10,50), v0 = ri(0,15);
+      const t = (v0 + Math.sqrt(v0*v0 + 4*4.9*h0))/9.8;
+      return { auftrag:`Ein Stein wird von einem ${h0} m hohen Turm ${v0?`mit ${v0} m/s senkrecht nach oben`:"fallen gelassen"}${v0?" geworfen":""}. Wann schlägt er auf?`,
+        formel:`h(t) = ${h0}${v0?` + ${v0}t`:""} − 4.9t<sup>2</sup>`,
+        felder:[{label:"t ≈", einheit:"s", wert:t, tol:{rel:0.003}}],
+        tipps:[`Zeichnen, Fenster passend wählen (y bis über ${h0}), dann ${M("6 Graph analysieren","1 Nullstelle")} rechts von 0.`, `Kontrolle: ${code("solve(h=0,t)")} – die negative Lösung streichen.`] };
+    },
+  ],
+]},
+/* ---------------------------------------------------------------- 6 */
+{ id:"einheiten", name:"Einheiten", video:"", stufen:[
+  [
+    () => {
+      const v = pick([18,27,36,45,54,63,72,90,99,108,126,144]);
+      return { auftrag:"Rechne in m/s um.", formel:`${v} km/h`,
+        felder:[{label:"=", einheit:"m/s", wert:v/3.6, tol:{rel:1e-3}, fehler:[{wert:v*3.6, msg:"Falsche Richtung: m/s ist die kleinere Zahl (÷ 3.6)."}]}],
+        tipps:[`Einheiten beginnen mit ${code("_")} (${KK("ctrl","␣")}). Umrechnen mit dem Pfeil ▸ zur Zieleinheit. Stunde heisst ${code("_hr")}.`, T.einh] };
+    },
+    () => {
+      const t = ri(1,24)/4;
+      return { auftrag:"Rechne in Sekunden um.", formel:`${dn(t)} h`,
+        felder:[{label:"=", einheit:"s", wert:t*3600, tol:{rel:1e-4}, fehler:[{wert:t*60, msg:"Das sind Minuten – eine Stunde hat 3600 s."}]}],
+        tipps:[`${code(`${t}_hr`)} ▸ ${code("_s")}. Oder der Umrechnungsassistent ${KK("ctrl","3")}.`, T.einh] };
+    },
+    () => {
+      const opts = [{html:"Fallbeschleunigung 9.80665 m/s²", ok:true},
+        {html:"Gramm", warum:"Gramm heisst im Rechner _gm."},
+        {html:"Gewichtskraft", warum:"Die musst du ausrechnen: m·_g."},
+        {html:"Gravitationskonstante", warum:"Die heisst _Gc."}];
+      return { auftrag:"Was bedeutet _g im Rechner?", formel:code("_g"), mc:shuffle(opts),
+        tipps:[`Tippe ${code("_g")} ${K("enter")} und schau, was herauskommt.`, `Der Umrechnungsassistent ${KK("ctrl","3")} zeigt alle Konstanten.`] };
+    },
+  ],
+  [
+    () => {
+      const a = rd(ri(5,40)/10,1), b = rd(ri(10,990)/10,1), c = ri(1,9);
+      return { auftrag:"Addiere und gib das Resultat in cm an.", formel:`${dn(a)} m + ${dn(b)} cm + ${c} mm`,
+        felder:[{label:"=", einheit:"cm", wert:a*100+b+c/10, tol:{rel:1e-4}}],
+        tipps:[`Jede Grösse mit Einheit eintippen, am Schluss ▸ ${code("_cm")}.`, SCR("Rechner",[["1.25·_m+38.4·_cm+7·_mm ▸ _cm","164.1·_cm"]])] };
+    },
+    () => {
+      const v = rd(ri(15,400)/10,1);
+      return { auftrag:"Rechne in km/h um.", formel:`${dn(v)} m/s`,
+        felder:[{label:"=", einheit:"km/h", wert:v*3.6, tol:{rel:1e-3}, fehler:[{wert:v/3.6, msg:"Falsche Richtung: km/h ist die grössere Zahl (· 3.6)."}]}],
+        tipps:[`${code("_m/_s")} ▸ ${code("_km/_hr")}.`, T.einh] };
+    },
+    () => {
+      const m = rd(ri(5,1200)/10,1);
+      return { auftrag:"Berechne die Gewichtskraft mit der Konstanten _g.", formel:`m = ${dn(m)} kg`,
+        felder:[{label:"F_G ≈", einheit:"N", wert:m*9.80665, tol:{rel:0.003}}],
+        tipps:[`${code(`${m}_kg*_g`)} ▸ ${code("_N")}.`, SCR("Rechner",[["10·_kg·_g ▸ _N","98.0665·_N"]])] };
+    },
+  ],
+  [
+    () => {
+      const z = pick([{n:"von der Sonne zur Erde",d:1.496e11},{n:"vom Mars zur Erde (geringster Abstand)",d:5.46e10},{n:"von der Venus zur Erde (geringster Abstand)",d:3.8e10}]);
+      const e = Math.floor(Math.log10(z.d));
+      return { auftrag:`Wie viele Minuten braucht das Licht ${z.n}? Rechne mit der Konstanten _c.`, formel:`s = ${zp(+(z.d/10**e).toFixed(3),e)} m`,
+        felder:[{label:"t ≈", einheit:"min", wert:z.d/299792458/60, tol:{rel:0.003}, fehler:[{wert:z.d/299792458, msg:"Das sind Sekunden – mit ▸ _min umrechnen."}]}],
+        tipps:[`${code("_c")} ist die Lichtgeschwindigkeit. ${code("1.5E11_m/_c")} ▸ ${code("_min")}.`, T.einh] };
+    },
+    () => {
+      const h = ri(2,4), mi = ri(0,59), s = ri(0,59);
+      return { auftrag:`Ein Marathon (42.195 km) dauert ${h} h ${mi} min ${s} s. Durchschnittsgeschwindigkeit?`,
+        felder:[{label:"v ≈", einheit:"km/h", wert:42.195/(h+mi/60+s/3600), tol:{rel:0.002}}],
+        tipps:[`Zeit mit Einheiten addieren: ${code(`(${h}_hr+${mi}_min+${s}_s)`)}.`, `${code(`42.195_km/(${h}_hr+${mi}_min+${s}_s)`)} ▸ ${code("_km/_hr")}`] };
+    },
+    () => {
+      const st = pick([{n:"Aluminium",r:2700},{n:"Eisen",r:7870},{n:"Kupfer",r:8960}]);
+      const a = ri(4,12)/2, m = Math.round(st.r*(a/100)**3*1000);
+      return { auftrag:`Ein Würfel aus ${st.n} hat ${dn(a)} cm Kantenlänge und ${m} g Masse. Dichte in kg/m³?`,
+        felder:[{label:"ρ ≈", einheit:"kg/m³", wert:m/1000/(a/100)**3, tol:{rel:0.003}, fehler:[{wert:m/a**3, msg:"Das ist g/cm³ – noch in kg/m³ umrechnen."}]}],
+        tipps:[`ρ = m/V. Gramm heisst ${code("_gm")}!`, `${code(`${m}_gm/(${a}_cm)^3`)} ▸ ${code("_kg/_m^3")}`] };
+    },
+  ],
+]},
+/* ---------------------------------------------------------------- 7 */
+{ id:"messreihen", name:"Messreihen", video:"", stufen:[
+  [
+    () => {
+      const b = rd(ri(20,200)/10,1), xs = Array.from({length:5}, () => rd(b + ri(-3,3)/10,1));
+      return { auftrag:"Fünf Messungen derselben Länge (in cm). Mittelwert?", formel:`<span class="formel klein">${xs.map(x=>x.toFixed(1)).join(", ")}</span>`,
+        felder:[{label:"x̄ =", einheit:"cm", wert:mean(xs), tol:{rel:1e-4}}],
+        tipps:[`${code("mean({…})")} – Liste in geschweiften Klammern.`, T.mean] };
+    },
+    () => {
+      let xs; do { const b = rd(ri(20,200)/10,1); xs = Array.from({length:5}, () => rd(b + ri(-4,4)/10,1)); } while(stdS(xs) < 0.05);
+      return { auftrag:"Fünf Messungen (in s). Standardabweichung der Messreihe?", formel:`<span class="formel klein">${xs.map(x=>x.toFixed(1)).join(", ")}</span>`,
+        felder:[{label:"s ≈", einheit:"s", wert:stdS(xs), tol:{rel:0.005}, fehler:[{wert:stdP(xs), tol:{rel:0.002}, msg:"Das ist stDevPop. Für eine Messreihe nimmst du stDevSamp."}]}],
+        tipps:[`${code("stDevSamp({…})")} (Stichprobe). Nicht ${code("stDevPop")}.`, T.mean] };
+    },
+  ],
+  [
+    () => {
+      const m = rd(ri(5,40)/10,1), b = rd(ri(-10,10)/10,1);
+      const t = [0,1,2,3,4], s = t.map(x => rd(m*x + b + ri(-2,2)/10,1));
+      const r = linreg(t,s);
+      return { auftrag:"Messreihe eines Wagens. Bestimme die Ausgleichsgerade s = m·t + b (2 Nachkommastellen).",
+        bild:datenTabelle(["t in s","s in m"],[t,s],[0,1]),
+        felder:[{label:"m ≈", einheit:"m/s", wert:r.m, tol:{abs:0.006}},{label:"b ≈", einheit:"m", wert:r.b, tol:{abs:0.006}}],
+        tipps:[`Daten in Lists &amp; Spreadsheet (Spalten benennen), dann ${M("6 Statistik","1 Statistische Berechnungen","3 Lineare Regression (mx+b)")}. Oder in Data &amp; Statistics: ${M("4 Analysieren","6 Regression")}.`, T.linreg] };
+    },
+  ],
+  [
+    () => {
+      const k = ri(15,60), x = [2,4,6,8,10];
+      const F = x.map(c => rd(k*c/100 + ri(-3,3)/100, 2));
+      const r = linreg(x.map(c=>c/100), F);
+      return { auftrag:"Federversuch: Kraft gegen Auslenkung. Bestimme die Federkonstante k (Steigung) in N/m.",
+        bild:datenTabelle(["x in cm","F in N"],[x,F],[0,2]),
+        felder:[{label:"k ≈", einheit:"N/m", wert:r.m, tol:{rel:0.01}, fehler:[{wert:r.m/100, tol:{rel:0.01}, msg:"Das ist N/cm – x war in cm! Erst in m umrechnen (oder × 100)."}]}],
+        tipps:[`Lineare Regression F = m·x + b. Achtung Einheiten: x in Meter umrechnen, z. B. Spalte ${code("=xcm/100")}.`, T.linreg] };
+    },
+    () => {
+      const a = rd(ri(4,20)/10,1), t = [0.5,1,1.5,2,2.5];
+      const s = t.map(x => rd(a/2*x*x + ri(-5,5)/1000, 3));
+      const q = quadreg(t,s);
+      return { auftrag:"Wagen auf der schiefen Ebene, Start aus der Ruhe. Bestimme die Beschleunigung a aus einer quadratischen Regression.",
+        bild:datenTabelle(["t in s","s in m"],[t,s],[1,3]),
+        felder:[{label:"a ≈", einheit:"m/s²", wert:2*q.a, tol:{rel:0.02}, fehler:[{wert:q.a, tol:{rel:0.02}, msg:"Fast: s = ½·a·t², der Koeffizient vor t² ist a/2 → verdoppeln."}]}],
+        tipps:[`${M("6 Statistik","1 Statistische Berechnungen")} ▸ Quadratische Regression. Ergebnis: s = a₂·t² + a₁·t + a₀.`, `Vergleich mit s = ${fr(1,2)}·a·t²: Koeffizient vor t² ist a/2.`] };
+    },
+  ],
+]},
+];
+
+/* ===================================================================
+   Aufgaben aus den Skripten (Physik 1/2, Algebra 1-4, Uebungen, Pruefung 1).
+   Loesungen wie in den .tex-Dateien (Toleranz so, dass auch der ungerundete
+   Rechnerwert akzeptiert wird). `quelle` wird in der Aufgabe angezeigt.
+   =================================================================== */
+const SK = (quelle, t) => () => Object.assign({quelle}, t);
+const SKRIPT = {
+rechnen: [
+  [],
+  [
+    SK("Algebra Übung 1", { auftrag:"Berechne mit dem Rechner und runde auf 4 signifikante Stellen.", formel:"0.327·30 − 0.0582 + 1.3067",
+      felder:[{label:"≈", wert:11.06, tol:{abs:5e-4}, fehler:[{wert:11.0585, tol:{abs:1e-4}, msg:"Stimmt – jetzt noch auf 4 signifikante Stellen runden."}]}],
+      tipps:[`Alles in einer Zeile eintippen, Minus zum Subtrahieren ist ${K("−")}. Signifikante Stellen: von der ersten Ziffer ungleich 0 an zählen.`, SCR("Rechner",[["0.327·30−0.0582+1.3067","11.0585"]],"→ 11.06")] }),
+    SK("Algebra Übung 1", { auftrag:"Berechne und runde auf 4 signifikante Stellen.", formel:"(15.0347 − 23.107) · (35 ÷ 99.09) · 24.9",
+      felder:[{label:"≈", wert:-71.00, tol:{abs:5e-4}, fehler:[{wert:-70.99616, tol:{abs:1e-4}, msg:"Stimmt – noch auf 4 signifikante Stellen runden: −71.00."}]}],
+      tipps:[`Klammern genau so setzen wie in der Aufgabe. Das Resultat ist negativ, weil die erste Klammer negativ ist.`, SCR("Rechner",[["(15.0347−23.107)·(35/99.09)·24.9","−70.9962"]])] }),
+    SK("Algebra 2.7", { auftrag:"Wandle in einen gekürzten Bruch um.", formel:code("exact(0.0375)"), felder:[{label:"=", bruch:[3,80]}],
+      tipps:[`${code("exact( )")} macht aus einer Dezimalzahl einen Bruch.`, T.exact] }),
+    SK("Algebra 2.7", { auftrag:"Wandle in einen gekürzten Bruch um.", formel:code("exact(2.045)"), felder:[{label:"=", bruch:[409,200]}],
+      tipps:[`${code("exact( )")}.`, T.exact] }),
+    SK("Physik 1.7", { auftrag:"Ein Wasserstoffatom hat die Masse 1.7·10⁻²⁷ kg. Wie viele Atome ergeben zusammen 1.0 g?",
+      felder:[{label:"N ≈", wert:5.9e23, tol:{rel:0.01}, fehler:[{wert:5.9e26, tol:{rel:0.01}, msg:"1.0 g sind 0.001 kg – Einheit!"}], ph:"z. B. 5.9E23"}],
+      tipps:[`N = m / m<sub>Atom</sub>. Gramm in kg umrechnen, Exponent mit ${K("EE")} und ${K("(−)")}.`, SCR("Rechner",[["0.001/1.7E−27","5.88235E23"]])] }),
+  ],
+  [
+    SK("Algebra 2.7", { auftrag:"Berechne den Doppelbruch exakt.", formel:fr(`4 − ${fr(6, `2 − ${fr(1,5)}`)}`, `1 + ${fr(1,3)} − ${fr(10,9)}`),
+      felder:[{label:"=", bruch:[3,1]}],
+      tipps:[`Bruchvorlage ${KK("ctrl","÷")}, im Nenner wieder eine Bruchvorlage. Klammern setzt die Vorlage von selbst.`, SCR("Rechner",[["(4−6/(2−1/5))/(1+1/3−10/9)","3"]])] }),
+    SK("Physik 1.6", { auftrag:"Umlaufdauer der Erde um die Sonne (3. Kepler-Gesetz). Resultat in Tagen.",
+      formel:`<span class="formel klein">T = √( ${fr("4π²·a³","G·(M+m)")} ) &nbsp; a = 1.496·10<sup>11</sup> m, &nbsp; G = 6.674·10<sup>−11</sup> m³/(kg·s²), &nbsp; M+m = 1.989·10<sup>30</sup> kg</span>`,
+      felder:[{label:"T ≈", einheit:"Tage", wert:365.2, tol:{rel:0.002}, fehler:[{wert:3.155e7, tol:{rel:0.002}, msg:"Das sind Sekunden – durch 86400 teilen."}]}],
+      tipps:[`Alle Zehnerpotenzen mit ${K("EE")}, negative Exponenten mit ${K("(−)")}. Wurzel ${KK("ctrl","x²")} um den ganzen Bruch.`, SCR("Rechner",[["√(4π²·(1.496E11)³/(6.674E−11·1.989E30))","3.15534E7"],["ans/86400","365.201"]])] }),
+  ],
+],
+terme: [
+  [
+    SK("Algebra 2.4", { auftrag:"Multipliziere aus (Kontrolle mit expand).", formel:"(3 + x)<sup>2</sup>",
+      mc:shuffle([{html:poly([1,6,9]), ok:true},{html:poly([1,0,9]), warum:"Das Mittelglied 2·3·x fehlt."},{html:poly([1,3,9]), warum:"Das Mittelglied ist 2·3·x = 6x."},{html:poly([1,-6,9]), warum:"Vorzeichen: (3 + x)² hat +6x."}]),
+      tipps:[`${code("expand((3+x)^2)")}`, T.expand] }),
+    SK("Algebra 2.4", { auftrag:"Vereinfache (Kontrolle mit expand).", formel:"(6 + p)(p + 6) − (p − 6)<sup>2</sup>",
+      mc:shuffle([{html:"24p", ok:true},{html:"0", warum:"(p+6)² und (p−6)² sind nicht gleich – die Mittelglieder haben verschiedene Vorzeichen."},{html:"2p<sup>2</sup> + 72", warum:"Vorzeichen beim Subtrahieren der zweiten Klammer."},{html:"72", warum:"Die p-Glieder bleiben: 12p − (−12p) = 24p."}]),
+      tipps:[`Den ganzen Term in ${code("expand( )")} setzen.`, T.expand] }),
+  ],
+  [
+    SK("Algebra 2.6", { auftrag:"Faktorisiere.", formel:poly([1,14,-32]),
+      mc:shuffle([{html:"(x + 16)(x − 2)", ok:true},{html:"(x − 16)(x + 2)", warum:"Ausmultipliziert: −14x."},{html:"(x + 8)(x − 4)", warum:"Ausmultipliziert: x² + 4x − 32."},{html:"(x + 16)(x + 2)", warum:"Ausmultipliziert: +32."}]),
+      tipps:[`${code("factor( )")}.`, T.factor] }),
+    SK("Algebra 2.6", { auftrag:"Faktorisiere vollständig.", formel:"48 − 30f + 3f<sup>2</sup>",
+      mc:shuffle([{html:"3·(f − 2)·(f − 8)", ok:true},{html:"(f − 2)·(f − 8)", warum:"Der gemeinsame Faktor 3 fehlt."},{html:"3·(f + 2)·(f + 8)", warum:"Ausmultipliziert gibt das +30f."},{html:"3·(f − 4)·(f − 6)", warum:"Ausmultipliziert: 3f² − 30f + 72."}]),
+      tipps:[`${code("factor( )")} zieht auch den gemeinsamen Faktor heraus.`, T.factor] }),
+    SK("Algebra 2.6", { auftrag:"Faktorisiere vollständig.", formel:"16d<sup>3</sup> − 48d<sup>2</sup> + 36d",
+      mc:shuffle([{html:"4d·(2d − 3)<sup>2</sup>", ok:true},{html:"4d·(2d + 3)<sup>2</sup>", warum:"Vorzeichen: das Mittelglied ist negativ."},{html:"4·(2d − 3)<sup>2</sup>", warum:"Jedes Glied enthält d – das d fehlt."},{html:"4d·(2d − 3)(2d + 3)", warum:"Das wäre 4d·(4d² − 9) = 16d³ − 36d."}]),
+      tipps:[`${code("factor( )")}.`, T.factor] }),
+  ],
+  [
+    SK("Algebra 3.3", { auftrag:"Multipliziere aus (Pascalsches Dreieck – Kontrolle mit expand).", formel:"(4x − 3y)<sup>3</sup>",
+      mc:shuffle([{html:"64x³ − 144x²y + 108xy² − 27y³", ok:true},{html:"64x³ − 27y³", warum:"Beim Kubieren gibt es vier Glieder."},{html:"64x³ + 144x²y + 108xy² + 27y³", warum:"Bei (a − b)³ wechseln die Vorzeichen."},{html:"64x³ − 144x²y − 108xy² − 27y³", warum:"Vorzeichen wechseln ab: + − + −."}]),
+      tipps:[`${code("expand((4x-3y)^3)")}`, T.expand] }),
+    SK("Algebra 2.7", { auftrag:"Vereinfache zu einem Bruch.", formel:`${fr("9a² + 9b²","6a − 6b")} − ${fr("9ab","3a − 3b")} − (a − b)`,
+      mc:shuffle([{html:fr("a − b","2"), ok:true},{html:fr("a + b","2"), warum:"Vorzeichen im Zähler."},{html:fr("a − b","6"), warum:"Nenner: nach dem Kürzen bleibt 2."},{html:"2(a − b)", warum:"Kehrwert – der Nenner 2 bleibt unten."}]),
+      tipps:[`${code("comDenom( )")} um den ganzen Term, oder einfach eintippen und ${K("enter")} – das CAS vereinfacht selbst.`, T.comden] }),
+  ],
+],
+gleichungen: [
+  [
+    SK("Algebra 4.2", { auftrag:"Löse nach x auf.", formel:"40(3 − 2x) = 60(2x − 5)", felder:[{label:"x =", wert:2.1, tol:{abs:1e-6}}],
+      tipps:[`${code("solve(40(3-2x)=60(2x-5),x)")}`, T.solve] }),
+  ],
+  [
+    SK("Algebra 4.2", { auftrag:"Löse nach x auf (exakt, als Bruch).", formel:"3x(6 − x) = (x − 1)<sup>2</sup> + 8 − (2x + 1)<sup>2</sup>", felder:[{label:"x =", bruch:[1,3]}],
+      tipps:[`${code("solve( ,x)")} – die Quadrate heben sich weg, übrig bleibt eine lineare Gleichung.`, T.solve] }),
+    SK("Algebra 4.6", { auftrag:"Zwei Zahlen haben die Summe 20 und das Produkt 36. Welche?", formel:"x<sup>2</sup> − 20x + 36 = 0",
+      felder:[{label:"x₁ =", wert:2, tol:{abs:1e-6}},{label:"x₂ =", wert:18, tol:{abs:1e-6}}],
+      tipps:[`${code("solve(x^2-20x+36=0,x)")}`, T.solve] }),
+    SK("Algebra 4.6", { auftrag:"Löse (exakt, als Brüche).", formel:"16x<sup>2</sup> + 2x − 3 = 0",
+      felder:[{label:"x₁ =", bruch:[-1,2], ph:"kleinere"},{label:"x₂ =", bruch:[3,8], ph:"grössere"}],
+      tipps:[`${code("solve( ,x)")} gibt beide Brüche.`, T.solve] }),
+    SK("Algebra 4.4", { auftrag:"Ein Fahrzeug startet bei s₀ = 0.12 km und fährt mit v = 65 dm/s. Wann ist es bei s = 4.8 km? (Zuerst alles in m und s.)",
+      formel:"s = s<sub>0</sub> + v·t", felder:[{label:"t =", einheit:"s", wert:720, tol:{abs:1}}],
+      tipps:[`0.12 km = 120 m, 65 dm/s = 6.5 m/s. ${code("solve(4800=120+6.5*t,t)")}`, T.formel] }),
+    SK("Algebra 4.4", { auftrag:"Ein Fahrzeug startet bei s₀ = 350 m und ist nach t = 4.1 min bei s = 2.4 km. Geschwindigkeit in km/h?",
+      formel:"s = s<sub>0</sub> + v·t", felder:[{label:"v ≈", einheit:"km/h", wert:30.0, tol:{rel:0.003}, fehler:[{wert:8.333, tol:{rel:0.003}, msg:"Das sind m/s – mal 3.6 für km/h."}]}],
+      tipps:[`Nach v auflösen, Zahlen in m und s einsetzen, am Schluss ·3.6.`, T.formel] }),
+  ],
+  [
+    SK("Physik 2.6", { auftrag:"Ein Auto startet aus dem Stand mit a = 2.00 m/s². Wie lange braucht es, um die 30.0 m breite Kreuzung zu überqueren?",
+      formel:`x = ${fr(1,2)}·a·t<sup>2</sup>`, felder:[{label:"t ≈", einheit:"s", wert:Math.sqrt(30), tol:{rel:0.003}}],
+      tipps:[`${code("solve(30=1/2*2*t^2,t)")}, negative Lösung streichen. ${MERKE_DELVAR}`, T.physik] }),
+    SK("Physik 2.6", { auftrag:"Ein Auto mit 25 m/s bremst auf 75 m bis zum Stillstand. Beschleunigung?",
+      formel:"v<sup>2</sup> = v<sub>0</sub><sup>2</sup> + 2·a·x", felder:[{label:"a ≈", einheit:"m/s²", wert:-25*25/150, tol:{rel:0.02}, fehler:[{wert:25*25/150, tol:{rel:0.02}, msg:"Vorzeichen: Bremsen ist eine negative Beschleunigung."}]}],
+      tipps:[`${code("solve(0=25^2+2*a*75,a)")}`, T.physik] }),
+    SK("Physik Übungen 2", { auftrag:"Eine Bremsspur ist 75 m lang, die Bremsverzögerung 7.00 m/s². Wie schnell war das Auto?",
+      formel:"v<sup>2</sup> = v<sub>0</sub><sup>2</sup> + 2·a·x",
+      felder:[{label:"v₀ ≈", einheit:"m/s", wert:Math.sqrt(2*7*75), tol:{rel:0.003}},{label:"v₀ ≈", einheit:"km/h", wert:Math.sqrt(2*7*75)*3.6, tol:{rel:0.005}}],
+      tipps:[`${code("solve(0=v^2+2*(-7)*75,v)")} – positive Lösung. Dann ·3.6.`, T.physik] }),
+    SK("Algebra 4.6", { auftrag:"Verkleinert man den Radius eines Kreises um 30 mm, hat er nur noch 80 % der Fläche. Ursprünglicher Radius?",
+      formel:"π(r − 30)<sup>2</sup> = 0.8·πr<sup>2</sup>",
+      felder:[{label:"r ≈", einheit:"mm", wert:284.16, tol:{rel:0.003}, fehler:[{wert:15.84, tol:{rel:0.01}, msg:"Die kleine Lösung ist unmöglich: Der Radius wird um 30 mm verkleinert, muss also grösser als 30 mm sein."}]}],
+      tipps:[`${code("solve(pi*(r-30)^2=0.8*pi*r^2,r)")} – zwei Lösungen, eine ist sinnlos.`, T.solve] }),
+    SK("Algebra 4.6", { auftrag:"10'000 Fr. wachsen mit Zinseszins in zwei Jahren auf 10'506.25 Fr. Zinssatz in Prozent?",
+      formel:"10000·(1 + p)<sup>2</sup> = 10506.25",
+      felder:[{label:"p =", einheit:"%", wert:2.5, tol:{abs:0.01}, fehler:[{wert:0.025, tol:{abs:1e-4}, msg:"Das ist p als Dezimalzahl – in Prozent: 2.5 %."},{wert:-202.5, tol:{abs:0.1}, msg:"Die negative Lösung ist kein Zinssatz."}]}],
+      tipps:[`${code("solve(10000*(1+p)^2=10506.25,p)")}`, T.solve] }),
+    SK("Physik Übungen 2", { auftrag:"Freier Fall gemessen: h = 1.382 m, t = 0.5309 s. Bestimme g daraus.",
+      formel:`h = ${fr(1,2)}·g·t<sup>2</sup>`, felder:[{label:"g ≈", einheit:"m/s²", wert:2*1.382/0.5309**2, tol:{abs:0.003}}],
+      tipps:[`${code("solve(1.382=1/2*g*0.5309^2,g)")} oder direkt 2h/t².`, T.physik] }),
+  ],
+],
+variablen: [[],[],[
+    SK("Physik 2.6", { auftrag:"Anhalteweg bei 90 km/h mit Reaktionszeit 1.0 s – einmal mit a = −4.0 m/s² (trockene Strasse), einmal mit a = −8.0 m/s². Speichere v in m/s und tr, dann nur a wechseln.",
+      formel:`<span class="formel klein">s = v·t<sub>r</sub> + ${fr("v²","2·|a|")}</span>`,
+      felder:[{label:"s(−4.0) ≈", einheit:"m", wert:25+625/8, tol:{rel:3e-3}},{label:"s(−8.0) ≈", einheit:"m", wert:25+625/16, tol:{rel:3e-3}}],
+      tipps:[`${code("v:=90/3.6")}, ${code("tr:=1")}, ${code("a:=4")}, dann ${code("v*tr+v^2/(2a)")}. Für den zweiten Fall nur ${code("a:=8")} und die Zeile mit ${K("▲")} nochmals holen.`, T.rezept] }),
+]],
+trig: [
+  [
+    SK("Physik Übungen 1", { auftrag:"Rechne um: 142° ins Bogenmass und 3 rad in Grad.",
+      felder:[{label:"142° =", einheit:"rad", wert:142*Math.PI/180, tol:{abs:0.002}},{label:"3 rad =", einheit:"°", wert:3*180/Math.PI, tol:{abs:0.01}}],
+      tipps:[`Bogenmass = Grad · π/180. Oder im Grad-Modus: ${code("142°▸Rad")} (° und ▸Rad aus dem Symbolkatalog ${KK("ctrl","Katalog")}).`, SCR("Rechner · Grad",[["142·π/180 &nbsp;≈","2.47837"],["3·180/π &nbsp;≈","171.887"]])] }),
+  ],[],[],
+],
+graphs: [
+  [],
+  [
+    SK("Physik Übungen 2", { auftrag:"Bauer A fährt mit 54 km/h los, gleichzeitig Bauer B mit 36 km/h aus dem 5 km entfernten Dorf entgegen. Zeichne beide Ort-Zeit-Geraden (x in s, y in m) und lies den Treffpunkt ab.",
+      formel:`<span class="formel klein">f1(x) = 15·x &nbsp;&nbsp; f2(x) = 5000 − 10·x</span>`,
+      felder:[{label:"t =", einheit:"s", wert:200, tol:{abs:1}},{label:"Ort =", einheit:"m", wert:3000, tol:{abs:10}}],
+      tipps:[`54 km/h = 15 m/s, 36 km/h = 10 m/s. Fenster: x 0 bis 400, y 0 bis 5000. ${M("6 Graph analysieren","4 Schnittpunkt")}.`, T.graph] }),
+    SK("Physik Prüfung 1", { auftrag:"Ein Tram (36 km/h) startet hinter einer Velofahrerin (18 km/h), die 1.2 km Vorsprung hat. Wann und wo holt es sie ein?",
+      formel:`<span class="formel klein">f1(x) = 10·x &nbsp;&nbsp; f2(x) = 5·x + 1200</span>`,
+      felder:[{label:"t =", einheit:"s", wert:240, tol:{abs:1}},{label:"Ort =", einheit:"m", wert:2400, tol:{abs:10}}],
+      tipps:[`Fenster: x 0 bis 300, y 0 bis 3000. Schnittpunkt.`, T.graph] }),
+    SK("Physik Prüfung 1", { auftrag:"Aus dem Diagramm abgelesen: x₀ = 50 m, v₀ = 4 m/s, a = 2 m/s². Zeichne x(t) und lies x nach 10 s aus der Wertetabelle.",
+      formel:`<span class="formel klein">f1(x) = 50 + 4·x + x<sup>2</sup></span>`, felder:[{label:"x(10 s) =", einheit:"m", wert:190, tol:{abs:0.5}}],
+      tipps:[`x = x₀ + v₀·t + ½·a·t². Wertetabelle mit ${KK("ctrl","T")}, Schrittweite 1.`, `Kontrolle im Rechner: ${code("f1(10)")}.`] }),
+  ],
+  [
+    SK("Physik 2.7", { auftrag:"Ein Ball wird mit 15.0 m/s senkrecht hochgeworfen. Wann passiert er ein Fenster auf 5.0 m Höhe? (zweimal!)",
+      formel:`<span class="formel klein">f1(x) = 15·x − 4.905·x<sup>2</sup> &nbsp;&nbsp; f2(x) = 5</span>`,
+      felder:[{label:"t₁ ≈", einheit:"s", wert:(15-Math.sqrt(225-4*4.905*5))/9.81, tol:{abs:0.01}},{label:"t₂ ≈", einheit:"s", wert:(15+Math.sqrt(225-4*4.905*5))/9.81, tol:{abs:0.01}}],
+      tipps:[`Beide Schnittpunkte mit ${M("6 Graph analysieren","4 Schnittpunkt")} – einmal links, einmal rechts vom Scheitel.`, `Kontrolle: ${code("solve(15x-4.905x^2=5,x)")}`] }),
+    SK("Physik Übungen 2", { auftrag:"Aus einem Helikopter in 115 m Höhe, der mit 5.60 m/s steigt, fällt ein Päckchen. Wann landet es?",
+      formel:`<span class="formel klein">f1(x) = 115 + 5.6·x − 4.905·x<sup>2</sup></span>`,
+      felder:[{label:"t ≈", einheit:"s", wert:(5.6+Math.sqrt(5.6**2+4*4.905*115))/9.81, tol:{abs:0.01}}],
+      tipps:[`Fenster x 0 bis 7, y 0 bis 130. ${M("6 Graph analysieren","1 Nullstelle")}.`, `Kontrolle: ${code("solve(115+5.6x-4.905x^2=0,x)")}, positive Lösung.`] }),
+  ],
+],
+einheiten: [
+  [
+    SK("Physik Prüfung 1", { auftrag:"Rechne um.", formel:"2.5 h", felder:[{label:"=", einheit:"s", wert:9000, tol:{abs:1}}], tipps:[`${code("2.5_hr")} ▸ ${code("_s")}`, T.einh] }),
+    SK("Physik Prüfung 1", { auftrag:"Rechne um.", formel:"250 µm", felder:[{label:"=", einheit:"m", wert:2.5e-4, tol:{rel:1e-6}, ph:"z. B. 2.5E-4"}], tipps:[`µ = 10⁻⁶. ${code("250_μm")} ▸ ${code("_m")} (µ im Symbolkatalog) oder ${code("250E-6")}.`, T.einh] }),
+    SK("Physik Prüfung 1", { auftrag:"Rechne um.", formel:"0.75 l", felder:[{label:"=", einheit:"cm³", wert:750, tol:{abs:0.5}}], tipps:[`1 l = 1 dm³ = 1000 cm³. ${code("0.75_l")} ▸ ${code("_cm^3")}`, T.einh] }),
+    SK("Physik Übungen 2", { auftrag:"Rechne um.", formel:"55 km/h", felder:[{label:"≈", einheit:"m/s", wert:55/3.6, tol:{rel:0.02}}], tipps:[`÷ 3.6, oder ${code("55_km/_hr")} ▸ ${code("_m/_s")}`, T.einh] }),
+    SK("Physik Prüfung 1", { auftrag:"Rechne um.", formel:"4.5 km²", felder:[{label:"=", einheit:"m²", wert:4.5e6, tol:{rel:1e-6}, ph:"z. B. 4.5E6"}], tipps:[`1 km² = (1000 m)² = 10⁶ m². ${code("4.5_km^2")} ▸ ${code("_m^2")}`, T.einh] }),
+  ],
+  [
+    SK("Physik Prüfung 1", { auftrag:"Rechne um.", formel:"1.5 g/cm³", felder:[{label:"=", einheit:"kg/m³", wert:1500, tol:{abs:0.5}}], tipps:[`${code("1.5_gm/_cm^3")} ▸ ${code("_kg/_m^3")} – Gramm heisst _gm!`, T.einh] }),
+    SK("Physik Übungen 1", { auftrag:"Rechne um.", formel:"130 km/h", felder:[{label:"≈", einheit:"m/s", wert:130/3.6, tol:{rel:0.003}}], tipps:[`${code("130_km/_hr")} ▸ ${code("_m/_s")}`, T.einh] }),
+    SK("Physik Übungen 1", { auftrag:"Rechne um.", formel:"80 N/mm²", felder:[{label:"=", einheit:"kN/m²", wert:80000, tol:{rel:1e-6}}], tipps:[`${code("80_N/_mm^2")} ▸ ${code("_kN/_m^2")}`, T.einh] }),
+    SK("Physik Prüfung 1", { auftrag:"Rechne um.", formel:"12 mm³", felder:[{label:"=", einheit:"cm³", wert:0.012, tol:{rel:1e-6}}], tipps:[`1 cm³ = 1000 mm³. ${code("12_mm^3")} ▸ ${code("_cm^3")}`, T.einh] }),
+    SK("Physik Übungen 1", { auftrag:"Rechne um.", formel:"0.49 h", felder:[{label:"=", einheit:"s", wert:1764, tol:{abs:1}}], tipps:[`${code("0.49_hr")} ▸ ${code("_s")}`, T.einh] }),
+  ],
+  [
+    SK("Physik Übungen 1", { auftrag:"Dichte der Sonne: m = 2.0·10³⁰ kg, V = 1.4·10³³ cm³.",
+      felder:[{label:"ρ ≈", einheit:"kg/m³", wert:1428.6, tol:{rel:0.003}, fehler:[{wert:1.4286e-3, tol:{rel:0.003}, msg:"Das ist kg/cm³ – das Volumen noch in m³ umrechnen."}]}],
+      tipps:[`${code("2E30_kg/(1.4E33_cm^3)")} ▸ ${code("_kg/_m^3")}`, T.einh] }),
+    SK("Algebra Übung 3.2", { auftrag:"Licht ist 300'000 km/s schnell. Wie viele km sind ein Lichtjahr (365 Tage)?",
+      felder:[{label:"1 LJ ≈", einheit:"km", wert:9.46e12, tol:{rel:0.002}, ph:"z. B. 9.46E12"}],
+      tipps:[`Strecke = v·t: ${code("300000_km/_s*365_day")} ▸ ${code("_km")}, oder 300000·365·24·3600.`, T.einh] }),
+    SK("Algebra Übung 1", { auftrag:"Addiere und gib das Resultat in kg an.", formel:`<span class="formel klein">0.170500 t + 12.53 kg − 7684.3 g − 0.0094 t + 20800 mg</span>`,
+      felder:[{label:"=", einheit:"kg", wert:165.9665, tol:{rel:5e-4}}],
+      tipps:[`Jede Grösse mit Einheit (${code("_t")}, ${code("_kg")}, ${code("_gm")}, ${code("_mg")}), am Schluss ▸ ${code("_kg")}.`, SCR("Rechner",[["0.1705·_t+12.53·_kg−7684.3·_gm−0.0094·_t+20800·_mg ▸ _kg","165.967·_kg"]])] }),
+    SK("Algebra Übung 3.2", { auftrag:"Widerstand eines Kupferkabels: R = ρ·L/A mit ρ = 17 µΩ·cm²/dm, L = 1.2·10⁻⁴ Mm, A = 0.0000012 m².",
+      felder:[{label:"R ≈", einheit:"Ω", wert:1.7, tol:{rel:0.003}}],
+      tipps:[`Alles in SI: ρ = 17·10⁻⁶ Ω · 10⁻⁴ m² / 0.1 m, L = 120 m. Oder dem Rechner die Einheiten überlassen: ${code("_Ω")} aus dem Symbolkatalog.`, SCR("Rechner",[["17E−6·1E−4/0.1·120/1.2E−6","1.7"]])] }),
+  ],
+],
+messreihen: [
+  [
+    SK("Physik Versuch 1", { auftrag:"Fahrzeiten auf der schiefen Ebene (Neigung A): 3.12 s, 2.98 s, 3.21 s. Mittelwert?",
+      felder:[{label:"t̄ ≈", einheit:"s", wert:(3.12+2.98+3.21)/3, tol:{abs:0.006}}], tipps:[`${code("mean({3.12,2.98,3.21})")}`, T.mean] }),
+    SK("Physik Versuch 1 (phyphox)", { auftrag:"Fünf abgelesene Beschleunigungen (m/s²): 0.44, 0.51, 0.47, 0.52, 0.46. Mittelwert?",
+      felder:[{label:"ā =", einheit:"m/s²", wert:0.48, tol:{abs:0.003}}], tipps:[`${code("mean({…})")}`, T.mean] }),
+    SK("Physik Prüfung 1", { auftrag:"Eine Länge wurde als 24.5 cm ± 0.5 cm gemessen. Relativer Fehler in Prozent?",
+      felder:[{label:"≈", einheit:"%", wert:0.5/24.5*100, tol:{abs:0.06}, fehler:[{wert:0.5/24.5, tol:{abs:0.001}, msg:"Das ist der Anteil – mal 100 für Prozent."}]}],
+      tipps:[`relativer Fehler = Δx / x.`, SCR("Rechner",[["0.5/24.5·100","2.04082"]])] }),
+  ],
+  [
+    SK("Physik Versuch 1 (Sensor)", { auftrag:"Ultraschallsensor, Neigung B: Geschwindigkeit gegen Zeit. Bestimme die Beschleunigung als Steigung der Ausgleichsgeraden.",
+      bild:datenTabelle(["t in s","v in m/s"],[[0,0.5,1,1.5,2],[0.01,0.21,0.41,0.62,0.82]],[1,2]),
+      felder:[{label:"a ≈", einheit:"m/s²", wert:linreg([0,0.5,1,1.5,2],[0.01,0.21,0.41,0.62,0.82]).m, tol:{abs:0.006}}],
+      tipps:[`Lineare Regression v = m·t + b: m ist die Beschleunigung.`, T.linreg] }),
+    SK("Physik Versuchsprotokoll", { auftrag:"Aufsteigende Luftblase: Weg gegen mittlere Zeit. Geschwindigkeit als Steigung der Ausgleichsgeraden (x über t)?",
+      bild:datenTabelle(["t̄ in s","x in cm"],[[0,1.80,3.70,5.51,7.40,9.21],[0,10,20,30,40,50]],[2,0]),
+      felder:[{label:"v ≈", einheit:"cm/s", wert:linreg([0,1.80,3.70,5.51,7.40,9.21],[0,10,20,30,40,50]).m, tol:{abs:0.03}, fehler:[{wert:1/linreg([0,1.80,3.70,5.51,7.40,9.21],[0,10,20,30,40,50]).m, tol:{abs:0.002}, msg:"Das ist die Steigung von t über x. Gesucht ist x über t: Liste zeit als x, weg als y."}]}],
+      tipps:[`Listen ${code("zeit")} und ${code("weg")} anlegen, Regression mit zeit als x-Liste.`, T.linreg] }),
+  ],
+  [
+    SK("Physik Versuch 1", { auftrag:"Neigung B: Fahrzeiten 2.21 s, 2.09 s, 2.18 s über x = 0.90 m aus der Ruhe. Mittlere Zeit und Beschleunigung?",
+      formel:`<span class="formel klein">a = ${fr("2x","t̄²")}</span>`,
+      felder:[{label:"t̄ ≈", einheit:"s", wert:(2.21+2.09+2.18)/3, tol:{abs:0.006}},{label:"a ≈", einheit:"m/s²", wert:2*0.9/((2.21+2.09+2.18)/3)**2, tol:{abs:0.006}}],
+      tipps:[`${code("tm:=mean({2.21,2.09,2.18})")}, dann ${code("2*0.9/tm^2")}.`, T.mean] }),
+  ],
+],
+};
+STATIONEN.forEach(s => (SKRIPT[s.id]||[]).forEach((arr,l) => s.stufen[l].push(...arr)));
+
+const STUFEN = ["Basis","Standard","Profi"];
+
+/* ===================================================================
+   Fortschritt (rein, testbar)
+   =================================================================== */
+function neuerStand(){ return {level:0, max:0, serie:0, fail:0, profi:0, badge:false}; }
+// ergebnis: 'sauber' (1. Versuch, ohne Tipp) | 'geloest' | 'aufgegeben'
+function fortschritt(s, ergebnis){
+  const msg = [];
+  if(ergebnis === "sauber"){ s.serie++; s.fail = 0; }
+  else if(ergebnis === "geloest"){ s.serie = 0; s.fail = 0; }
+  else { s.serie = 0; s.fail++; }
+  if(ergebnis !== "aufgegeben" && s.level === 2){ s.profi++; if(s.profi >= 2 && !s.badge){ s.badge = true; msg.push("badge"); } }
+  if(s.serie >= 3 && s.level < 2){ s.level++; s.max = Math.max(s.max, s.level); s.serie = 0; msg.push("up"); }
+  if(s.fail >= 2 && s.level > 0) msg.push("tiefer");
+  return msg;
+}
+function erzeuge(station, level, ausser){
+  const pool = station.stufen[level];
+  for(let i=0;i<50;i++){
+    const k = pool.length>1 ? ri(0,pool.length-1) : 0;
+    if(k === ausser && pool.length>1) continue;
+    const t = pool[k]();
+    if(t) return {t, k};
+  }
+  return {t:pool[0](), k:0};
+}
+
+/* ===================================================================
+   Lernen: pro Station kurze Schritte {titel, text, bild?, probier?}.
+   probier hat das gleiche Format wie eine Trainer-Aufgabe (felder|mc),
+   aber feste Zahlen aus dem frueheren Heft; zaehlt nicht fuer Punkte.
+   =================================================================== */
+const TASTEN = [
+  ["home","Startbildschirm: Scratchpad, neues Dokument, Einstellungen. <b>ctrl + home/on</b> schaltet aus."],
+  ["scratch","Scratchpad: Rechner für schnelle Rechnungen, nochmals drücken: Graph. Wird nicht gespeichert."],
+  ["doc","Dokument-Menü: Speichern, Seiten, Einstellungen. <b>ctrl + doc</b> fügt eine neue Seite ein."],
+  ["menu","Menü der App, in der du gerade bist (Rechner, Graphs …). Die Ziffern wählen direkt aus."],
+  ["ctrl","Orange Zweitbelegung: zuerst ctrl, dann die Taste. Beispiel: ctrl + enter gibt das Dezimalresultat ≈."],
+  ["esc","Abbrechen, Menü schliessen."],
+  ["tab","Zum nächsten Feld springen – in Vorlagen und in Graphs."],
+  ["del","Zeichen löschen. <b>ctrl + del</b> löscht die ganze Zeile."],
+  ["var","Liste der gespeicherten Variablen."],
+  ["trig","sin, cos, tan und ihre Umkehrfunktionen."],
+  ["Vorlagen","Vorlagen: Bruch, Wurzel, Potenz, Betrag, Gleichungssystem. Mit tab von Feld zu Feld."],
+  ["Katalog","Alle Befehle von A bis Z, mit Syntaxhilfe am unteren Rand. Ein Buchstabe springt zum Befehl."],
+  ["(−)","Vorzeichen für negative Zahlen – nicht die Minus-Taste!"],
+  ["EE","«mal zehn hoch»: 3.4E5 = 3.4·10<sup>5</sup>."],
+];
+const tastenRaster = () => `<div class="tasten">${TASTEN.map((t,i)=>`<button data-info="${i}">${K(t[0])}</button>`).join("")}</div>
+  <div class="kinfo" id="kinfo">Tippe auf eine Taste.</div>`;
+
+function svgAbkuehlung(){
+  const X = t => 40 + t*8.5, Y = T => 150 - (T-15)*3;
+  const pts = Array.from({length:61}, (_,i) => { const t=i/2; return `${X(t).toFixed(1)},${Y(22+30*Math.exp(-t/8)).toFixed(1)}`; }).join(" ");
+  return `<svg viewBox="0 0 320 175" width="320" height="175" font-family="inherit" font-size="11">
+    <line x1="40" y1="150" x2="305" y2="150" stroke="#999"/><line x1="40" y1="150" x2="40" y2="20" stroke="#999"/>
+    ${[10,20,30].map(t=>`<text x="${X(t)}" y="164" text-anchor="middle">${t}</text>`).join("")}
+    ${[20,30,40,50].map(T=>`<text x="34" y="${Y(T)+4}" text-anchor="end">${T}</text>`).join("")}
+    <text x="300" y="144" text-anchor="end">t in s</text><text x="46" y="20">T in °C</text>
+    <polyline points="${pts}" fill="none" stroke="#B3402F" stroke-width="2"/>
+  </svg>`;
+}
+const SCRtab = (titel, html) => `<div class="screen"><div class="bar"><span>${titel}</span></div>${html}</div>`;
+
+const LERNEN = {
+start: [
+  { titel:"Die wichtigsten Tasten", text:"Tippe auf eine Taste, um zu sehen, wofür sie da ist. Such sie dann auf deinem Gerät.", bild:tastenRaster() },
+  { titel:"Scratchpad oder Dokument?",
+    text:`<ul><li>Schnell etwas rechnen: ${K("scratch")} öffnet das <b>Scratchpad</b>. Es wird nicht gespeichert.</li>
+      <li>Alles, was du behalten willst (Versuchsauswertung, Graph mit Tabelle): ${K("home")} ▸ Neues Dokument ▸ App wählen. Speichern mit ${KK("ctrl","S")}.</li></ul>`,
+    probier:{ auftrag:"Du willst eine Messreihe aus dem Labor nächste Woche weiter auswerten. Wo arbeitest du?",
+      mc:[{html:"in einem Dokument", ok:true},{html:"im Scratchpad", warum:"Das Scratchpad wird nicht gespeichert."}] } },
+  { titel:"Einstellungen prüfen",
+    text:`${K("home")} ▸ 5 Einstellungen ▸ 2 Dokumenteinstellungen. Stell alles so ein wie unten und wähle <b>Als Standard festlegen</b>: Dann gilt es für alle neuen Dokumente.`,
+    bild:SCR("Dokumenteinstellungen",[["Anzeigeziffern","Fliess 6"],["Winkel","Grad"],["Exponentialformat","Normal"],["Rechenmodus","Auto"]]),
+    probier:{ auftrag:"Welcher Winkelmodus ist für Physik und Trigonometrie richtig?",
+      mc:[{html:"Grad", ok:true},{html:"Bogenmass", warum:"Mit Bogenmass gibt sin(30) = −0.988 statt 0.5."},{html:"Neugrad", warum:"Neugrad (Gon) teilt den rechten Winkel in 100 – brauchen wir nicht."}] } },
+  { titel:"Befehle eintippen",
+    text:`Befehle wie ${code("round")}, ${code("solve")} oder ${code("expand")} tippst du einfach mit den <b>Buchstabentasten</b> aus, Klammer auf, Argumente, Klammer zu – Gross- oder Kleinschreibung ist egal.
+      <ul><li>Schreibweise oder Argumente vergessen? ${K("Katalog")}: einen Buchstaben tippen springt zum Befehl, unten steht die Syntax, z. B. ${code("round(Wert,Stellen)")}; ${K("enter")} fügt den Befehl ein.</li>
+      <li>Die häufigsten Befehle stehen auch in den Menüs (${M("3 Algebra")}, ${M("2 Zahl")}) – gut zum Entdecken, aber langsamer als tippen.</li></ul>`,
+    bild:SCR("Rechner",[["round(2/7,4)","0.2857"],["ROUND(2/7,4)","0.2857"]],"gross oder klein geschrieben – beides geht"),
+    probier:{ auftrag:"Du weisst nicht mehr, in welcher Reihenfolge round seine Argumente will. Was hilft am schnellsten?",
+      mc:[{html:"Katalog öffnen, r tippen, Syntaxzeile unten lesen", ok:true},{html:"Alle Menüs durchsuchen", warum:"round steht in keinem Menü – und der Katalog zeigt die Syntax direkt."},{html:"Im Internet suchen", warum:"Geht auch, aber der Katalog ist offline und zwei Tasten entfernt."}] } },
+  { titel:"Zeit sparen",
+    text:`<ul><li>${K("▲")} in der Eingabezeile holt frühere Eingaben zurück, ${K("enter")} übernimmt sie.</li>
+      <li>${KK("ctrl","Z")} macht rückgängig, ${KK("ctrl","C")}/${KK("ctrl","V")} kopieren – wie am Computer.</li>
+      <li>Mit dem letzten Resultat weiterrechnen: einfach mit einem Rechenzeichen beginnen – ${code("+4")}, ${code("·2")}, ${code("÷3")} – der Rechner setzt ${code("ans")} selbst davor. ${KK("ctrl","(−)")} tippt ${code("ans")} ausdrücklich, wenn es mitten im Term stehen soll.</li>
+      <li>Achtung Minus: ${K("−")} am Zeilenanfang gibt ${code("ans−3")}, ${K("(−)")} gibt die negative Zahl ${code("−3")}.</li>
+      <li>${M("1 Aktionen","5 Verlauf löschen")} räumt den Bildschirm auf.</li></ul>`,
+    probier:{ auftrag:`Rechne 7·8 und tippe in der nächsten Zeile nur ${code("+4")} ${K("enter")}. Was steht da?`, felder:[{label:"=", wert:60, tol:{abs:1e-9}, fehler:[{wert:4, msg:"Dann hat der Rechner kein ans eingesetzt – hast du ans vorher gelöscht oder mit (−) begonnen?"}]}] } },
+],
+rechnen: [
+  { titel:"Exakt oder dezimal",
+    text:`Der CAS-Rechner antwortet <b>exakt</b>: mit Brüchen, Wurzeln und π. Ein Dezimalresultat gibt ${KK("ctrl","enter")} (orange: ${CK("≈")}). Steht irgendwo ein Dezimalpunkt in der Eingabe, rechnet er von selbst dezimal.`,
+    bild:T.bruch,
+    probier:{ auftrag:"Berechne exakt und dezimal.", formel:`${fr(2,3)} + ${fr(4,5)}`,
+      felder:[{label:"exakt", bruch:[22,15]},{label:"≈", wert:22/15, tol:{rel:1e-4}}] } },
+  { titel:"Zwei Minuszeichen",
+    text:`Der Rechner hat zwei Minus-Tasten, und sie sind nicht austauschbar:
+      <ul><li>${K("−")} (rechts bei + × ÷) <b>subtrahiert</b>: steht zwischen zwei Zahlen.</li>
+      <li>${K("(−)")} (unten beim Ziffernblock) macht eine Zahl <b>negativ</b>: steht vor einer Zahl – am Anfang, nach einer Klammer, nach · oder im Exponenten.</li></ul>
+      Bei Potenzen entscheidet zusätzlich die Klammer: ohne Klammer wird zuerst potenziert, dann kommt das Minus davor.`,
+    bild:SCR("Rechner",[["5−(−3)","8"],["−5−3","−8"],["(−3)<sup>2</sup>","9"],["−3<sup>2</sup>","−9"],["2<sup>−3</sup>",fr(1,8)]]),
+    probier:{ auftrag:"Tippe beide ein – mit den richtigen Minus-Tasten.", formel:"(−2)<sup>4</sup> &nbsp;&nbsp;&nbsp; −2<sup>4</sup>",
+      felder:[{label:"(−2)<sup>4</sup> =", wert:16, tol:{abs:1e-9}, fehler:[{wert:-16, msg:"Mit Klammer: (−2)·(−2)·(−2)·(−2) = +16."}]},{label:"−2<sup>4</sup> =", wert:-16, tol:{abs:1e-9}, fehler:[{wert:16, msg:"Ohne Klammer: −(2⁴) = −16."}]}] } },
+  { titel:"Zehnerpotenzen: drei Wege hinein",
+    text:`3.4·10<sup>4</sup> kannst du auf drei Arten eingeben – alle liefern dasselbe:
+      <ul><li>${code("3.4")} ${K("EE")} ${code("4")} – EE heisst «mal zehn hoch» (kürzester Weg)</li>
+      <li>${code("3.4")} ${K("×")} ${code("10")} ${K("^")} ${code("4")}</li>
+      <li>ausgeschrieben: ${code("34000")}</li></ul>
+      Für 4·10<sup>−4</sup> steht im Exponenten ein <b>Vorzeichen</b>: ${code("4")} ${K("EE")} ${K("(−)")} ${code("4")} – nicht ${K("−")}! Oder einfach ${code("0.0004")}.`,
+    bild:SCR("Rechner",[["3.4E4","34000"],["3.4·10<sup>4</sup>","34000"],["34000","34000"],["4E−4","0.0004"],["0.0004","0.0004"]]),
+    probier:{ auftrag:"Berechne einmal mit EE und einmal mit ×10^ – das Resultat muss beide Male gleich sein.", formel:`${zp(2.5,-3)} · ${zp(4,8)}`,
+      felder:[{label:"=", wert:1e6, tol:{rel:1e-6}, ph:"z. B. 1E6 oder 1000000"}] } },
+  { titel:"Zehnerpotenzen: drei Anzeigen heraus",
+    text:`Wie der Rechner Resultate <b>anzeigt</b>, stellst du in den Dokumenteinstellungen unter <b>Exponentialformat</b> ein:
+      <ul><li><b>Normal</b>: 34000 und 0.0004 – Zehnerpotenz nur bei sehr grossen oder kleinen Zahlen</li>
+      <li><b>Wissenschaftlich</b>: immer 3.4E4 – eine Stelle vor dem Punkt</li>
+      <li><b>Technisch</b>: 34.E3 – Exponent in Dreierschritten, passend zu k, M, m, µ</li></ul>
+      Für die Physik ist Normal praktisch; Technisch hilft beim Umrechnen in Vorsilben.`,
+    bild:SCR("Dokumenteinstellungen",[["Exponentialformat","Normal ▾"]],"Normal: 34000 · Wissenschaftlich: 3.4E4 · Technisch: 34.E3"),
+    probier:{ auftrag:"Stell auf Technisch und rechne 123456 · 10. Was zeigt der Rechner? Danach zurück auf Normal.",
+      mc:[{html:"1.23456E6", ok:true},{html:"1234560", warum:"Das ist die Anzeige Normal."},{html:"12.3456E5", warum:"Technisch nimmt Exponenten in Dreierschritten: 6, nicht 5."}] } },
+  { titel:"Vorlagen statt Klammerwald",
+    text:`${K("Vorlagen")} öffnet Bruch, Wurzel, n-te Wurzel, Potenz, Betrag. Mit ${K("tab")} springst du von Feld zu Feld, mit ${K("▶")} aus der Vorlage hinaus. Direkt geht es auch: Bruch ${KK("ctrl","÷")}, Wurzel ${KK("ctrl","x²")}, Potenz ${K("^")}.`,
+    bild:T.wurzel,
+    probier:{ auftrag:"Was zeigt der Rechner exakt?", formel:"√72",
+      mc:[{html:"6·√2", ok:true},{html:"2·√6", warum:"Probe: (2·√6)² = 24."},{html:"36·√2", warum:"Die 36 wird beim Herausziehen zu 6."},{html:"8.48528", warum:"Das ist das Dezimalresultat – gefragt ist exakt."}] } },
+  { titel:"Runden und umwandeln",
+    text:`${code("round(x,2)")} rundet auf 2 Nachkommastellen, ${code("exact(0.375)")} macht aus einer Dezimalzahl einen Bruch. Meist rundest du aber erst ganz am Schluss von Hand – im Rechner bleiben alle Stellen.`,
+    bild:T.round,
+    probier:{ auftrag:"Wandle um.", formel:code("exact(0.625)"), felder:[{label:"=", bruch:[5,8]}] } },
+  { titel:"Werte speichern",
+    text:`Ein Wert bekommt mit ${code(":=")} einen Namen (${KK("ctrl","Vorlagen")} tippt es), z. B. ${code("g:=9.81")}. Alternativ ${code("9.81")} ${CK("sto→")} ${code("g")} mit ${KK("ctrl","var")}. Danach rechnet der Rechner mit dem Namen weiter. ${K("var")} zeigt alle Variablen, ${code("DelVar g")} löscht. Eine <b>Liste</b> in geschweiften Klammern wird Eintrag für Eintrag gerechnet – praktisch für ganze Messreihen.`,
+    bild:SCR("Rechner",[["g:=9.81","9.81"],["m:=2.5","2.5"],["m·g","24.525"],["{1.2,3.5,4.8}·g","{11.772,34.335,47.088}"]]),
+    probier:{ auftrag:`Speichere ${code("v:=15")} und ${code("t:=8")}. Was liefert ${code("v*t")}? Lösche danach beide mit ${code("DelVar v,t")}.`, felder:[{label:"=", wert:120, tol:{abs:1e-9}}] } },
+],
+terme: [
+  { titel:"Vier Befehle für fast alles",
+    text:`Ein CAS rechnet mit Buchstaben. Die Befehle stehen unter ${M("3 Algebra")} – tippen geht meist schneller.
+      <ul><li>${code("expand( )")} multipliziert aus</li><li>${code("factor( )")} faktorisiert</li><li>${code("comDenom( )")} bringt auf einen gemeinsamen Nenner</li><li>${code("propFrac( )")} zerlegt einen unechten Bruch</li></ul>`,
+    bild:SCR("Rechner",[["expand((x+3)<sup>2</sup>)","x<sup>2</sup>+6·x+9"],["factor(x<sup>2</sup>−5x+6)","(x−3)·(x−2)"],["comDenom(1/x+1/(2x))",fr(3,"2·x")],["propFrac(17/5)",`3+${fr(2,5)}`]]),
+    probier:{ auftrag:"Was liefert der Rechner?", formel:code("expand((2x-1)(x+4))"),
+      mc:[{html:poly([2,7,-4]), ok:true},{html:poly([2,0,-4]), warum:"Die gemischten Produkte fehlen."},{html:poly([2,9,-4]), warum:"−1·x wurde vergessen: 8x − x = 7x."},{html:poly([2,7,4]), warum:"−1·4 = −4."}] } },
+  { titel:"Der «mit»-Operator",
+    text:`${code("term|x=3")} setzt einen Wert ein, ohne ihn zu speichern. Der senkrechte Strich steht in der Palette ${KK("ctrl","=")}. Mehrere Werte verbindest du mit ${code("and")}.`,
+    bild:T.mit,
+    probier:{ auftrag:"Setze x = 5 ein.", formel:code("x^2-4x+1|x=5"), felder:[{label:"=", wert:6, tol:{abs:1e-9}}] } },
+  { titel:"Der Rechner kontrolliert – du rechnest",
+    text:`Der Rechner zeigt keinen Rechenweg. In der Prüfung zählt dein Weg auf dem Papier; das CAS ist zur <b>Kontrolle</b> da. Stimmt dein Resultat nicht mit dem Rechner überein, ist meist eine Klammer oder ein Vorzeichen anders.`,
+    probier:{ auftrag:"Kontrolliere: Was ist die vollständige Faktorisierung?", formel:"6x<sup>2</sup> + 9x",
+      mc:[{html:"3x·(2x + 3)", ok:true},{html:"3·(2x<sup>2</sup> + 3x)", warum:"Da steckt noch ein x drin."},{html:"x·(6x + 9)", warum:"Da steckt noch eine 3 drin."},{html:"3x·(2x + 9)", warum:"Ausmultipliziert gibt das 27x."}] } },
+],
+gleichungen: [
+  { titel:"solve – der Alleskönner",
+    text:`${code("solve(Gleichung,Variable)")} (${M("3 Algebra","1 Löse")}) löst nach der Variablen auf. Das Gleichheitszeichen ist die Taste ${K("=")}. Mehrere Lösungen kommen mit <b>or</b>, Ungleichungen liefern einen Bereich.`,
+    bild:T.solve,
+    probier:{ auftrag:"Löse.", formel:"5x − 12 = 3x + 6", felder:[{label:"x =", wert:9, tol:{abs:1e-9}}] } },
+  { titel:"Zwei Lösungen",
+    text:`Quadratische Gleichungen haben oft zwei Lösungen. Der Rechner zeigt beide, verbunden mit <b>or</b>.`,
+    probier:{ auftrag:"Löse.", formel:"x<sup>2</sup> = 49", felder:[{label:"x₁ =", wert:-7, tol:{abs:1e-9}, ph:"kleinere"},{label:"x₂ =", wert:7, tol:{abs:1e-9}, ph:"grössere"}] } },
+  { titel:"Numerisch lösen",
+    text:`Findet ${code("solve")} nichts oder wird die exakte Lösung unübersichtlich, hilft ${code("nSolve(Gleichung,x)")} (${M("3 Algebra","6 Numerisches Lösen")}). Es liefert <b>eine</b> Dezimallösung, mit Startwert in dessen Nähe: ${code("nSolve(x^2=10,x=-3)")}.`,
+    bild:T.nsolve,
+    probier:{ auftrag:"Löse numerisch mit Startwert 3.", formel:code("nSolve(x^2=10,x=3)"), felder:[{label:"x ≈", wert:Math.sqrt(10), tol:{rel:1e-4}}] } },
+  { titel:"Gleichungssysteme",
+    text:`Beide Gleichungen mit ${code("and")} verbinden, die Variablen in geschweiften Klammern: ${code("solve(… and …,{x,y})")}. Oder ${M("3 Algebra","5 Gleichungssystem lösen")} und die Vorlage ausfüllen.`,
+    bild:T.system,
+    probier:{ auftrag:"Löse das System.", formel:`<span class="formel klein">3x + 2y = 12<br>x − y = 1</span>`, felder:[{label:"x =", wert:2.8, tol:{abs:1e-6}},{label:"y =", wert:1.8, tol:{abs:1e-6}}] } },
+  { titel:"Formeln umstellen (Physik)",
+    text:`<b>Der wichtigste Trick fürs Labor:</b> ${code("solve")} stellt jede Formel nach jeder Grösse um. Zahlen setzt du am Schluss mit dem mit-Operator ein. Negative Zeiten oder Längen streichst du selbst.
+      <ul><li>Zwischen Buchstaben gehört ein Malzeichen: ${code("a*t")} – ${code("at")} wäre eine Variable «at».</li><li>${MERKE_DELVAR}</li></ul>`,
+    bild:T.physik,
+    probier:{ auftrag:"Ein Auto beschleunigt aus dem Stand mit a = 2.4 m/s² über s = 75 m. Wie lange braucht es?", formel:`s = ${fr(1,2)}·a·t<sup>2</sup>`,
+      felder:[{label:"t ≈", einheit:"s", wert:Math.sqrt(2*75/2.4), tol:{rel:0.003}}] } },
+],
+variablen: [
+  { titel:"Warum speichern?",
+    text:`Zwei Gründe:<ul><li><b>Genauigkeit.</b> Wer ein Zwischenresultat vom Bildschirm abtippt, nimmt die gerundete Zahl – und das Endresultat stimmt nicht mehr ganz. Gespeichert bleibt der exakte Wert; gerundet wird einmal, ganz am Schluss.</li>
+      <li><b>Mehrfach brauchen.</b> In Physikaufgaben kommen g, m oder v<sub>0</sub> fünfmal vor. Einmal tippen reicht.</li></ul>
+      ${code("ans")} merkt sich nur die letzte Zeile – eine Variable bleibt, bis du sie löschst.`,
+    bild:T.praez,
+    probier:{ auftrag:`Rechne ${code("1/13")}, speichere als ${code("a")} (${code("a:=1/13")}). Vergleiche ${code("a*13000")} mit ${code("0.077*13000")}.`,
+      felder:[{label:"a·13000 =", wert:1000, tol:{abs:1e-6}, fehler:[{wert:1001, tol:{abs:1e-6}, msg:"Das ist der Wert mit der abgetippten Zahl – gespeichert bleibt 1/13 exakt."}]},{label:"0.077·13000 =", wert:1001, tol:{abs:1e-6}}] } },
+  { titel:"Drei Wege",
+    text:`<ul><li>${code("g:=9.81")} – Doppelpunkt-Gleich mit ${KK("ctrl","Vorlagen")}. Der Normalfall.</li>
+      <li>${code("9.81")} ${CK("sto→")} ${code("g")} – Speicherpfeil mit ${KK("ctrl","var")}. Dasselbe, nur andersherum gelesen.</li>
+      <li>${code("m*g | g=9.81")} – der «mit»-Strich (${KK("ctrl","=")}) setzt <b>nur einmal</b> ein und speichert nichts. Ideal, um am Schluss die Zahlen in eine umgestellte Formel zu stecken.</li></ul>
+      Namen: Buchstaben, auch mit Ziffern (${code("v0")}, ${code("t1")}). Zwischen zwei Namen gehört ein Malzeichen: ${code("a*t")} – ${code("at")} wäre eine Variable namens «at».`,
+    bild:T.wege,
+    probier:{ auftrag:"Speichere m:=2.5 und g:=9.81. Berechne m·g. Dann einmalig mit Mond-Schwerkraft: m·g | g=1.62. Was zeigt danach ein einfaches g?",
+      felder:[{label:"m·g =", wert:24.525, tol:{abs:1e-6}},{label:"m·g | g=1.62 =", wert:4.05, tol:{abs:1e-6}},{label:"g =", wert:9.81, tol:{abs:1e-6}, fehler:[{wert:1.62, msg:"Nein – der mit-Strich hat g nicht verändert."}]}] } },
+  { titel:"solve speichert nichts",
+    text:`${code("solve(x²=49,x)")} <b>zeigt</b> die Lösungen nur. Tippst du danach ${code("x+1")}, kommt ${code("x+1")} zurück – x ist weiterhin unbekannt. Weiterrechnen mit einer Lösung:
+      <ul><li>einsetzen: ${code("x+1 | x=7")}</li><li>oder ${code("zeros(x²−49,x)")} liefert die Lösungen als Liste ${code("{−7,7}")}, die du speichern kannst.</li></ul>`,
+    bild:T.solvevar,
+    probier:{ auftrag:`Tippe ${code("solve(3x-7=11,x)")} und danach ${code("x*2")}. Was zeigt der Rechner?`,
+      mc:[{html:code("2·x"), ok:true},{html:"12", warum:"solve hat x nicht gespeichert – x ist noch unbekannt."},{html:"Fehlermeldung", warum:"Kein Fehler: 2·x ist ein gültiger Term."}] } },
+  { titel:"Aufräumen",
+    text:`Gespeicherte Variablen überleben Ausschalten und Seitenwechsel – und stören die nächste Aufgabe: Ist ${code("t:=8")} noch da, stellt ${code("solve(s=½·a·t²,t)")} nichts mehr um, sondern setzt 8 ein.
+      <ul><li>${K("var")} zeigt, was gespeichert ist.</li>
+      <li>${code("DelVar t")} oder ${code("DelVar s,a,t")} löscht gezielt; ${M("1 Aktionen","3 Variable löschen")} macht dasselbe per Menü.</li>
+      <li>Ein <b>neues Problem</b> (${K("doc")} ▸ Einfügen ▸ Problem) oder ein neues Dokument startet mit leerem Speicher. Das Scratchpad hat seine eigenen Variablen.</li></ul>`,
+    bild:T.aufraeumen,
+    probier:{ auftrag:"Du willst in einem Dokument mit vielen gespeicherten Variablen eine neue Aufgabe sauber beginnen. Schnellster Weg?",
+      mc:[{html:"Neues Problem einfügen", ok:true},{html:"Alle Variablen einzeln mit DelVar löschen", warum:"Geht, dauert aber – ein neues Problem ist ein Tastendruck."},{html:"Rechner aus und wieder ein", warum:"Variablen überleben das."}] } },
+  { titel:"Funktionen und Listen speichern",
+    text:`Nicht nur Zahlen lassen sich speichern:
+      <ul><li><b>Funktion</b>: ${code("f(x):=12x−4.9x²")}. Danach ${code("f(1)")}, ${code("solve(f(x)=0,x)")} – und in Graphs zeichnet ${code("f1(x)=f(x)")} sie.</li>
+      <li><b>Liste</b>: ${code("t:={3.12,2.98,3.21}")}. Dann ${code("mean(t)")}, ${code("t*2")} (jeder Eintrag), ${code("max(t)")}. Das ist die Messreihe aus dem Labor in einer Zeile.</li>
+      <li><b>Grösse mit Einheit</b>: ${code("v:=72_km/_hr")}, dann ${code("v▸_m/_s")}. Die Einheit reist mit.</li></ul>
+      Variablen gelten im ganzen Problem: auf der Rechner-Seite definiert, in Graphs und Lists &amp; Spreadsheet verfügbar.`,
+    bild:T.funk,
+    probier:{ auftrag:`Definiere ${code("f(x):=12x-4.9x^2")}. Berechne f(1) und f(2).`,
+      felder:[{label:"f(1) =", wert:7.1, tol:{abs:1e-6}},{label:"f(2) =", wert:4.4, tol:{abs:1e-6}}] } },
+  { titel:"Das Rezept für jede Physikaufgabe",
+    text:`<ol><li><b>Formel umstellen</b>, noch ohne Zahlen: ${code("solve(s=1/2*a*t^2,t)")}</li>
+      <li><b>Werte speichern</b>: ${code("s:=75")}, ${code("a:=2.4")}</li>
+      <li><b>Einsetzen</b>: die umgestellte Formel eintippen (oder mit ${K("▲")} zurückholen) – die Werte sind jetzt drin.</li>
+      <li><b>Einheit</b> prüfen (Einheitentest oder mit ${code("_m")}, ${code("_s")} rechnen lassen).</li>
+      <li><b>Runden</b> – einmal, am Schluss, sinnvoll.</li>
+      <li><b>Aufräumen</b>: ${code("DelVar s,a")} oder neues Problem.</li></ol>
+      Reihenfolge wichtig: Speicherst du s und a <i>vor</i> Schritt 1, stellt solve nichts mehr um.`,
+    bild:T.rezept,
+    probier:{ auftrag:"Nach Rezept: Ein Velo beschleunigt von v₀ = 3 m/s mit a = 1.5 m/s² auf v = 12 m/s. v = v₀ + a·t – wie lange dauert das?",
+      felder:[{label:"t =", einheit:"s", wert:6, tol:{abs:1e-6}}] } },
+],
+trig: [
+  { titel:"Zuerst der Winkelmodus",
+    text:`Häufigste Fehlerquelle: Das Gerät steht auf <b>Bogenmass</b> – dann ist sin(30) = −0.988 statt 0.5. Kontrolle in den Dokumenteinstellungen (Winkel: Grad). Ist das Gerät auf Englisch gestellt, heisst Grad <b>DEG</b>; «GRAD» bedeutet dort Neugrad!`,
+    probier:{ auftrag:"Rechne im Grad-Modus.", formel:"sin(30°)", felder:[{label:"=", wert:0.5, tol:{abs:1e-6}, fehler:[{wert:Math.sin(30), tol:{abs:1e-3}, msg:"Bogenmass! Winkel auf Grad stellen."}]}] } },
+  { titel:"Die Taste trig",
+    text:`${K("trig")} öffnet sin, cos, tan und die Umkehrfunktionen sin<sup>−1</sup>, cos<sup>−1</sup>, tan<sup>−1</sup> (Winkel aus einem Seitenverhältnis). Steht das Resultat noch als ${code("sin(37)")} da: ${KK("ctrl","enter")}.`,
+    bild:T.invtrig,
+    probier:{ auftrag:"Winkel in Grad, auf 1 Nachkommastelle.", formel:"sin<sup>−1</sup>(0.8)", felder:[{label:"≈", einheit:"°", wert:asind(0.8), tol:{abs:0.06}}] } },
+  { titel:"Im rechtwinkligen Dreieck",
+    text:`sin α = ${fr("Gegenkathete","Hypotenuse")} &nbsp; cos α = ${fr("Ankathete","Hypotenuse")} &nbsp; tan α = ${fr("Gegenkathete","Ankathete")}`,
+    bild:svgDreieck({a:"Gegenkathete", b:"Ankathete", c:"Hypotenuse"}),
+    probier:{ auftrag:"Eine Rampe ist 4.5 m lang (schräg gemessen) und überwindet 1.2 m Höhe. Neigungswinkel?",
+      felder:[{label:"α ≈", einheit:"°", wert:asind(1.2/4.5), tol:{abs:0.06}, fehler:[{wert:atand(1.2/4.5), msg:"Die Länge ist schräg gemessen → sin, nicht tan."}]}] } },
+],
+graphs: [
+  { titel:"Die Graphs-App",
+    text:`${K("scratch")} zweimal (oder ${K("home")} ▸ Graphs) öffnet das Koordinatensystem. Unten steht ${code("f1(x)=")}: Funktion tippen, ${K("enter")}. ${KK("ctrl","G")} blendet die Eingabezeile ein und aus. Die Variable heisst immer <b>x</b> – auch wenn in der Physik die Zeit t gemeint ist.` },
+  { titel:"Fenster einstellen",
+    text:`${M("4 Fenster/Zoom")}: <b>1 Fenstereinstellungen</b> für XMin, XMax, YMin, YMax von Hand; <b>5 Zoom – Standard</b> setzt −10 … 10. Mit dem Touchpad kannst du auch eine Achsen-Endzahl anklicken und überschreiben.` },
+  { titel:"Schnittpunkt und Nullstelle",
+    text:`<ul><li>${M("6 Graph analysieren","4 Schnittpunkt")} bzw. <b>1 Nullstelle</b>: links und rechts davon klicken.</li>
+      <li>${M("5 Spur","1 Graphspur")}: Der Cursor läuft auf dem Graphen. Eine Zahl tippen springt zu diesem x.</li>
+      <li>${KK("ctrl","T")} blendet eine Wertetabelle ein.</li></ul>`,
+    bild:T.graph,
+    probier:{ auftrag:"Zwei Fahrzeuge: f1(x) = 1.5·x und f2(x) = 0.5·x + 4. Fenster x von 0 bis 10, y von 0 bis 12. Schnittpunkt?",
+      felder:[{label:"x =", wert:4, tol:{abs:0.01}},{label:"y =", wert:6, tol:{abs:0.01}}] } },
+  { titel:"Physik: Ballwurf",
+    text:`Ein Ball wird hochgeworfen: h(t) = 12t − 4.9t². Tippe ${code("f1(x)=12x-4.9x^2")}, Fenster x: 0 bis 3, y: 0 bis 8. Mit <b>Nullstelle</b> findest du, wann er wieder unten ist.`,
+    probier:{ auftrag:"Wann ist der Ball wieder unten?", felder:[{label:"t ≈", einheit:"s", wert:12/4.9, tol:{rel:0.003}}] } },
+  { titel:"Schieberegler und geteilter Bildschirm",
+    text:`<ul><li>${M("1 Aktionen")} ▸ Schieberegler einfügen: einen Parameter ${code("a")} anlegen und ${code("f1(x)=a*x")} tippen. Ziehen am Regler verändert den Graphen live.</li>
+      <li>${K("doc")} ▸ 5 Seitenlayout ▸ Layout auswählen: Graph links, Rechner oder Tabelle rechts.</li></ul>`,
+    probier:{ auftrag:"Stell den Regler bei f1(x) = a·x auf 3. Wohin wandert der Schnittpunkt mit f2(x) = 0.5·x + 4?",
+      mc:[{html:"nach links unten", ok:true},{html:"nach rechts oben", warum:"f1 wird steiler – sie trifft f2 früher."},{html:"er verschwindet", warum:"Zwei Geraden mit verschiedener Steigung schneiden sich immer."}] } },
+],
+einheiten: [
+  { titel:"Einheiten tippen",
+    text:`Eine Einheit beginnt mit einem Unterstrich (${KK("ctrl","␣")}): ${code("_m")}, ${code("_km")}, ${code("_s")}, ${code("_hr")} (Stunde), ${code("_kg")}, ${code("_N")}. <b>Achtung:</b> ${code("_g")} ist die Fallbeschleunigung 9.80665 m/s², das Gramm heisst ${code("_gm")}.` },
+  { titel:"Umrechnen",
+    text:`Mit dem Pfeil ▸ und der Zieleinheit: ${code("72_km/_hr")} ▸ ${code("_m/_s")}. Der Umrechnungsassistent ${KK("ctrl","3")} schreibt den Ausdruck für dich und zeigt auch die Konstanten (${code("_c")} Lichtgeschwindigkeit, ${code("_g")} …).`,
+    bild:T.einh,
+    probier:{ auftrag:"Rechne um.", formel:"108 km/h", felder:[{label:"=", einheit:"m/s", wert:30, tol:{rel:1e-3}, fehler:[{wert:388.8, msg:"Falsche Richtung."}]}] } },
+  { titel:"Der automatische Einheitentest",
+    text:`Der Rechner prüft die Einheiten mit: Ergibt eine Rechnung <code>_m·_s</code> statt Meter, stimmt die Formel nicht.`,
+    bild:SCR("Rechner",[["10·_kg·_g ▸ _N","98.0665·_N"],["_c","299792458.·_m/_s"]]),
+    probier:{ auftrag:"Gewichtskraft einer Masse von 65 kg (mit _g):", felder:[{label:"F_G ≈", einheit:"N", wert:65*9.80665, tol:{rel:0.002}}] } },
+],
+messreihen: [
+  { titel:"Lists & Spreadsheet",
+    text:`Eine Tabellenkalkulation wie Excel: ${K("home")} ▸ Lists &amp; Spreadsheet. In die <b>Kopfzelle</b> jeder Spalte schreibst du einen Namen, z. B. ${code("zeit")} und ${code("weg")} – dann sind die Spalten im ganzen Dokument als Listen verfügbar. Eine Formel in der grauen Zeile darunter (${code("=weg/zeit")}) rechnet die ganze Spalte.`,
+    bild:SCRtab("Lists &amp; Spreadsheet",`<table><tr><th></th><th>A zeit</th><th>B weg</th></tr>${[[0,0],[1,2.1],[2,3.9],[3,6.2],[4,7.9]].map((r,i)=>`<tr><td>${i+1}</td><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</table>`) },
+  { titel:"Mittelwert und Standardabweichung",
+    text:`Im Rechner (gleiches Dokument, neue Seite mit ${KK("ctrl","doc")}): ${code("mean(weg)")}, ${code("stDevSamp(weg)")} (Standardabweichung der Messreihe), ${code("min( )")}, ${code("max( )")}. Die Liste kannst du auch direkt tippen: ${code("mean({12.3,12.5,12.4})")}.`,
+    bild:T.mean,
+    probier:{ auftrag:"Fünf Messungen derselben Länge in cm:", formel:`<span class="formel klein">12.3, 12.5, 12.4, 12.6, 12.2</span>`,
+      felder:[{label:"x̄ =", einheit:"cm", wert:12.4, tol:{rel:1e-4}},{label:"s ≈", einheit:"cm", wert:stdS([12.3,12.5,12.4,12.6,12.2]), tol:{rel:0.005}, fehler:[{wert:stdP([12.3,12.5,12.4,12.6,12.2]), tol:{rel:0.002}, msg:"Das ist stDevPop – nimm stDevSamp."}]}] } },
+  { titel:"Ausgleichsgerade",
+    text:`${K("home")} ▸ Data &amp; Statistics: unten die Spalte ${code("zeit")}, links ${code("weg")} wählen – fertig ist das Streudiagramm. Dann ${M("4 Analysieren","6 Regression")} ▸ Lineare Regression (mx+b). Im Rechner geht es mit ${M("6 Statistik","1 Statistische Berechnungen","3 Lineare Regression (mx+b)")}.`,
+    bild:T.linreg,
+    probier:{ auftrag:"Erfasse die Tabelle aus Schritt 1 und bestimme die Ausgleichsgerade. Die Steigung ist die Geschwindigkeit.",
+      felder:[{label:"m ≈", einheit:"m/s", wert:1.99, tol:{abs:0.006}},{label:"b ≈", einheit:"m", wert:0.04, tol:{abs:0.006}}] } },
+],
+sensoren: [
+  { titel:"Sensor anschliessen",
+    text:`Vernier-Sensoren (Temperatur, Bewegung, Kraft, Licht) kommen in den USB-Anschluss oben am Gerät – direkt oder über den Adapter EasyLink. Das Gerät erkennt den Sensor und öffnet <b>Vernier DataQuest</b>; sonst ${K("home")} ▸ Vernier DataQuest.` },
+  { titel:"Eine Messung aufnehmen",
+    text:`<ul><li>Messwert in der Ansicht <b>Messgerät</b> kontrollieren – plausibel?</li>
+      <li>${M("1 Versuch","7 Erfassungsmodus")}: Zeitbasiert, Rate und Dauer (z. B. 10/s, 30 s). Einzelwerte auf Tastendruck: <b>Ereignisse mit Eingabe</b>.</li>
+      <li>Start mit dem grünen Pfeil oben links. Der Graph zeichnet live.</li>
+      <li>${M("4 Analysieren")}: Steigung, Kurvenanpassung, Statistik – Bereich vorher markieren.</li>
+      <li>${M("1 Versuch")} ▸ Datensatz speichern, dann ${KK("ctrl","S")}.</li></ul>`,
+    bild:SCR("Vernier DataQuest",[[svgAbkuehlung(),""]],"Temperaturfühler kühlt nach dem Herausziehen aus warmem Wasser ab") },
+  { titel:"Vor jeder Messung",
+    text:`<ul><li>Nullpunkt bzw. Raumwert prüfen.</li><li>Rate und Dauer passend wählen: schnelle Vorgänge → hohe Rate, kurze Dauer.</li><li>Sensor ruhig halten, nach der Messung sofort speichern.</li></ul>`,
+    probier:{ auftrag:"Für welchen Versuch passt der Modus «Ereignisse mit Eingabe»?",
+      mc:[{html:"Federkraft bei verschiedenen Auslenkungen", ok:true},{html:"Ein fallender Ball", warum:"Das geht viel zu schnell – zeitbasiert mit hoher Rate."},{html:"Abkühlkurve von Wasser", warum:"Das läuft von selbst – zeitbasiert."}] } },
+],
+};
+
+/* ===================================================================
+   Tastatur nach Foto des CX II-T CAS (05.10.2026). Masse in Bildpunkten
+   des Fotos (Tastenfeld x 290..950, y 555..1580), daraus Prozentwerte --
+   so stimmen Groessen und Abstaende mit dem Geraet ueberein.
+   data-k entspricht dem Text in K("…"); c = Zweitbelegung (ctrl, orange).
+   =================================================================== */
+const KP_BOX = {x:290, y:555, w:660, h:1025};
+const KP = [];
+const key = (k, x, y, w, h, o={}) => KP.push(Object.assign({k, x, y, w, h}, o));
+// Navigation und Touchpad
+key("esc",305,570,85,50,{c:"↶"});  key("scratch",305,665,85,50,{l:"▦",c:"save"});  key("tab",305,757,85,48);
+key("home",845,580,85,45,{l:"⌂ on",c:"off"}); key("doc",845,668,85,47,{l:"doc ▾",c:"+ page"}); key("menu",845,760,85,48,{c:"≡"});
+KP.push({tp:1, x:475, y:575, w:285, h:230});
+// Hauptblock
+key("ctrl",300,885,85,50,{t:"ctrl"}); key("⇧",450,885,90,48,{l:"⇧ shift",c:"CAPS"}); key("var",690,885,85,48,{c:"sto→"}); key("del",850,885,85,48,{c:"clear"});
+const ROWS = [963, 1053, 1140, 1228];
+[["=",{c:"| ≠ ≥"}],["^",{c:"ⁿ√"}],["eˣ",{c:"ln"}],["(",{c:"[ ]"}]].forEach(([k,o],i) => key(k,300,ROWS[i],58,50,o));
+[["trig",{c:"?"}],["x²",{c:"√"}],["10ˣ",{c:"log"}],[")",{c:"{ }"}]].forEach(([k,o],i) => key(k,365,ROWS[i],60,50,o));
+[["7","8","9"],["4","5","6"],["1","2","3"],["0",".","(−)"]].forEach((r,i) => r.forEach((k,j) => key(k,[450,570,690][j],ROWS[i],[90,90,85][j],50,{t:"num", c:k==="."?"capture":k==="(−)"?"ans":""})));
+[["Vorlagen",{l:"▭",c:":="}],["×",{}],["+",{}]].forEach(([k,o],i) => key(k,800,ROWS[i],60,50,o));
+[["Katalog",{l:"📖",c:"∞β°"}],["÷",{c:"▭⁄▭"}],["−",{}]].forEach(([k,o],i) => key(k,870,ROWS[i],65,50,o));
+key("enter",815,1228,120,50,{c:"≈"});
+// Buchstabenblock
+const AROWS = [1325, 1390, 1455, 1520];
+[["EE"],["π",{l:"π ▸"}],[","]].forEach(([k,o],i) => key(k,295,AROWS[i],55,40,Object.assign({t:"abc"},o||{})));
+["ABCDEFG","HIJKLMN","OPQRSTU","VWXYZ"].forEach((r,i) => [...r].forEach((ch,j) => key(ch,378+j*70,AROWS[i],52,40,{t:"abc"})));
+[["?!"],["⚑"],["↵"]].forEach(([k],i) => key(k,878,AROWS[i],57,40,{t:"abc"}));
+key("␣",735,1520,115,40,{t:"abc"});
+
+function keypadHTML(){
+  const pos = d => `left:${((d.x-KP_BOX.x)/KP_BOX.w*100).toFixed(2)}%;top:${((d.y-KP_BOX.y)/KP_BOX.h*100).toFixed(2)}%;width:${(d.w/KP_BOX.w*100).toFixed(2)}%;height:${(d.h/KP_BOX.h*100).toFixed(2)}%`;
+  return KP.map(d => d.tp
+    ? `<div class="tp" style="${pos(d)}"><i></i><span data-k="▲" style="top:0;left:50%;transform:translateX(-50%)">▲</span><span data-k="▼" style="bottom:0;left:50%;transform:translateX(-50%)">▼</span><span data-k="◀" style="left:4px;top:50%;transform:translateY(-50%)">◀</span><span data-k="▶" style="right:4px;top:50%;transform:translateY(-50%)">▶</span></div>`
+    : `<div class="k ${d.t||""}" data-k="${d.k}" style="${pos(d)}">${d.c?`<span class="c">${d.c}</span>`:""}${d.l||d.k}</div>`).join("");
+}
+
+const KEYINFO = Object.assign(Object.fromEntries(TASTEN), {
+  "⇧":"Grossbuchstaben und die grün aufgedruckten Zeichen.",
+  enter:"Ausführen. <b>ctrl + enter</b>: Dezimalresultat ≈.",
+  "=":"Gleichheitszeichen für Gleichungen. <b>ctrl + =</b>: Palette mit |, ≠, ≤, ≥.",
+  "÷":"Division. <b>ctrl + ÷</b>: Bruch-Vorlage.",
+  "×":"Multiplikation – zwischen zwei Buchstaben Pflicht: a*t.",
+  "−":"Minus zum Subtrahieren – nicht für negative Zahlen.",
+  "+":"Plus.", "^":"Potenz: 2^10.",
+  "x²":"Quadrat. <b>ctrl + x²</b>: Wurzel √.",
+  "(":"Klammer auf – bei (−3)² und um ganze Terme. Mit ctrl: [ ].", ")":"Klammer zu. Mit ctrl: { } für Listen.",
+  "Vorlagen":"Vorlagen: Bruch, Wurzel, Potenz, Betrag, Gleichungssystem. Mit tab von Feld zu Feld. <b>ctrl + Vorlagen</b> tippt := zum Speichern.",
+  "Katalog":"Alle Befehle von A bis Z, mit Syntaxhilfe am unteren Rand. <b>ctrl + Katalog</b>: Symbolpalette (∞, °, ▸ …).",
+  "⚑":"Markierung setzen.", "↵":"Zeilenumbruch (z. B. in Notes).",
+  "π":"Pi. Daneben ▸ für Umwandlungen wie ▸Decimal.",
+  "var":"Liste der gespeicherten Variablen. <b>ctrl + var</b>: Speicherpfeil sto→ (9.81→g).",
+  "eˣ":"e hoch x; mit ctrl: ln.", "10ˣ":"10 hoch x; mit ctrl: log.",
+  "?!":"Satzzeichen und Sonderzeichen.", ",":"Komma trennt Argumente: round(x,2).",
+  "π":"Pi.", ".":"Dezimalpunkt – kein Komma!",
+  "␣":"Leerzeichen. <b>ctrl + ␣</b>: Unterstrich _ für Einheiten.",
+  "▲":"Touchpad ▲: im Rechner frühere Eingaben zurückholen; in Graphs zu f2 wechseln.",
+  "▼":"Touchpad ▼: nach unten.", "◀":"Touchpad ◀: Cursor nach links (Spur: Punkt bewegen).",
+  "▶":"Touchpad ▶: Cursor nach rechts, aus einer Vorlage hinaus.",
+});
+const keyInfo = k => KEYINFO[k] || (/^[0-9]$/.test(k) ? `Ziffer ${k}.${k==="3"?" <b>ctrl + 3</b>: Umrechnungsassistent für Einheiten.":""}`
+  : /^[A-Z]$/.test(k) ? `Buchstabe ${k} für Variablen und Befehle. Mit ctrl sind Buchstaben Tastenkürzel: ctrl + S speichern, ctrl + Z rückgängig, ctrl + T Wertetabelle, ctrl + G Eingabezeile in Graphs.` : "");
+
+/* Navigation: Start + Trainer-Stationen + Sensoren */
+const NAV = [{id:"start", name:"Start", stufen:null}, ...STATIONEN, {id:"sensoren", name:"Sensoren", stufen:null}];
+
+/* ===================================================================
+   Oberflaeche
+   =================================================================== */
+// Aufgabe (Trainer oder Probier) als HTML; Eingabefelder heissen <pfx>f<i>
+function aufgabeHTML(t, pfx){
+  let h = (t.quelle ? `<div class="quelle">aus dem Skript · ${t.quelle}</div>` : "") + `<p class="auftrag">${t.auftrag}</p>`;
+  if(t.formel) h += `<div class="formel">${t.formel}</div>`;
+  if(t.bild) h += `<div class="bild">${t.bild}</div>`;
+  if(t.felder){
+    h += `<div class="felder">` + t.felder.map((f,i)=>`<div class="feld"><label for="${pfx}f${i}">${f.label.replace(/_([A-Za-z])/,"<sub>$1</sub>")}</label>
+      <input id="${pfx}f${i}" type="text" autocomplete="off" spellcheck="false" placeholder="${f.ph||""}">
+      ${f.einheit?`<span class="unit">${f.einheit}</span>`:""}</div>`).join("") + `</div>`;
+  } else {
+    h += `<div class="options">` + t.mc.map((o,i)=>`<button class="opt" data-i="${i}">${o.html}</button>`).join("") + `</div>`;
+  }
+  return h;
+}
+// Felder pruefen: {status:'ok'|'falsch'|'unvollstaendig', msg}
+function pruefeFelder(t, pfx){
+  const res = t.felder.map((f,i) => pruefeFeld(f, document.getElementById(pfx+"f"+i).value));
+  const fmt = res.find(r => r.status==="format");
+  if(fmt) return {status:"unvollstaendig", msg:fmt.msg};
+  if(res.some(r => r.status==="leer")) return {status:"unvollstaendig", msg:"Bitte in jedes Feld eine Zahl eintragen."};
+  res.forEach((r,i) => document.getElementById(pfx+"f"+i).className = r.status==="ok" ? "ok" : "bad");
+  if(res.every(r => r.status==="ok")) return {status:"ok"};
+  return {status:"falsch", msg:res.filter(r=>r.status==="falsch" && r.msg).map(r=>r.msg).join(" ")};
+}
+
+if(typeof document !== "undefined"){
+  const LS = "tbz-nspire-trainer";
+  const leer = () => ({v:1, punkte:0, aktiv:"start", modus:{}, schritt:{}, gelernt:{}, geloestSchritt:{}, st:{}});
+  let state;
+  try { state = JSON.parse(localStorage.getItem(LS)); } catch(e) {}
+  if(!state || state.v !== 1) state = leer();
+  state = Object.assign(leer(), state);
+  const save = () => { try { localStorage.setItem(LS, JSON.stringify(state)); } catch(e) {} };
+  const S = id => state.st[id] || (state.st[id] = neuerStand());
+  const $ = id => document.getElementById(id);
+  const station = () => NAV.find(s => s.id===state.aktiv) || NAV[0];
+  const trainer = STATIONEN.length;
+
+  let akt = null;   // laufende Trainer-Aufgabe
+
+  /* ---------- Rechner-Panel ---------- */
+  $("kp").innerHTML = keypadHTML();
+  const kpKeys = [...document.querySelectorAll("#kp [data-k]")];
+  // Tasten, die in den uebergebenen Bereichen als Tastenkappe vorkommen, leuchten
+  function litKeys(nodes){
+    const names = new Set();
+    nodes.forEach(n => n && n.querySelectorAll(".key:not(.c)").forEach(k => names.add(k.textContent.trim())));
+    kpKeys.forEach(e => e.classList.toggle("lit", names.has(e.dataset.k)));
+  }
+  function setScreen(html, titel){
+    $("devScreen").innerHTML = html || SCR(titel || "Rechner", [], "Das Beispiel zu diesem Schritt bzw. zu Tipp 2 erscheint hier.");
+  }
+  // inline-Bildschirme bekommen auf breiten Fenstern einen Verweis (dort sind sie ausgeblendet)
+  function verweisRechts(node){
+    node.querySelectorAll(".screen").forEach(sc => { if(!sc.nextElementSibling || !sc.nextElementSibling.classList.contains("hinweis-rechts")) sc.insertAdjacentHTML("afterend", `<div class="hinweis-rechts">→ Beispiel auf dem Rechner rechts</div>`); });
+  }
+  function zeigeTaste(name){
+    kpKeys.forEach(e => e.classList.toggle("on", e.dataset.k===name));
+    $("devInfo").innerHTML = `${K(name)} &nbsp;${keyInfo(name)}`;
+  }
+  $("kp").addEventListener("click", e => { const k = e.target.closest("[data-k]"); if(k) zeigeTaste(k.dataset.k); });
+  // Tastenkappe im Text beruehren: Taste auf dem Rechner hervorheben
+  document.addEventListener("mouseover", e => { const k = e.target.closest(".key"); if(!k || k.closest("#kp")) return; const n = k.textContent.trim(); kpKeys.forEach(x => x.classList.toggle("hot", x.dataset.k===n)); });
+  document.addEventListener("mouseout", e => { if(e.target.closest && e.target.closest(".key")) kpKeys.forEach(x => x.classList.remove("hot")); });
+  $("devToggle").onclick = () => { const o = $("device").classList.toggle("open"); $("devToggle").textContent = o ? "✕ schliessen" : "⌨ Rechner"; };
+
+  /* ---------- Navigation ---------- */
+  function zeichneStationen(){
+    $("stations").innerHTML = NAV.map((s,i) => {
+      const st = S(s.id);
+      const mark = st.badge ? `<span class="badge" title="geschafft">★</span>`
+        : state.gelernt[s.id] ? `<span class="gel" title="Lernteil fertig">✓</span>` : "";
+      return `<button class="st${s.id===state.aktiv?" on":""}" data-id="${s.id}">
+        <span class="nm"><small>${i}</small>${s.name}</span><span class="mark">${mark}</span>
+        ${s.stufen ? `<span class="pips">${[0,1,2].map(l=>`<i class="${l<=st.max?"reached":""}"></i>`).join("")}</span>` : ""}
+        </button>`;
+    }).join("");
+    $("stations").querySelectorAll(".st").forEach(b => b.onclick = () => waehleStation(b.dataset.id));
+    $("punkte").textContent = state.punkte;
+    $("abzeichen").textContent = `${STATIONEN.filter(s=>S(s.id).badge).length}/${trainer}`;
+  }
+  function waehleStation(id){
+    state.aktiv = id;
+    const s = station();
+    if(!state.modus[id]) state.modus[id] = (s.stufen && state.gelernt[id]) ? "ueben" : "lernen";
+    if(!s.stufen) state.modus[id] = "lernen";
+    save(); zeige();
+  }
+  function setzeModus(m){ state.modus[state.aktiv] = m; save(); zeige(); }
+  function zeige(){
+    const s = station(), m = state.modus[s.id] || "lernen";
+    $("kartentitel").textContent = `${NAV.indexOf(s)} · ${s.name}`;
+    $("tabUeben").disabled = !s.stufen;
+    $("tabLernen").className = "tab" + (m==="lernen" ? " on" : "");
+    $("tabUeben").className = "tab" + (m==="ueben" ? " on" : "");
+    $("lernen").hidden = m!=="lernen";
+    $("ueben").hidden = m!=="ueben";
+    zeichneStationen();
+    if(m==="lernen") zeigeSchritt();
+    else if(!akt || akt.station!==s.id || akt.level!==S(s.id).level) neueAufgabe();
+    else zeichneKopf();
+  }
+
+  /* ---------- Lernen ---------- */
+  function zeigeSchritt(){
+    const s = station(), schritte = LERNEN[s.id];
+    let n = Math.min(state.schritt[s.id] || 0, schritte.length-1);
+    const sch = schritte[n];
+    const geloest = state.geloestSchritt || (state.geloestSchritt = {});
+    const key = i => `${s.id}:${i}`;
+    $("schritte").innerHTML = schritte.map((x,i)=>`<button class="${i===n?"on":""}${geloest[key(i)]?" ok":""}" data-n="${i}" title="${x.titel}">${i+1}</button>`).join("")
+      + `<span>${sch.titel}</span>`;
+    $("schritte").querySelectorAll("button").forEach(b => b.onclick = () => { state.schritt[s.id] = +b.dataset.n; save(); zeigeSchritt(); });
+
+    let h = `<h2 class="sch">${sch.titel}</h2><div class="sch-text">${sch.text}</div>`;
+    if(sch.bild) h += `<div class="sch-bild">${sch.bild}</div>`;
+    if(sch.probier){
+      h += `<div class="probier${geloest[key(n)]?" geloest":""}" id="probier"><b>Probier's am Rechner</b>${aufgabeHTML(sch.probier,"p")}
+        ${sch.probier.felder ? `<div class="aktionen"><button class="primary" id="pPruefen">Prüfen</button></div>` : ""}
+        <div class="meldung" id="pMeldung" aria-live="polite"></div></div>`;
+    }
+    $("schritt").innerHTML = h;
+    verweisRechts($("schritt"));
+    const scr = $("schritt").querySelector(".sch-bild .screen");
+    setScreen(scr ? scr.outerHTML : null, sch.titel);
+    litKeys([$("schritt")]);
+
+    // Tasten-Raster (Start, Schritt 1)
+    $("schritt").querySelectorAll("[data-info]").forEach(b => b.onclick = () => {
+      $("schritt").querySelectorAll("[data-info]").forEach(x => x.classList.remove("on"));
+      b.classList.add("on");
+      const t = TASTEN[+b.dataset.info];
+      $("kinfo").innerHTML = `${K(t[0])} &nbsp;${t[1]}`;
+      zeigeTaste(t[0]);
+    });
+
+    const ok = () => {
+      geloest[key(n)] = true; save();
+      $("probier").classList.add("geloest");
+      $("pMeldung").className = "meldung ok"; $("pMeldung").textContent = "Richtig!";
+      $("schritte").querySelectorAll("button")[n].classList.add("ok");
+    };
+    if(sch.probier && sch.probier.felder){
+      const pr = () => {
+        const r = pruefeFelder(sch.probier, "p");
+        if(r.status==="ok") return ok();
+        $("pMeldung").className = "meldung bad";
+        $("pMeldung").textContent = r.msg || "Stimmt noch nicht – schau dir das Beispiel oben nochmals an.";
+      };
+      $("pPruefen").onclick = pr;
+      $("schritt").querySelectorAll("input").forEach(inp => inp.addEventListener("keydown", e => { if(e.key==="Enter") pr(); }));
+    } else if(sch.probier){
+      $("schritt").querySelectorAll(".opt").forEach(b => b.onclick = () => {
+        const o = sch.probier.mc[+b.dataset.i];
+        if(o.ok){ b.classList.add("right"); ok(); }
+        else { b.classList.add("wrong"); $("pMeldung").className = "meldung bad"; $("pMeldung").textContent = o.warum; }
+      });
+    }
+
+    const letzter = n === schritte.length-1;
+    if(letzter && !state.gelernt[s.id]){ state.gelernt[s.id] = true; save(); zeichneStationen(); }
+    $("zurueck").style.visibility = n>0 ? "visible" : "hidden";
+    const naechste = NAV[NAV.indexOf(s)+1];
+    $("vor").textContent = !letzter ? "Weiter →" : s.stufen ? "Jetzt üben →" : naechste ? `Weiter mit ${naechste.name} →` : "Fertig";
+    $("vor").disabled = letzter && !s.stufen && !naechste;
+    $("zurueck").onclick = () => { state.schritt[s.id] = n-1; save(); zeigeSchritt(); window.scrollTo({top:$("karte").offsetTop-10}); };
+    $("vor").onclick = () => {
+      if(!letzter){ state.schritt[s.id] = n+1; save(); zeigeSchritt(); }
+      else if(s.stufen) setzeModus("ueben");
+      else if(naechste) waehleStation(naechste.id);
+      window.scrollTo({top:$("karte").offsetTop-10});
+    };
+  }
+
+  /* ---------- Ueben ---------- */
+  function zeichneKopf(){
+    const s = station(), st = S(s.id);
+    $("levels").innerHTML = STUFEN.map((n,l)=>`<button class="lv${l===st.level?" on":""}" data-l="${l}" ${l>st.max?"disabled":""}>${n}</button>`).join("");
+    $("levels").querySelectorAll(".lv").forEach(b => b.onclick = () => { st.level = +b.dataset.l; st.serie = 0; save(); neueAufgabe(); });
+    $("serie").innerHTML = st.level < 2
+      ? `${[0,1,2].map(i=>`<i class="${i<st.serie?"full":""}"></i>`).join("")} <span>auf Anhieb gelöst – bei 3 geht's weiter zu ${STUFEN[st.level+1]}</span>`
+      : `${[0,1].map(i=>`<i class="${i<st.profi?"full":""}"></i>`).join("")} <span>${st.badge?"Station geschafft ★ – weiterüben oder nächste Station":"2 Profi-Aufgaben lösen: Station geschafft"}</span>`;
+    if(s.video) $("serie").innerHTML += ` &nbsp;<a href="${s.video}" target="_blank" rel="noopener">Video</a>`;
+  }
+  function neueAufgabe(){
+    const s = station(), st = S(s.id);
+    const {t,k} = erzeuge(s, st.level, akt && akt.station===s.id && akt.level===st.level ? akt.k : -1);
+    akt = {station:s.id, level:st.level, t, k, versuche:0, tipp:false, fertig:false};
+    zeichneStationen(); zeichneKopf();
+    $("aufgabe").innerHTML = aufgabeHTML(t, "");
+    $("pruefen").hidden = !t.felder;
+    $("loesung").hidden = true;
+    $("meldung").textContent = ""; $("meldung").className = "meldung";
+    ["1","2"].forEach(n => { $("tippbox"+n).className = "tipp"; $("tippbox"+n).innerHTML = `<b class="t">Tipp ${n}</b>${t.tipps[n-1]}`; $("tipp"+n).className = "ghost"; });
+    $("done").className = "done"; $("tiefer").hidden = true;
+    verweisRechts($("tippbox2"));
+    setScreen(null, s.name);
+    litKeys([$("aufgabe")]);
+    if(t.felder){
+      $("aufgabe").querySelectorAll("input").forEach(inp => inp.addEventListener("keydown", e => { if(e.key==="Enter") pruefen(); }));
+      const first = $("f0"); if(first && window.matchMedia("(min-width:700px)").matches) first.focus();
+    } else {
+      $("aufgabe").querySelectorAll(".opt").forEach(b => b.onclick = () => waehle(+b.dataset.i, b));
+    }
+  }
+  function zeigeTipp(n, auto){
+    $("tippbox"+n).classList.add("show"); $("tipp"+n).classList.add("offen");
+    if(!akt.fertig && !auto) akt.tipp = true;
+    litKeys([$("aufgabe"), ...["1","2"].filter(i => $("tippbox"+i).classList.contains("show")).map(i => $("tippbox"+i))]);
+    const scr = $("tippbox"+n).querySelector(".screen");
+    if(scr) setScreen(scr.outerHTML);
+  }
+  function fehlversuch(msg){
+    akt.versuche++;
+    $("meldung").className = "meldung bad";
+    $("meldung").textContent = msg || "Stimmt noch nicht.";
+    if(akt.versuche >= 2 && !$("tippbox1").classList.contains("show")){ zeigeTipp(1, true); $("meldung").textContent += " Tipp 1 ist jetzt offen."; }
+    if(akt.versuche >= 3) $("loesung").hidden = false;
+  }
+  function pruefen(){
+    if(akt.fertig) return;
+    const r = pruefeFelder(akt.t, "");
+    if(r.status==="unvollstaendig"){ $("meldung").className="meldung bad"; $("meldung").textContent = r.msg; return; }
+    if(r.status==="ok") return geloest();
+    fehlversuch(r.msg || null);
+  }
+  function waehle(i, btn){
+    if(akt.fertig || btn.classList.contains("wrong")) return;
+    const o = akt.t.mc[i];
+    if(o.ok){ btn.classList.add("right"); return geloest(); }
+    btn.classList.add("wrong");
+    fehlversuch(o.warum);
+  }
+  function abschluss(ergebnis){
+    akt.fertig = true;
+    const st = S(akt.station);
+    state.punkte += ergebnis==="sauber" ? 10 : ergebnis==="geloest" ? 4 : 0;
+    const msg = fortschritt(st, ergebnis);
+    save();
+    let info = ergebnis==="sauber" ? `<b>Richtig, auf Anhieb!</b> +10` : ergebnis==="geloest" ? `<b>Richtig.</b> +4` : `Lösung eingetragen – schau dir Tipp 2 an.`;
+    if(msg.includes("up")) info += `<br><span class="up">Stark! Weiter zu ${STUFEN[st.level]}.</span>`;
+    if(msg.includes("badge")) info += `<br><span class="up">Station geschafft ★</span>`;
+    $("doneinfo").innerHTML = info;
+    $("done").className = "done show" + (ergebnis==="aufgegeben" ? " aufgegeben" : "");
+    if(msg.includes("tiefer")){ $("tiefer").hidden = false; $("tiefer").textContent = `Nochmal ${STUFEN[st.level-1]} üben`; }
+    $("pruefen").hidden = true; $("loesung").hidden = true;
+    zeigeTipp(2, true);
+    zeichneStationen(); zeichneKopf();
+    $("weiter").focus();
+  }
+  function geloest(){
+    $("meldung").className = "meldung ok"; $("meldung").textContent = "";
+    abschluss(akt.versuche===0 && !akt.tipp ? "sauber" : "geloest");
+  }
+
+  $("tabLernen").onclick = () => setzeModus("lernen");
+  $("tabUeben").onclick = () => setzeModus("ueben");
+  $("pruefen").onclick = pruefen;
+  $("tipp1").onclick = () => zeigeTipp(1);
+  $("tipp2").onclick = () => zeigeTipp(2);
+  $("ueberspringen").onclick = () => { if(!akt.fertig){ const st=S(akt.station); st.serie=0; save(); } neueAufgabe(); };
+  $("loesung").onclick = () => {
+    if(akt.t.felder) akt.t.felder.forEach((f,i) => { $("f"+i).value = loesungText(f); $("f"+i).className = "ok"; });
+    else $("aufgabe").querySelectorAll(".opt").forEach((b,i) => { if(akt.t.mc[i].ok) b.classList.add("right"); });
+    $("meldung").textContent = "";
+    abschluss("aufgegeben");
+  };
+  $("weiter").onclick = neueAufgabe;
+  $("tiefer").onclick = () => { const st=S(akt.station); st.level=Math.max(0,st.level-1); st.fail=0; st.serie=0; save(); neueAufgabe(); };
+  $("reset").onclick = () => { if(confirm("Ganzen Fortschritt löschen?")){ state = leer(); save(); akt=null; zeige(); } };
+
+  waehleStation(state.aktiv);
+}
+</script>
+</body>
+</html>
