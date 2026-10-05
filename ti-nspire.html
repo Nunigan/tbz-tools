@@ -252,7 +252,7 @@
   <ul>
     <li>Leg den <b>Taschenrechner</b> neben dich – alles wird am Gerät gemacht, hier nur nachgeschaut und eingetippt.</li>
     <li>Jede Station hat zwei Teile: <b>Lernen</b> zeigt in kurzen Schritten, wie es geht (mit einer Probier-Aufgabe pro Schritt). <b>Üben</b> ist der Trainer.</li>
-    <li>Im Trainer startest du auf <b>Basis</b>. Drei Aufgaben hintereinander auf Anhieb und ohne Tipp: weiter zu <b>Standard</b>, dann <b>Profi</b>. Zwei Profi-Aufgaben gelöst: Station geschafft ★.</li>
+    <li>Im Trainer startest du auf <b>Basis</b>. Drei Aufgaben hintereinander auf Anhieb und ohne Tipp: weiter zu <b>Standard</b>, dann <b>Profi</b>. Zwei Profi-Aufgaben gelöst: Station geschafft ★. Wer sich sicher fühlt, klickt die Stufe oben rechts direkt an.</li>
     <li>Eingabe: Dezimalpunkt oder Komma, beides geht; <code>6.8E-7</code> für 6.8·10<sup>−7</sup>; Brüche als <code>31/24</code>.</li>
   </ul>
 </details>
@@ -1997,7 +1997,7 @@ if(typeof document !== "undefined"){
   /* ---------- Ueben ---------- */
   function zeichneKopf(){
     const s = station(), st = S(s.id);
-    $("levels").innerHTML = STUFEN.map((n,l)=>`<button class="lv${l===st.level?" on":""}" data-l="${l}" ${l>st.max?"disabled":""}>${n}</button>`).join("");
+    $("levels").innerHTML = STUFEN.map((n,l)=>`<button class="lv${l===st.level?" on":""}" data-l="${l}" title="Stufe direkt wählen">${n}</button>`).join("");
     $("levels").querySelectorAll(".lv").forEach(b => b.onclick = () => { st.level = +b.dataset.l; st.serie = 0; save(); neueAufgabe(); });
     $("serie").innerHTML = st.level < 2
       ? `${[0,1,2].map(i=>`<i class="${i<st.serie?"full":""}"></i>`).join("")} <span>auf Anhieb gelöst – bei 3 geht's weiter zu ${STUFEN[st.level+1]}</span>`
