@@ -503,7 +503,7 @@ const T = {
 };
 T.praez = SCR("Rechner",[["1/7 &nbsp;≈","0.142857"],["a:=1/7",fr(1,7)],["a·7000","1000"],["0.143·7000","1001."]],"gespeichert bleibt alles exakt – abgetippt fehlt der Rest");
 T.wege = SCR("Rechner",[["g:=9.81","9.81"],["2.5→m","2.5"],["m·g","24.525"],["m·g | g=1.62","4.05"]],"| setzt nur einmal ein, g bleibt 9.81");
-T.solvevar = SCR("Rechner",[["solve(x<sup>2</sup>=49,x)","x=−7 or x=7"],["x+1","x+1"],["zeros(x<sup>2</sup>−49,x)","{−7,7}"],["x+1 | x=7","8"]]);
+T.solvevar = SCR("Rechner",[["solve(x<sup>2</sup>=49,x)","x=−7 or x=7"],["x+1","x+1"],["x+1 | x=7","8"]]);
 T.aufraeumen = SCR("Rechner",[["t","8"],["solve(s=1/2·a·t<sup>2</sup>,t)","s=32·a"],["DelVar t","Fertig"],["ClearAZ","Fertig"],["solve(s=1/2·a·t<sup>2</sup>,t)",`t=−${fr("√2·√s","√a")} or t=${fr("√2·√s","√a")}`]],"mit t=8 wird nicht umgestellt, sondern eingesetzt");
 T.funk = SCR("Rechner",[["f(x):=12x−4.9x<sup>2</sup>","Fertig"],["f(1)","7.1"],["solve(f(x)=0,x)","x=0. or x=2.44898"],["t:={3.12,2.98,3.21}","{3.12,2.98,3.21}"],["2·0.9/mean(t)<sup>2</sup>","0.186879"]]);
 T.rezept = SCR("Rechner",[["solve(s=1/2·a·t<sup>2</sup>,t)",`t=−${fr("√2·√s","√a")} or t=${fr("√2·√s","√a")}`],["s:=75","75"],["a:=2.4","2.4"],["√(2s/a)","7.90569"],["DelVar s,a","Fertig"]],"1 umstellen · 2 speichern · 3 einsetzen · 4 Einheit · 5 runden · 6 aufräumen");
@@ -824,10 +824,10 @@ const STATIONEN = [
       const r=ri(2,9), opts=shuffle([
         {html:code("x+1"), ok:true},
         {html:dn(r+1), warum:"solve zeigt die Lösung nur an – x bleibt eine unbekannte Variable."},
-        {html:`${dn(-r+1)} or ${dn(r+1)}`, warum:"solve speichert nichts, auch keine Liste."},
+        {html:`${dn(-r+1)} or ${dn(r+1)}`, warum:"solve speichert nichts – auch nicht beide Lösungen."},
         {html:"Fehlermeldung", warum:"Kein Fehler: x+1 ist ein gültiger Term mit unbekanntem x."}]);
       return { auftrag:`Du tippst ${code("solve(x^2="+r*r+",x)")} und in der nächsten Zeile ${code("x+1")}. Was zeigt der Rechner?`, mc:opts,
-        tipps:[`solve speichert <b>nichts</b>. Willst du mit der Lösung weiterrechnen: ${code("x+1 | x="+r)} oder ${code("zeros(x^2-"+r*r+",x)")} für die Liste.`, T.solvevar] };
+        tipps:[`solve speichert <b>nichts</b>. Willst du mit der Lösung weiterrechnen: ${code("x+1 | x="+r)}.`, T.solvevar] };
     },
   ],
   [
@@ -1335,17 +1335,6 @@ messreihen: [
 };
 STATIONEN.forEach(s => (SKRIPT[s.id]||[]).forEach((arr,l) => s.stufen[l].push(...arr)));
 
-/* Gleichungen: Loesungen als Liste speichern und weiterverwenden */
-STATIONEN.find(s=>s.id==="gleichungen").stufen[1].push(
-  () => {
-    let r1,r2; do { r1=ri(-9,9); r2=ri(-9,9); } while(r1>=r2 || !r1 || !r2);
-    const b=-(r1+r2), c=r1*r2;
-    return { auftrag:`Speichere die Lösungen als Liste: ${code("l:=zeros("+poly([1,b,c]).replace(/<sup>2<\/sup>/,"^2").replace(/ /g,"").replace(/−/g,"-")+",x)")}. Lies l[1] und l[2] ab und berechne l[1]·l[2].`,
-      formel:poly([1,b,c]),
-      felder:[{label:"l[1] =", wert:r1, tol:{abs:1e-9}, ph:"kleinere"},{label:"l[2] =", wert:r2, tol:{abs:1e-9}, ph:"grössere"},{label:"l[1]·l[2] =", wert:c, tol:{abs:1e-9}, fehler:[{wert:r1+r2, msg:"Das ist die Summe. Das Produkt der Lösungen ist immer das konstante Glied (Vieta)."}]}],
-      tipps:[`${code("zeros(Term,x)")} löst Term = 0 und gibt eine Liste. Eckige Klammern für das Element: ${code("l[1]")}. Fällt dir auf: l[1]·l[2] = ${c}, das konstante Glied.`, SCR("Rechner",[["l:=zeros(x<sup>2</sup>−5x+6,x)","{2,3}"],["l[1]","2"],["l[1]·l[2]","6"]])] };
-  });
-
 /* Doppelbrueche (Rechnen): exakte Bruchantworten, typischer Fehler = ohne Klammern */
 const kuerze = (z,n) => { if(n<0){z=-z;n=-n;} const g=gcd(z,n)||1; return [z/g, n/g]; };
 T.doppel = SCR("Rechner",[[fr(fr(1,2),fr(3,4)), fr(2,3)],["(1/2)/(3/4)", fr(2,3)],["1/2/3/4 &nbsp;<span style='color:#B3402F;font-size:11px'>ohne Klammern!</span>", fr(1,24)]],"Vorlage in Vorlage, oder Klammern um Zähler und Nenner");
@@ -1617,14 +1606,6 @@ gleichungen: [
   { titel:"Zwei Lösungen",
     text:`Quadratische Gleichungen haben oft zwei Lösungen. Der Rechner zeigt beide, verbunden mit <b>or</b>.`,
     probier:{ auftrag:"Löse.", formel:"x<sup>2</sup> = 49", felder:[{label:"x₁ =", wert:-7, tol:{abs:1e-9}, ph:"kleinere"},{label:"x₂ =", wert:7, tol:{abs:1e-9}, ph:"grössere"}] } },
-  { titel:"Lösungen als Liste: zeros und polyRoots",
-    text:`${code("solve")} zeigt Lösungen als Text (<i>x=2 or x=3</i>) – damit kannst du nicht weiterrechnen. Zwei Befehle liefern sie als <b>Liste</b>:
-      <ul><li>${code("zeros(x²−5x+6,x)")} → ${code("{2,3}")} – für jeden Term, gelöst wird Term = 0 (das «= 0» lässt du weg).</li>
-      <li>${code("polyRoots(x²−5x+6,x)")} → ${code("{2,3}")} – nur für Polynome; gibt es keine reelle Lösung, kommt ${code("{ }")}.</li></ul>
-      Die Liste kannst du speichern und einzelne Lösungen abrufen: ${code("l:=zeros(…)")}, dann ${code("l[1]")}, ${code("l[2]")}.`,
-    bild:SCR("Rechner",[["solve(x<sup>2</sup>−5x+6=0,x)","x=2 or x=3"],["zeros(x<sup>2</sup>−5x+6,x)","{2,3}"],["polyRoots(x<sup>2</sup>−5x+6,x)","{2,3}"],["l:=zeros(x<sup>2</sup>−5x+6,x)","{2,3}"],["l[1]·l[2]","6"]]),
-    probier:{ auftrag:`Speichere ${code("l:=zeros(x^2-49,x)")}. Was sind l[1] und l[2]?`,
-      felder:[{label:"l[1] =", wert:-7, tol:{abs:1e-9}},{label:"l[2] =", wert:7, tol:{abs:1e-9}}] } },
   { titel:"Numerisch lösen",
     text:`Findet ${code("solve")} nichts oder wird die exakte Lösung unübersichtlich, hilft ${code("nSolve(Gleichung,x)")} (${M("3 Algebra","6 Numerisches Lösen")}). Es liefert <b>eine</b> Dezimallösung, mit Startwert in dessen Nähe: ${code("nSolve(x^2=10,x=-3)")}.`,
     bild:T.nsolve,
@@ -1657,8 +1638,8 @@ variablen: [
     probier:{ auftrag:"Speichere m:=2.5 und g:=9.81. Berechne m·g. Dann einmalig mit Mond-Schwerkraft: m·g | g=1.62. Was zeigt danach ein einfaches g?",
       felder:[{label:"m·g =", wert:24.525, tol:{abs:1e-6}},{label:"m·g | g=1.62 =", wert:4.05, tol:{abs:1e-6}},{label:"g =", wert:9.81, tol:{abs:1e-6}, fehler:[{wert:1.62, msg:"Nein – der mit-Strich hat g nicht verändert."}]}] } },
   { titel:"solve speichert nichts",
-    text:`${code("solve(x²=49,x)")} <b>zeigt</b> die Lösungen nur. Tippst du danach ${code("x+1")}, kommt ${code("x+1")} zurück – x ist weiterhin unbekannt. Weiterrechnen mit einer Lösung:
-      <ul><li>einsetzen: ${code("x+1 | x=7")}</li><li>oder ${code("zeros(x²−49,x)")} liefert die Lösungen als Liste ${code("{−7,7}")}, die du speichern kannst.</li></ul>`,
+    text:`${code("solve(x²=49,x)")} <b>zeigt</b> die Lösungen nur. Tippst du danach ${code("x+1")}, kommt ${code("x+1")} zurück – x ist weiterhin unbekannt.
+      Weiterrechnen mit einer Lösung: einsetzen mit dem mit-Strich, ${code("x+1 | x=7")}.`,
     bild:T.solvevar,
     probier:{ auftrag:`Tippe ${code("solve(3x-7=11,x)")} und danach ${code("x*2")}. Was zeigt der Rechner?`,
       mc:[{html:code("2·x"), ok:true},{html:"12", warum:"solve hat x nicht gespeichert – x ist noch unbekannt."},{html:"Fehlermeldung", warum:"Kein Fehler: 2·x ist ein gültiger Term."}] } },
