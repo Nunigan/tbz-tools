@@ -623,7 +623,7 @@ const STATIONEN = [
     () => {
       const z = pick([{n:"zum Mond",d:3.84e8,u:"s"},{n:"von der Sonne zur Erde",d:1.496e11,u:"min"},{n:"vom Mars zur Erde (geringster Abstand)",d:5.46e10,u:"min"},{n:"vom Jupiter zur Erde (Mittel)",d:7.8e11,u:"min"}]);
       const t = z.d/3e8, w = z.u==="min" ? t/60 : t;
-      return { auftrag:`Wie lange braucht das Licht ${z.n}?`, formel:`<span class="formel klein">s = ${zp(+(z.d/10**Math.floor(Math.log10(z.d))).toFixed(3), Math.floor(Math.log10(z.d)))} m, &nbsp; c = 3·10<sup>8</sup> m/s</span>`,
+      return { auftrag:`Wie lange braucht das Licht ${z.n}? Rechne t = s / c${z.u==="min" ? " und teile durch 60 für Minuten" : ""}:`, formel:`<span class="formel klein">t = ${fr(zp(+(z.d/10**Math.floor(Math.log10(z.d))).toFixed(3), Math.floor(Math.log10(z.d)))+" m", "3·10<sup>8</sup> m/s")}${z.u==="min" ? " ÷ 60" : ""}</span>`,
         felder:[{label:"t ≈", einheit:z.u, wert:w, tol:{rel:0.003}, fehler: z.u==="min" ? [{wert:t, msg:"Das sind Sekunden – gesucht sind Minuten (÷ 60)."}] : []}],
         tipps:[`t = s / c. Zehnerpotenzen mit ${K("EE")}.`, SCR("Rechner",[["1.5E11/3E8","500."],["500/60","8.33333"]])] };
     },
@@ -1145,9 +1145,10 @@ rechnen: [
       tipps:[`${code("exact( )")} macht aus einer Dezimalzahl einen Bruch.`, T.exact] }),
     SK("Algebra 2.7", { auftrag:"Wandle in einen gekürzten Bruch um.", formel:code("exact(2.045)"), felder:[{label:"=", bruch:[409,200]}],
       tipps:[`${code("exact( )")}.`, T.exact] }),
-    SK("Physik 1.7", { auftrag:"Ein Wasserstoffatom hat die Masse 1.7·10⁻²⁷ kg. Wie viele Atome ergeben zusammen 1.0 g?",
-      felder:[{label:"N ≈", wert:5.9e23, tol:{rel:0.01}, fehler:[{wert:5.9e26, tol:{rel:0.01}, msg:"1.0 g sind 0.001 kg – Einheit!"}], ph:"z. B. 5.9E23"}],
-      tipps:[`N = m / m<sub>Atom</sub>. Gramm in kg umrechnen, Exponent mit ${K("EE")} und ${K("(−)")}.`, SCR("Rechner",[["0.001/1.7E−27","5.88235E23"]])] }),
+    SK("Physik 1.7", { auftrag:"Ein Wasserstoffatom hat die Masse 1.7·10⁻²⁴ g. Wie viele Atome ergeben zusammen 1.0 g? Rechne:",
+      formel:`N = ${fr("1.0", "1.7·10<sup>−24</sup>")}`,
+      felder:[{label:"N ≈", wert:1/1.7e-24, tol:{rel:0.01}, fehler:[{wert:1.7e-24, tol:{rel:0.01}, msg:"Das ist die Atommasse selbst – 1.0 geteilt durch sie."},{wert:1e24, tol:{rel:0.01}, msg:"Die 1.7 fehlt im Nenner."}], ph:"z. B. 5.9E23"}],
+      tipps:[`Zehnerpotenz mit ${K("EE")}, Minus im Exponenten mit ${K("(−)")}. Das Resultat zeigt der Rechner selbst mit E.`, SCR("Rechner",[["1/1.7E−24","5.88235E23"]])] }),
   ],
   [
     SK("Algebra 2.7", { auftrag:"Berechne den Doppelbruch exakt.", formel:fr(`4 − ${fr(6, `2 − ${fr(1,5)}`)}`, `1 + ${fr(1,3)} − ${fr(10,9)}`),
