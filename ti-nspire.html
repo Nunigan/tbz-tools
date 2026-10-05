@@ -1020,7 +1020,7 @@ const STATIONEN = [
       const t = ri(1,24)/4;
       return { auftrag:"Rechne in Sekunden um.", formel:`${dn(t)} h`,
         felder:[{label:"=", einheit:"s", wert:t*3600, tol:{rel:1e-4}, fehler:[{wert:t*60, msg:"Das sind Minuten – eine Stunde hat 3600 s."}]}],
-        tipps:[`${code(`${t}_hr`)} ▸ ${code("_s")}. Oder der Umrechnungsassistent ${KK("ctrl","3")}.`, T.einh] };
+        tipps:[`${code(`${t}_hr`)} ▸ ${code("_s")}. Die Einheitennamen stehen im Katalog ${K("Katalog")} im Reiter Einheiten.`, T.einh] };
     },
     () => {
       const opts = [{html:"Fallbeschleunigung 9.80665 m/s²", ok:true},
@@ -1028,7 +1028,7 @@ const STATIONEN = [
         {html:"Gewichtskraft", warum:"Die musst du ausrechnen: m·_g."},
         {html:"Gravitationskonstante", warum:"Die heisst _Gc."}];
       return { auftrag:"Was bedeutet _g im Rechner?", formel:code("_g"), mc:shuffle(opts),
-        tipps:[`Tippe ${code("_g")} ${K("enter")} und schau, was herauskommt.`, `Der Umrechnungsassistent ${KK("ctrl","3")} zeigt alle Konstanten.`] };
+        tipps:[`Tippe ${code("_g")} ${K("enter")} und schau, was herauskommt.`, `Im Katalog ${K("Katalog")}, Reiter Einheiten, stehen unter «Konstanten» alle vordefinierten Werte (_c, _g, _Gc …).`] };
     },
   ],
   [
@@ -1599,7 +1599,7 @@ einheiten: [
   { titel:"Einheiten tippen",
     text:`Eine Einheit beginnt mit einem Unterstrich (${KK("ctrl","␣")}): ${code("_m")}, ${code("_km")}, ${code("_s")}, ${code("_hr")} (Stunde), ${code("_kg")}, ${code("_N")}. <b>Achtung:</b> ${code("_g")} ist die Fallbeschleunigung 9.80665 m/s², das Gramm heisst ${code("_gm")}.` },
   { titel:"Umrechnen",
-    text:`Mit dem Pfeil ▸ und der Zieleinheit: ${code("72_km/_hr")} ▸ ${code("_m/_s")}. Der Umrechnungsassistent ${KK("ctrl","3")} schreibt den Ausdruck für dich und zeigt auch die Konstanten (${code("_c")} Lichtgeschwindigkeit, ${code("_g")} …).`,
+    text:`Mit dem Pfeil ▸ und der Zieleinheit: ${code("72_km/_hr")} ▸ ${code("_m/_s")}. Alle Einheitennamen und die Konstanten (${code("_c")} Lichtgeschwindigkeit, ${code("_g")} …) findest du im Katalog ${K("Katalog")} im Reiter Einheiten – auswählen und ${K("enter")} fügt sie ein.`,
     bild:T.einh,
     probier:{ auftrag:"Rechne um.", formel:"108 km/h", felder:[{label:"=", einheit:"m/s", wert:30, tol:{rel:1e-3}, fehler:[{wert:388.8, msg:"Falsche Richtung."}]}] } },
   { titel:"Der automatische Einheitentest",
@@ -1698,7 +1698,7 @@ const KEYINFO = Object.assign(Object.fromEntries(TASTEN), {
   "▼":"Touchpad ▼: nach unten.", "◀":"Touchpad ◀: Cursor nach links (Spur: Punkt bewegen).",
   "▶":"Touchpad ▶: Cursor nach rechts, aus einer Vorlage hinaus.",
 });
-const keyInfo = k => KEYINFO[k] || (/^[0-9]$/.test(k) ? `Ziffer ${k}.${k==="3"?" <b>ctrl + 3</b>: Umrechnungsassistent für Einheiten.":""}`
+const keyInfo = k => KEYINFO[k] || (/^[0-9]$/.test(k) ? `Ziffer ${k}.`
   : /^[A-Z]$/.test(k) ? `Buchstabe ${k} für Variablen und Befehle. Mit ctrl sind Buchstaben Tastenkürzel: ctrl + S speichern, ctrl + Z rückgängig, ctrl + T Wertetabelle, ctrl + G Eingabezeile in Graphs.` : "");
 
 /* Navigation: Start + Trainer-Stationen + Sensoren */
