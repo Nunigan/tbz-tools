@@ -80,7 +80,8 @@
   .kp .tp{position:absolute;background:#2A2E35;border-radius:9%;border:1px solid #555}
   .kp .tp span{position:absolute;color:#DDE1E6;font-size:3.4cqw;cursor:pointer;padding:2px}
   .kp .tp span.lit{color:#FFE033;font-size:5cqw;font-weight:700;text-shadow:0 0 6px #FF9500,0 0 14px #FFC800;animation:none;transform:none;box-shadow:none;background:none !important}
-  .kp .tp i{position:absolute;left:50%;top:50%;width:26%;height:32%;transform:translate(-50%,-50%);border-radius:14%;border:1px solid #777}
+  .kp .tp i{position:absolute;left:50%;top:50%;width:26%;height:32%;transform:translate(-50%,-50%);border-radius:14%;border:1px solid #777;cursor:pointer}
+  .kp .tp i.lit{border-color:#FFE033;box-shadow:0 0 0 2px #FF9500,0 0 12px 4px rgba(255,200,0,.8);animation:none;transform:translate(-50%,-50%);background:rgba(255,224,51,.25) !important}
   .kp .lit{background:#FFE033 !important;color:#1E2A38 !important;border-color:#FF9500 !important;box-shadow:0 0 0 3px #FF9500,0 0 14px 4px rgba(255,200,0,.75);z-index:2;transform:scale(1.12);animation:kpuls 1.1s ease-in-out infinite}
   .kp .lit .c{color:#7A3A00}
   @keyframes kpuls{0%,100%{box-shadow:0 0 0 3px #FF9500,0 0 14px 4px rgba(255,200,0,.75)}50%{box-shadow:0 0 0 4px #FFB000,0 0 22px 8px rgba(255,200,0,.95)}}
@@ -1450,11 +1451,11 @@ const TASTEN = [
   ["menu","Menü der App, in der du gerade bist (Rechner, Graphs …). Die Ziffern wählen direkt aus."],
   ["ctrl","Orange Zweitbelegung: zuerst ctrl, dann die Taste. Beispiel: ctrl + enter gibt das Dezimalresultat ≈."],
   ["esc","Abbrechen, Menü schliessen."],
-  ["tab","Zum nächsten Feld springen – in Vorlagen und in Graphs."],
+  ["tab","In Dialogen und in Graphs zum nächsten Feld. In Vorlagen bewegst du dich mit den Pfeilen des Touchpads, nicht mit tab."],
   ["del","Zeichen löschen. <b>ctrl + del</b> löscht die ganze Zeile."],
   ["var","Liste der gespeicherten Variablen."],
   ["trig","sin, cos, tan und ihre Umkehrfunktionen."],
-  ["Vorlagen","Vorlagen: Bruch, Wurzel, Potenz, Betrag, Gleichungssystem. Mit tab von Feld zu Feld."],
+  ["Vorlagen","Vorlagen: Bruch, Wurzel, Potenz, Betrag, Gleichungssystem. Auswahl mit den Touchpad-Pfeilen und Klick; in der Vorlage mit den Pfeilen von Feld zu Feld."],
   ["Katalog","Alle Befehle von A bis Z, mit Syntaxhilfe am unteren Rand. Ein Buchstabe springt zum Befehl."],
   ["(−)","Vorzeichen für negative Zahlen – nicht die Minus-Taste!"],
   ["EE","«mal zehn hoch»: 3.4E5 = 3.4·10<sup>5</sup>."],
@@ -1508,7 +1509,7 @@ rechnen: [
     text:`Der CAS-Rechner antwortet <b>exakt</b>: mit Brüchen, Wurzeln und π. Ein Dezimalresultat gibt ${KK("ctrl","enter")} (orange: ${CK("≈")}). Steht irgendwo ein Dezimalpunkt in der Eingabe, rechnet er von selbst dezimal.
       <p>Brüche kannst du auf zwei Arten eintippen:</p>
       <ul><li><b>in der Zeile</b>: ${code("2")} ${K("÷")} ${code("3")} – schnell, aber bei zusammengesetzten Brüchen brauchst du Klammern: ${code("1/(2+3)")}</li>
-      <li><b>als Vorlage</b>: ${KK("ctrl","÷")} öffnet ${fr("□","□")} – Zähler tippen, ${K("tab")} oder ${K("▼")} in den Nenner, ${K("▶")} wieder hinaus. Sieht aus wie auf dem Papier, und Klammern kannst du nicht vergessen.</li></ul>`,
+      <li><b>als Vorlage</b>: ${KK("ctrl","÷")} öffnet ${fr("□","□")} – Zähler tippen, mit ${K("▼")} in den Nenner, mit ${K("▶")} wieder hinaus. Sieht aus wie auf dem Papier, und Klammern kannst du nicht vergessen.</li></ul>`,
     bild:T.bruch,
     probier:{ auftrag:"Berechne exakt und dezimal – einmal in der Zeile getippt, einmal mit der Bruchvorlage. Beides muss dasselbe geben.", formel:`${fr(2,3)} + ${fr(4,5)}`,
       felder:[{label:"exakt", bruch:[22,15]},{label:"≈", wert:22/15, tol:{rel:1e-4}}] } },
@@ -1539,7 +1540,7 @@ rechnen: [
     probier:{ auftrag:"Berechne einmal mit EE und einmal mit ×10^ – das Resultat muss beide Male gleich sein.", formel:`${zp(2.5,-3)} · ${zp(4,8)}`,
       felder:[{label:"=", wert:1e6, tol:{rel:1e-6}, ph:"z. B. 1E6 oder 1000000"}] } },
   { titel:"Vorlagen statt Klammerwald",
-    text:`${K("Vorlagen")} öffnet Bruch, Wurzel, n-te Wurzel, Potenz, Betrag. Mit ${K("tab")} springst du von Feld zu Feld, mit ${K("▶")} aus der Vorlage hinaus. Direkt geht es auch: Bruch ${KK("ctrl","÷")}, Wurzel ${KK("ctrl","x²")}, Potenz ${K("^")}.`,
+    text:`${K("Vorlagen")} öffnet Bruch, Wurzel, n-te Wurzel, Potenz, Betrag. In der Vorlagen-Palette bewegst du dich mit den Pfeilen ${K("◀")} ${K("▲")} ${K("▼")} ${K("▶")} des Touchpads und wählst mit dem ${K("Klick")} in der Mitte. In der Vorlage selbst: mit den Pfeilen von Feld zu Feld, mit ${K("▶")} am Ende hinaus. Direkt geht es auch: Bruch ${KK("ctrl","÷")}, Wurzel ${KK("ctrl","x²")}, Potenz ${K("^")}.`,
     bild:T.wurzel,
     probier:{ auftrag:"Was zeigt der Rechner exakt?", formel:"√72",
       mc:[{html:"6·√2", ok:true},{html:"2·√6", warum:"Probe: (2·√6)² = 24."},{html:"36·√2", warum:"Die 36 wird beim Herausziehen zu 6."},{html:"8.48528", warum:"Das ist das Dezimalresultat – gefragt ist exakt."}] } },
@@ -1762,7 +1763,7 @@ key("␣",735,1520,115,40,{t:"abc"});
 function keypadHTML(){
   const pos = d => `left:${((d.x-KP_BOX.x)/KP_BOX.w*100).toFixed(2)}%;top:${((d.y-KP_BOX.y)/KP_BOX.h*100).toFixed(2)}%;width:${(d.w/KP_BOX.w*100).toFixed(2)}%;height:${(d.h/KP_BOX.h*100).toFixed(2)}%`;
   return KP.map(d => d.tp
-    ? `<div class="tp" style="${pos(d)}"><i></i><span data-k="▲" style="top:0;left:50%;transform:translateX(-50%)">▲</span><span data-k="▼" style="bottom:0;left:50%;transform:translateX(-50%)">▼</span><span data-k="◀" style="left:4px;top:50%;transform:translateY(-50%)">◀</span><span data-k="▶" style="right:4px;top:50%;transform:translateY(-50%)">▶</span></div>`
+    ? `<div class="tp" style="${pos(d)}"><i data-k="Klick" title="Klick"></i><span data-k="▲" style="top:0;left:50%;transform:translateX(-50%)">▲</span><span data-k="▼" style="bottom:0;left:50%;transform:translateX(-50%)">▼</span><span data-k="◀" style="left:4px;top:50%;transform:translateY(-50%)">◀</span><span data-k="▶" style="right:4px;top:50%;transform:translateY(-50%)">▶</span></div>`
     : `<div class="k ${d.t||""}" data-k="${d.k}" style="${pos(d)}">${d.c?`<span class="c">${d.c}</span>`:""}${d.l||d.k}</div>`).join("");
 }
 
@@ -1776,7 +1777,7 @@ const KEYINFO = Object.assign(Object.fromEntries(TASTEN), {
   "+":"Plus.", "^":"Potenz: 2^10.",
   "x²":"Quadrat. <b>ctrl + x²</b>: Wurzel √.",
   "(":"Klammer auf – bei (−3)² und um ganze Terme. Mit ctrl: [ ].", ")":"Klammer zu. Mit ctrl: { } für Listen.",
-  "Vorlagen":"Vorlagen: Bruch, Wurzel, Potenz, Betrag, Gleichungssystem. Mit tab von Feld zu Feld. <b>ctrl + Vorlagen</b> tippt := zum Speichern.",
+  "Vorlagen":"Vorlagen: Bruch, Wurzel, Potenz, Betrag, Gleichungssystem. Mit den Touchpad-Pfeilen zur Vorlage, Klick wählt; in der Vorlage mit den Pfeilen von Feld zu Feld. <b>ctrl + Vorlagen</b> tippt := zum Speichern.",
   "Katalog":"Alle Befehle von A bis Z, mit Syntaxhilfe am unteren Rand. Reiter 3: Einheiten und das Umrechnungssymbol ▸. <b>ctrl + Katalog</b>: Symbolpalette (∞, ° …).",
   "⚑":"Markierung setzen.", "↵":"Zeilenumbruch (z. B. in Notes).",
   "π":"Pi. (Der Umrechnungspfeil ▸ für Einheiten steht nicht hier, sondern im Katalog, Reiter 3.)",
@@ -1788,6 +1789,7 @@ const KEYINFO = Object.assign(Object.fromEntries(TASTEN), {
   "▲":"Touchpad ▲: im Rechner frühere Eingaben zurückholen; in Graphs zu f2 wechseln.",
   "▼":"Touchpad ▼: nach unten.", "◀":"Touchpad ◀: Cursor nach links (Spur: Punkt bewegen).",
   "▶":"Touchpad ▶: Cursor nach rechts, aus einer Vorlage hinaus.",
+  "Klick":"Mitte des Touchpads: auswählen und bestätigen – wie ein Mausklick, z. B. in der Vorlagen-Palette oder im Katalog.",
 });
 const keyInfo = k => KEYINFO[k] || (/^[0-9]$/.test(k) ? `Ziffer ${k}.`
   : /^[A-Z]$/.test(k) ? `Buchstabe ${k} für Variablen und Befehle. Mit ctrl sind Buchstaben Tastenkürzel: ctrl + S speichern, ctrl + Z rückgängig, ctrl + T Wertetabelle, ctrl + G Eingabezeile in Graphs.` : "");
