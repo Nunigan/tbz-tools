@@ -1331,6 +1331,85 @@ messreihen: [
 };
 STATIONEN.forEach(s => (SKRIPT[s.id]||[]).forEach((arr,l) => s.stufen[l].push(...arr)));
 
+/* Doppelbrueche (Rechnen): exakte Bruchantworten, typischer Fehler = ohne Klammern */
+const kuerze = (z,n) => { if(n<0){z=-z;n=-n;} const g=gcd(z,n)||1; return [z/g, n/g]; };
+T.doppel = SCR("Rechner",[[fr(fr(1,2),fr(3,4)), fr(2,3)],["(1/2)/(3/4)", fr(2,3)],["1/2/3/4 &nbsp;<span style='color:#B3402F;font-size:11px'>ohne Klammern!</span>", fr(1,24)]],"Vorlage in Vorlage, oder Klammern um Zähler und Nenner");
+STATIONEN[0].stufen[1].push(
+  () => {
+    let a,b,c,d; do { a=ri(1,9); b=ri(2,9); c=ri(1,9); d=ri(2,9); } while(a===b || c===d || (a*d)%(b*c)===0);
+    const L = kuerze(a*d, b*c);
+    return { auftrag:"Berechne den Doppelbruch exakt.", formel:fr(fr(a,b), fr(c,d)),
+      felder:[{label:"=", bruch:L, fehler:[{bruch:kuerze(a, b*c*d), msg:"So rechnet der Rechner a/b/c/d ohne Klammern – von links nach rechts. Zähler und Nenner je in Klammern, oder Vorlage in Vorlage."},{bruch:kuerze(a*c, b*d), msg:"Das wäre multipliziert. Durch einen Bruch teilen heisst mit dem Kehrwert multiplizieren."}]}],
+      tipps:[`Bruchvorlage ${KK("ctrl","÷")}, und im Zähler gleich nochmals ${KK("ctrl","÷")} – der Rechner setzt die Klammern selbst. In der Zeile: ${code(`(${a}/${b})/(${c}/${d})`)}.`, T.doppel] };
+  },
+  () => {
+    let a,b; do { a=ri(2,12); b=ri(2,12); } while(a===b);
+    const L = kuerze(a*b, a+b);
+    return { auftrag:"Berechne exakt (so sieht z. B. die Formel für parallele Widerstände aus).", formel:fr(1, `${fr(1,a)} + ${fr(1,b)}`),
+      felder:[{label:"=", bruch:L, fehler:[{bruch:[a+b,1], msg:"Nicht jeden Bruch einzeln umdrehen: Zuerst die Summe im Nenner bilden, dann den Kehrwert."},{bruch:kuerze(a+b, a*b), msg:"Das ist der Nenner allein – noch den Kehrwert nehmen."}]}],
+      tipps:[`Vorlage: Zähler 1, im Nenner zwei Brüche mit +. In der Zeile: ${code(`1/(1/${a}+1/${b})`)} – die Klammer um die Summe ist Pflicht.`, T.doppel] };
+  });
+/* Potenzen und Wurzeln (Rechnen) */
+const nrt = (n,x) => `<sup style="font-size:.6em">${n}</sup>√<span style="text-decoration:overline">${x}</span>`;
+T.pot = SCR("Rechner",[["2<sup>10</sup>","1024"],["√50","5·√2"],[nrt(3,54),"3·"+nrt(3,2)],["8<sup>(1/3)</sup>","2"],["8<sup>2/3</sup> &nbsp;<span style='color:#B3402F;font-size:11px'>ohne Klammer</span>",fr(64,3)],[nrt(5,100)+" &nbsp;"+CK("≈"),"2.51189"]],"ⁿ√ als Vorlage (ctrl + ^) oder als Potenz mit Bruch-Exponent – in Klammern!");
+STATIONEN[0].stufen[0].push(
+  () => {
+    let a,b; do { a=ri(2,12); b=ri(2,12); } while(Number.isInteger(Math.sqrt(a*a+b*b)) || a===b);
+    return { auftrag:"Hypotenuse eines rechtwinkligen Dreiecks mit den Katheten a und b (Pythagoras). Auf 3 Nachkommastellen.", formel:`c = √(${a}² + ${b}²)`,
+      felder:[{label:"c ≈", wert:Math.sqrt(a*a+b*b), tol:{abs:6e-4}, fehler:[{wert:a+b, tol:{abs:1e-6}, msg:"Die Wurzel aus einer Summe ist nicht die Summe der Wurzeln – erst addieren, dann die Wurzel."},{wert:Math.sqrt(a*a)+b*b, tol:{abs:1e-3}, msg:"Die Wurzel muss über der ganzen Summe stehen: Klammer, oder in der Vorlage beides eintippen."}]}],
+      tipps:[`Wurzel mit ${KK("ctrl","x²")}: die Vorlage wächst mit, bis du mit ${K("▶")} hinausgehst. In der Zeile: ${code(`√(${a}^2+${b}^2)`)} – Klammer!`, T.pot] };
+  });
+STATIONEN[0].stufen[1].push(
+  () => {
+    const n=pick([3,4]), a=pick([2,3]), b=pick([2,3,5,7].filter(x=>x!==a));
+    const opts = shuffle([
+      {html:`${a}·${nrt(n,b)}`, ok:true},
+      {html:`${a}·√${b}`, warum:"Falscher Wurzelexponent – es ist die "+n+". Wurzel."},
+      {html:`${a**n}·${nrt(n,b)}`, warum:`${a**n} = ${a}<sup>${n}</sup> wird beim Herausziehen zu ${a}.`},
+      {html:`${nrt(n,a*b)}`, warum:"Da wurde nichts herausgezogen – und der Wert stimmt auch nicht."}]);
+    return { auftrag:"Was zeigt der Rechner exakt?", formel:nrt(n, a**n*b), mc:opts,
+      tipps:[`${n}. Wurzel: Vorlage ${KK("ctrl","^")} (oben ${n}, unten die Zahl) oder ${code(`(${a**n*b})^(1/${n})`)}. Der CAS zieht heraus, was geht.`, T.pot] };
+  },
+  () => {
+    let n,x; do { n=ri(3,5); x=ri(10,500); } while(Number.isInteger(Math.round(x**(1/n)*1e9)/1e9));
+    return { auftrag:`Berechne die ${n}. Wurzel auf 4 Nachkommastellen.`, formel:nrt(n,x),
+      felder:[{label:"≈", wert:x**(1/n), tol:{abs:6e-5}, fehler:[{wert:x/n, tol:{rel:1e-4}, msg:"Wurzel ziehen ist nicht durch n teilen."},{wert:Math.sqrt(x), tol:{rel:1e-4}, msg:"Das ist die Quadratwurzel – gefragt ist die "+n+". Wurzel."},{wert:x**n, tol:{rel:1e-4}, msg:"Das ist x hoch n – der Exponent muss 1/n sein."}]}],
+      tipps:[`Vorlage ${KK("ctrl","^")}: Index ${n}, dann die Zahl. Oder ${code(`${x}^(1/${n})`)} – Klammer um 1/${n}!`, T.pot] };
+  },
+  () => {
+    let b,n,m,a; do { b=ri(2,5); n=pick([2,3]); m=pick([1,2,3].filter(k=>k!==n)); a=b**n; } while(a**m/n === b**m);   // ohne Klammer darf nicht zufaellig stimmen
+    return { auftrag:"Potenz mit Bruch-Exponent – Klammer nicht vergessen.", formel:`${a}<sup>${m}/${n}</sup>`,
+      felder:[{label:"=", wert:b**m, tol:{abs:1e-9}, fehler:[{wert:a**m/n, tol:{rel:1e-6}, msg:`Ohne Klammer rechnet der Rechner ${a}^${m} und teilt dann durch ${n}. Exponent in Klammern: ^(${m}/${n}).`}]}],
+      tipps:[`${code(`${a}^(${m}/${n})`)}: Hoch 1/${n} ist die ${n}. Wurzel, hoch ${m} dann die Potenz. Mit ${K("^")} öffnet sich ein Exponentenfeld – da hinein den ganzen Bruch.`, T.pot] };
+  });
+STATIONEN[0].stufen[2].push(
+  () => {
+    const V=ri(50,2000);
+    const kugel = Math.random()<.5;
+    return kugel
+      ? { auftrag:`Eine Kugel hat das Volumen V = ${V} cm³. Radius?`, formel:`V = ${fr(4,3)}·π·r³ &nbsp; → &nbsp; r = ${nrt(3, fr("3V","4π"))}`,
+          felder:[{label:"r ≈", einheit:"cm", wert:Math.cbrt(3*V/(4*Math.PI)), tol:{rel:0.003}, fehler:[{wert:Math.sqrt(3*V/(4*Math.PI)), tol:{rel:0.003}, msg:"Quadratwurzel statt dritter Wurzel."},{wert:3*V/(4*Math.PI), tol:{rel:0.003}, msg:"Das ist r³ – noch die dritte Wurzel ziehen."}]}],
+          tipps:[`${code(`(3*${V}/(4π))^(1/3)`)} oder die ⁿ√-Vorlage mit Index 3. Kontrolle: ${code("solve(4/3*π*r^3="+V+",r)")}.`, T.pot] }
+      : { auftrag:`Ein Würfel hat das Volumen V = ${V} cm³. Kantenlänge?`, formel:`V = a³ &nbsp; → &nbsp; a = ${nrt(3,"V")}`,
+          felder:[{label:"a ≈", einheit:"cm", wert:Math.cbrt(V), tol:{rel:0.003}, fehler:[{wert:Math.sqrt(V), tol:{rel:0.003}, msg:"Quadratwurzel statt dritter Wurzel."},{wert:V/3, tol:{rel:0.003}, msg:"Dritte Wurzel ist nicht durch 3 teilen."}]}],
+          tipps:[`${code(`${V}^(1/3)`)} oder ⁿ√-Vorlage (${KK("ctrl","^")}) mit Index 3.`, T.pot] };
+  },
+  () => {
+    const n=ri(5,25);
+    return { auftrag:`Ein Kapital verdoppelt sich mit Zinseszins in ${n} Jahren. Welcher Zinssatz steckt dahinter?`, formel:`q<sup>${n}</sup> = 2 &nbsp; → &nbsp; q = ${nrt(n,2)}, &nbsp; p = (q − 1)·100 %`,
+      felder:[{label:"p ≈", einheit:"%", wert:(2**(1/n)-1)*100, tol:{abs:0.01}, fehler:[{wert:100/n, tol:{abs:0.01}, msg:"Das wäre ohne Zinseszins (linear). Mit Zinseszins: n-te Wurzel aus 2."},{wert:2**(1/n), tol:{abs:1e-4}, msg:"Das ist der Faktor q – Zinssatz = (q − 1)·100."}]}],
+      tipps:[`${code(`(2^(1/${n})-1)*100`)}. Kontrolle: ${code(`solve(q^${n}=2,q)`)} – nur die positive Lösung.`, T.pot] };
+  });
+STATIONEN[0].stufen[2].push(
+  () => {
+    let a,b,c,d,e,f,Z,N; do { a=ri(1,5); b=ri(1,5); c=ri(2,6); d=ri(2,6); e=ri(1,5); f=ri(2,6); Z=[a*c+b, c]; N=[d*f-e, f]; } while(N[0]<=0 || gcd(b,c)!==1 || gcd(e,f)!==1);
+    const L = kuerze(Z[0]*N[1], Z[1]*N[0]);
+    const ohne = kuerze(a*Z[1]*N[0] + b*N[1], Z[1]*N[0]);   // a + (b/c)/(d - e/f): Klammer im Zaehler vergessen
+    return { auftrag:"Berechne den Doppelbruch exakt.", formel:fr(`${a} + ${fr(b,c)}`, `${d} − ${fr(e,f)}`),
+      felder:[{label:"=", bruch:L, fehler: ohne[0]*L[1]===L[0]*ohne[1] ? [] : [{bruch:ohne, msg:"Im Zähler fehlt die Klammer um a + b/c – so wird nur b/c durch den Nenner geteilt."}]}],
+      tipps:[`Grosse Bruchvorlage zuerst, dann Zähler und Nenner füllen – in jedem steckt wieder eine kleine Vorlage. In der Zeile: ${code(`(${a}+${b}/${c})/(${d}-${e}/${f})`)}.`, T.doppel] };
+  });
+
 const STUFEN = ["Basis","Standard","Profi"];
 
 /* ===================================================================
@@ -1433,6 +1512,14 @@ rechnen: [
     bild:T.bruch,
     probier:{ auftrag:"Berechne exakt und dezimal – einmal in der Zeile getippt, einmal mit der Bruchvorlage. Beides muss dasselbe geben.", formel:`${fr(2,3)} + ${fr(4,5)}`,
       felder:[{label:"exakt", bruch:[22,15]},{label:"≈", wert:22/15, tol:{rel:1e-4}}] } },
+  { titel:"Doppelbrüche",
+    text:`Ein Bruch im Bruch ist der Klassiker für vergessene Klammern. Zwei sichere Wege:
+      <ul><li><b>Vorlage in Vorlage</b>: ${KK("ctrl","÷")} für den grossen Bruch, im Zähler nochmals ${KK("ctrl","÷")}. Der Rechner weiss dann genau, was oben und was unten ist.</li>
+      <li><b>In der Zeile</b> Klammern um Zähler und Nenner: ${code("(1/2)/(3/4)")}.</li></ul>
+      Ohne Klammern rechnet ${code("1/2/3/4")} von links nach rechts – das gibt ${fr(1,24)} statt ${fr(2,3)}.`,
+    bild:T.doppel,
+    probier:{ auftrag:"Berechne exakt – einmal mit Vorlage in Vorlage, einmal in der Zeile mit Klammern.", formel:fr(fr(3,4), fr(5,6)),
+      felder:[{label:"=", bruch:[9,10], fehler:[{bruch:[1,40], msg:"Das ist 3/4/5/6 ohne Klammern – von links nach rechts gerechnet."}]}] } },
   { titel:"Zwei Minuszeichen",
     text:`Der Rechner hat zwei Minus-Tasten, und sie sind nicht austauschbar:
       <ul><li>${K("−")} (rechts bei + × ÷) <b>subtrahiert</b>: steht zwischen zwei Zahlen.</li>
@@ -1464,6 +1551,15 @@ rechnen: [
     bild:T.wurzel,
     probier:{ auftrag:"Was zeigt der Rechner exakt?", formel:"√72",
       mc:[{html:"6·√2", ok:true},{html:"2·√6", warum:"Probe: (2·√6)² = 24."},{html:"36·√2", warum:"Die 36 wird beim Herausziehen zu 6."},{html:"8.48528", warum:"Das ist das Dezimalresultat – gefragt ist exakt."}] } },
+  { titel:"Potenzen und Wurzeln",
+    text:`<ul><li>Potenz: ${K("^")} öffnet ein Exponentenfeld – ${code("2^10")}. Quadrat direkt mit ${K("x²")}.</li>
+      <li>Quadratwurzel: ${KK("ctrl","x²")}. Die Vorlage wächst mit, bis du mit ${K("▶")} hinausgehst – so steht die ganze Summe unter der Wurzel.</li>
+      <li><b>n-te Wurzel</b>: ${KK("ctrl","^")} öffnet die ⁿ√-Vorlage: oben der Index, unten die Zahl.</li>
+      <li>Oder als Potenz mit Bruch-Exponent: ${code("8^(1/3)")} ist dasselbe wie ³√8. <b>Klammer um den Bruch</b> – ${code("8^1/3")} wäre 8 ÷ 3.</li></ul>
+      Exakt zieht der CAS heraus, was geht (√50 = 5·√2); dezimal wie immer mit ${KK("ctrl","enter")}.`,
+    bild:T.pot,
+    probier:{ auftrag:"Berechne – einmal mit der ⁿ√-Vorlage, einmal als Potenz mit Bruch-Exponent.", formel:`${nrt(3,216)} &nbsp;&nbsp; und &nbsp;&nbsp; 32<sup>(2/5)</sup>`,
+      felder:[{label:nrt(3,216)+" =", wert:6, tol:{abs:1e-9}, fehler:[{wert:72, msg:"Das ist 216 ÷ 3 – Wurzel ziehen ist nicht teilen."}]},{label:"32<sup>(2/5)</sup> =", wert:4, tol:{abs:1e-9}, fehler:[{wert:1024/5, tol:{abs:1e-6}, msg:"Ohne Klammer: 32² ÷ 5. Exponent in Klammern!"}]}] } },
   { titel:"Runden und umwandeln",
     text:`${code("round(x,2)")} rundet auf 2 Nachkommastellen, ${code("exact(0.375)")} macht aus einer Dezimalzahl einen Bruch. Meist rundest du aber erst ganz am Schluss von Hand – im Rechner bleiben alle Stellen.`,
     bild:T.round,
