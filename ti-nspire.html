@@ -555,16 +555,16 @@ const STATIONEN = [
     () => {
       const m=rd(ri(11,99)/10,1), e=ri(2,9), neg=Math.random()<.6;
       const ex = neg ? `−${e}` : `${e}`;
-      const falsch = neg ? `${m} ${K("EE")} ${K("−")} ${e}` : `${m} ${K("×")} ${K("1")}${K("0")} ${K("EE")} ${e}`;
+      const falsch = neg ? `${m} ${K("EE")} ${e}` : `${m} ${K("×")} ${K("1")}${K("0")} ${K("EE")} ${e}`;
       const opts = shuffle([
         {html:falsch, ok:true},
-        {html:`${m} ${K("EE")} ${neg?K("(−)")+" ":""}${e}`, warum:"Das ist richtig: EE heisst «mal zehn hoch», das Vorzeichen des Exponenten mit (−)."},
+        {html:`${m} ${K("EE")} ${neg?pick([K("(−)"),K("−")])+" ":""}${e}`, warum:"Das ist richtig: EE heisst «mal zehn hoch» – und direkt nach EE nimmt der Rechner (−) wie auch − als Vorzeichen."},
         {html:`${m} ${K("×")} ${K("1")}${K("0")} ${K("^")} ${neg?K("(−)")+" ":""}${e}`, warum:"Das ist richtig – ausgeschrieben mit Potenz."},
         {html:code(neg ? (m*10**-e).toFixed(e+1) : String(m*10**e)), warum:"Das ist richtig – einfach ausgeschrieben."},
       ]);
       return { auftrag:"Welche Tastenfolge ergibt NICHT " + zp(m, neg?-e:e) + "?", mc:opts,
-        tipps:[neg ? `Im Exponenten steht ein Vorzeichen – dafür gibt es nur ${K("(−)")}. Mit ${K("−")} rechnet der Taschenrechner eine Subtraktion.` : `EE ersetzt «mal zehn hoch» ganz – wer noch ×10 davor tippt, hat einen Faktor 10 zu viel.`,
-               SCR("Rechner",[["3.4E4","34000"],["3.4·10<sup>4</sup>","34000"],["4E−4","0.0004"],["4E−4 &nbsp;(mit − getippt)","Fehler oder 4E − 4 = 0"]])] };
+        tipps:[neg ? `Der Exponent ist negativ – ohne Minus wird aus 10<sup>−${e}</sup> ein 10<sup>${e}</sup>, ein Unterschied von ${e*2} Zehnerpotenzen. Nach EE geht ${K("(−)")} oder ${K("−")}.` : `EE ersetzt «mal zehn hoch» ganz – wer noch ×10 davor tippt, hat einen Faktor 10 zu viel.`,
+               SCR("Rechner",[["3.4E4","34000"],["3.4·10<sup>4</sup>","34000"],["4E−4","0.0004"],["4E4 &nbsp;<span style='color:#B3402F;font-size:11px'>Minus vergessen</span>","40000"]])] };
     },
   ],
   [ // Standard
@@ -573,7 +573,7 @@ const STATIONEN = [
       const w = mal ? m1*10**e1*m2*10**e2 : m1*10**e1/(m2*10**e2);
       return { auftrag:"Berechne mit Zehnerpotenzen – tippe jede Zahl so ein, wie es dir am schnellsten geht (EE, ×10^ oder ausgeschrieben).", formel:`${zform(m1,e1)} ${mal?"·":":"} ${zform(m2,e2)}`,
         felder:[{label:"≈", wert:w, tol:{rel:1e-4}, ph:"z. B. 6.8E-7"}],
-        tipps:[`Taste ${K("EE")} heisst «mal zehn hoch»: ${code("3.4E5")} ist 3.4·10<sup>5</sup>. Minus im Exponenten mit ${K("(−)")}.`, T.ee] };
+        tipps:[`Taste ${K("EE")} heisst «mal zehn hoch»: ${code("3.4E5")} ist 3.4·10<sup>5</sup>. Negativer Exponent: nach EE geht ${K("(−)")} oder ${K("−")}.`, T.ee] };
     },
     () => {
       const a=ri(2,5), n=pick([2,3]);
@@ -1524,7 +1524,7 @@ rechnen: [
   { titel:"Zwei Minuszeichen",
     text:`Der Rechner hat zwei Minus-Tasten, und sie sind nicht austauschbar:
       <ul><li>${K("−")} (rechts bei + × ÷) <b>subtrahiert</b>: steht zwischen zwei Zahlen.</li>
-      <li>${K("(−)")} (unten beim Ziffernblock) macht eine Zahl <b>negativ</b>: steht vor einer Zahl – am Anfang, nach einer Klammer, nach · oder im Exponenten.</li></ul>
+      <li>${K("(−)")} (unten beim Ziffernblock) macht eine Zahl <b>negativ</b>: steht vor einer Zahl – am Anfang, nach einer Klammer oder nach ·. (Einzige Ausnahme: direkt nach ${K("EE")} nimmt der Rechner beide Minus als Vorzeichen.)</li></ul>
       Bei Potenzen entscheidet zusätzlich die Klammer: ohne Klammer wird zuerst potenziert, dann kommt das Minus davor.`,
     bild:SCR("Rechner",[["5−(−3)","8"],["−5−3","−8"],["(−3)<sup>2</sup>","9"],["−3<sup>2</sup>","−9"],["2<sup>−3</sup>",fr(1,8)]]),
     probier:{ auftrag:"Tippe beide ein – mit den richtigen Minus-Tasten.", formel:"(−2)<sup>4</sup> &nbsp;&nbsp;&nbsp; −2<sup>4</sup>",
@@ -1534,7 +1534,7 @@ rechnen: [
       <ul><li>${code("3.4")} ${K("EE")} ${code("4")} – EE heisst «mal zehn hoch» (kürzester Weg)</li>
       <li>${code("3.4")} ${K("×")} ${code("10")} ${K("^")} ${code("4")}</li>
       <li>ausgeschrieben: ${code("34000")}</li></ul>
-      Für 4·10<sup>−4</sup> steht im Exponenten ein <b>Vorzeichen</b>: ${code("4")} ${K("EE")} ${K("(−)")} ${code("4")} – nicht ${K("−")}! Oder einfach ${code("0.0004")}.
+      Für 4·10<sup>−4</sup>: ${code("4")} ${K("EE")} ${K("(−)")} ${code("4")} – direkt nach EE geht ausnahmsweise auch ${K("−")}. Oder einfach ${code("0.0004")}. Häufigster Fehler: das Minus ganz vergessen.
       <p>Die Anzeige lassen wir auf <b>Normal</b> (Dokumenteinstellungen ▸ Exponentialformat): kleine und grosse Zahlen zeigt der Rechner dann von selbst mit E, z. B. ${code("1.5E11")}.</p>`,
     bild:SCR("Rechner",[["3.4E4","34000"],["3.4·10<sup>4</sup>","34000"],["34000","34000"],["4E−4","0.0004"],["0.0004","0.0004"]]),
     probier:{ auftrag:"Berechne einmal mit EE und einmal mit ×10^ – das Resultat muss beide Male gleich sein.", formel:`${zp(2.5,-3)} · ${zp(4,8)}`,
