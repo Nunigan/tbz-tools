@@ -18,6 +18,8 @@
   Fortschritt im localStorage des Browsers ('tbz-nspire-trainer').
 
   SELBST VERFASST (05.10.2026), alle Loesungen werden im Skript berechnet.
+  Lizenz CC BY-SA 4.0 (06.10.2026). Feste Aufgaben nur aus eigenem Material
+  (Pruefung 1, Versuche) oder eigene Varianten -- keine Lehrbuchaufgaben.
   Tastenwege/Menuepfade aus dem TI-Handbuch, NICHT am Geraet geprueft
   (s. TODO.md). Eine Datei, keine Abhaengigkeiten, laeuft offline.
   Verteilung: Kopie in ~/Documents/tbz-tools (GitHub Pages).
@@ -26,6 +28,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="TI-Nspire CX II-T CAS lernen und üben: Tutorial mit Tastenfeld und Bildschirm-Nachbau plus Trainer mit drei Stufen – Rechnen, Terme, Gleichungen, Variablen, Trigonometrie, Graphs, Einheiten, Messreihen. Für Berufsschule, BMS und Gymnasium. Läuft offline, kostenlos, CC BY-SA.">
+<meta property="og:title" content="TI-Nspire – Tutorial & Trainer">
+<meta property="og:description" content="Den TI-Nspire CX II-T CAS Schritt für Schritt lernen und mit dem Gerät daneben üben. Kostenlos, offline, CC BY-SA.">
+<meta property="og:image" content="https://nunigan.github.io/tbz-tools/ti-nspire-vorschau.png">
+<meta property="og:url" content="https://nunigan.github.io/tbz-tools/ti-nspire.html">
+<meta name="twitter:card" content="summary_large_image">
 <title>TI-Nspire Tutorial</title>
 <style>
   :root{
@@ -228,6 +236,7 @@
   .screen td,.screen th{border:1px solid #ccc;padding:1px 8px;text-align:right}
 
   footer{margin-top:28px;font-size:12px;color:var(--ink-soft)}
+  footer a,.howto a{color:var(--blue)}
   footer button{margin:0 0 0 8px}
   @media (max-width:520px){
     body{padding:14px 12px 30px}
@@ -246,6 +255,16 @@
     <div class="stat"><b id="abzeichen">0/7</b><small>Stationen ★</small></div>
   </div>
 </header>
+
+<details class="howto">
+  <summary>Für wen ist das?</summary>
+  <ul>
+    <li>Für alle, die den <b>TI-Nspire CX II-T CAS</b> (oder CX II CAS) neu in die Hand bekommen – Berufsschule, BMS, Gymnasium, erstes Jahr Physik und Mathematik. Deutsches Gerätemenü.</li>
+    <li>Du brauchst nur den Rechner und diese Seite; sie läuft auch offline und speichert deinen Fortschritt im Browser.</li>
+    <li>Entstanden an der Technischen Berufsschule Zürich. Frei nutzbar und anpassbar unter <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.de" target="_blank" rel="noopener">CC BY-SA 4.0</a> – Quelle: <a href="https://github.com/Nunigan/tbz-tools" target="_blank" rel="noopener">github.com/Nunigan/tbz-tools</a>.</li>
+    <li>Fehler gefunden, Tastenweg stimmt auf deinem Gerät nicht? <a href="https://github.com/Nunigan/tbz-tools/issues" target="_blank" rel="noopener">Issue auf GitHub</a> – jede Rückmeldung hilft.</li>
+  </ul>
+</details>
 
 <details class="howto">
   <summary>So funktioniert's</summary>
@@ -315,7 +334,7 @@
 <footer>
   Fortschritt bleibt in diesem Browser gespeichert.
   <button class="ghost" id="reset">Fortschritt zurücksetzen</button>
-  <br>Nur für den Unterrichtsgebrauch. M. Schmid, Technische Berufsschule Zürich.
+  <br>M. Schmid, Technische Berufsschule Zürich · <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.de" target="_blank" rel="noopener">CC BY-SA 4.0</a> · <a href="https://github.com/Nunigan/tbz-tools" target="_blank" rel="noopener">Quelle und Rückmeldungen auf GitHub</a>
 </footer>
 
 <script>
@@ -1126,136 +1145,141 @@ const STATIONEN = [
 ];
 
 /* ===================================================================
-   Aufgaben aus den Skripten (Physik 1/2, Algebra 1-4, Uebungen, Pruefung 1).
-   Loesungen wie in den .tex-Dateien (Toleranz so, dass auch der ungerundete
-   Rechnerwert akzeptiert wird). `quelle` wird in der Aufgabe angezeigt.
+   Feste Aufgaben. Zwei Sorten:
+   SK(quelle, t)  aus eigenem Unterrichtsmaterial (Pruefung 1, Versuche)
+                  -- Loesungen wie in den .tex-Dateien, Quelle wird angezeigt
+   EIG(t)         eigene Aufgaben im Stil der Skripte (06.10.2026: ersetzen
+                  frühere Übernahmen aus Giancoli, Uni Wien und geerbten
+                  Algebra-Blättern, die nicht öffentlich sein dürfen)
+   Toleranzen so, dass auch der ungerundete Rechnerwert akzeptiert wird.
    =================================================================== */
 const SK = (quelle, t) => () => Object.assign({quelle}, t);
+const EIG = t => () => t;
 const SKRIPT = {
 rechnen: [
   [],
   [
-    SK("Algebra Übung 1", { auftrag:"Berechne mit dem Rechner und runde auf 4 signifikante Stellen.", formel:"0.327·30 − 0.0582 + 1.3067",
-      felder:[{label:"≈", wert:11.06, tol:{abs:5e-4}, fehler:[{wert:11.0585, tol:{abs:1e-4}, msg:"Stimmt – jetzt noch auf 4 signifikante Stellen runden."}]}],
-      tipps:[`Alles in einer Zeile eintippen, Minus zum Subtrahieren ist ${K("−")}. Signifikante Stellen: von der ersten Ziffer ungleich 0 an zählen.`, SCR("Rechner",[["0.327·30−0.0582+1.3067","11.0585"]],"→ 11.06")] }),
-    SK("Algebra Übung 1", { auftrag:"Berechne und runde auf 4 signifikante Stellen.", formel:"(15.0347 − 23.107) · (35 ÷ 99.09) · 24.9",
-      felder:[{label:"≈", wert:-71.00, tol:{abs:5e-4}, fehler:[{wert:-70.99616, tol:{abs:1e-4}, msg:"Stimmt – noch auf 4 signifikante Stellen runden: −71.00."}]}],
-      tipps:[`Klammern genau so setzen wie in der Aufgabe. Das Resultat ist negativ, weil die erste Klammer negativ ist.`, SCR("Rechner",[["(15.0347−23.107)·(35/99.09)·24.9","−70.9962"]])] }),
-    SK("Algebra 2.7", { auftrag:"Wandle in einen gekürzten Bruch um.", formel:code("exact(0.0375)"), felder:[{label:"=", bruch:[3,80]}],
+    EIG({ auftrag:"Berechne mit dem Rechner und runde auf 4 signifikante Stellen.", formel:"0.418·25 − 0.0734 + 2.4091",
+      felder:[{label:"≈", wert:12.79, tol:{abs:5e-4}, fehler:[{wert:12.7857, tol:{abs:1e-4}, msg:"Stimmt – jetzt noch auf 4 signifikante Stellen runden."}]}],
+      tipps:[`Alles in einer Zeile eintippen, Minus zum Subtrahieren ist ${K("−")}. Signifikante Stellen: von der ersten Ziffer ungleich 0 an zählen.`, SCR("Rechner",[["0.418·25−0.0734+2.4091","12.7857"]],"→ 12.79")] }),
+    EIG({ auftrag:"Berechne und runde auf 4 signifikante Stellen.", formel:"(12.0463 − 19.871) · (42 ÷ 88.07) · 31.6",
+      felder:[{label:"≈", wert:-117.9, tol:{abs:5e-3}, fehler:[{wert:(12.0463-19.871)*(42/88.07)*31.6, tol:{abs:1e-3}, msg:"Stimmt – noch auf 4 signifikante Stellen runden: −117.9."}]}],
+      tipps:[`Klammern genau so setzen wie in der Aufgabe. Das Resultat ist negativ, weil die erste Klammer negativ ist.`, SCR("Rechner",[["(12.0463−19.871)·(42/88.07)·31.6","−117.925"]])] }),
+    EIG({ auftrag:"Wandle in einen gekürzten Bruch um.", formel:code("exact(0.0625)"), felder:[{label:"=", bruch:[1,16]}],
       tipps:[`${code("exact( )")} macht aus einer Dezimalzahl einen Bruch.`, T.exact] }),
-    SK("Algebra 2.7", { auftrag:"Wandle in einen gekürzten Bruch um.", formel:code("exact(2.045)"), felder:[{label:"=", bruch:[409,200]}],
+    EIG({ auftrag:"Wandle in einen gekürzten Bruch um.", formel:code("exact(1.375)"), felder:[{label:"=", bruch:[11,8]}],
       tipps:[`${code("exact( )")}.`, T.exact] }),
-    SK("Physik 1.7", { auftrag:"Ein Wasserstoffatom hat die Masse 1.7·10⁻²⁴ g. Wie viele Atome ergeben zusammen 1.0 g? Rechne:",
-      formel:`N = ${fr("1.0", "1.7·10<sup>−24</sup>")}`,
-      felder:[{label:"N ≈", wert:1/1.7e-24, tol:{rel:0.01}, fehler:[{wert:1.7e-24, tol:{rel:0.01}, msg:"Das ist die Atommasse selbst – 1.0 geteilt durch sie."},{wert:1e24, tol:{rel:0.01}, msg:"Die 1.7 fehlt im Nenner."}], ph:"z. B. 5.9E23"}],
-      tipps:[`Zehnerpotenz mit ${K("EE")}, Minus im Exponenten mit ${K("(−)")}. Das Resultat zeigt der Rechner selbst mit E.`, SCR("Rechner",[["1/1.7E−24","5.88235E23"]])] }),
+    EIG({ auftrag:"Ein Goldatom hat die Masse 3.27·10⁻²² g. Wie viele Atome stecken in 1.0 g Gold? Rechne:",
+      formel:`N = ${fr("1.0", "3.27·10<sup>−22</sup>")}`,
+      felder:[{label:"N ≈", wert:1/3.27e-22, tol:{rel:0.01}, fehler:[{wert:3.27e-22, tol:{rel:0.01}, msg:"Das ist die Atommasse selbst – 1.0 geteilt durch sie."},{wert:1e22, tol:{rel:0.01}, msg:"Die 3.27 fehlt im Nenner."}], ph:"z. B. 3.1E21"}],
+      tipps:[`Zehnerpotenz mit ${K("EE")}, Minus im Exponenten mit ${K("(−)")}. Das Resultat zeigt der Rechner selbst mit E.`, SCR("Rechner",[["1/3.27E−22","3.05810E21"]])] }),
   ],
   [
-    SK("Algebra 2.7", { auftrag:"Berechne den Doppelbruch exakt.", formel:fr(`4 − ${fr(6, `2 − ${fr(1,5)}`)}`, `1 + ${fr(1,3)} − ${fr(10,9)}`),
-      felder:[{label:"=", bruch:[3,1]}],
-      tipps:[`Bruchvorlage ${KK("ctrl","÷")}, im Nenner wieder eine Bruchvorlage. Klammern setzt die Vorlage von selbst.`, SCR("Rechner",[["(4−6/(2−1/5))/(1+1/3−10/9)","3"]])] }),
-    SK("Physik 1.6", { auftrag:"Umlaufdauer um die Sonne (3. Kepler-Gesetz). Speichere zuerst a, gc und m als Variablen, rechne T für die Erde – dann nur a neu speichern und die Formel mit ▲ zurückholen für den Mars. (m ist Sonne + Planet; die Planetenmasse fällt daneben nicht ins Gewicht, m bleibt also gleich.) Noch schneller: a als Liste {1.496E11, 2.279E11} speichern – eine Formel, beide Resultate.",
-      formel:`<span class="formel klein">T = √( ${fr("4π²·a³","gc·m")} ) ÷ 86400 &nbsp;&nbsp; ${code("a:=1.496E11")} (Erde) bzw. ${code("a:=2.279E11")} (Mars), &nbsp; ${code("gc:=6.674E-11")}, &nbsp; ${code("m:=1.989E30")}</span>`,
-      felder:[{label:"T Erde ≈", einheit:"Tage", wert:365.2, tol:{rel:0.002}, fehler:[{wert:3.155e7, tol:{rel:0.002}, msg:"Das sind Sekunden – noch durch 86400 teilen."}]},
-              {label:"T Mars ≈", einheit:"Tage", wert:Math.sqrt(4*Math.PI**2*(2.279e11)**3/(6.674e-11*1.989e30))/86400, tol:{rel:0.002}, fehler:[{wert:365.2, tol:{rel:0.002}, msg:"Das ist noch die Erde – a:=2.279E11 speichern und die Formel nochmals ausführen."}]}],
-      tipps:[`Drei Zeilen speichern (${code(":=")} mit ${KK("ctrl","Vorlagen")}), dann die Formel einmal tippen: Zehnerpotenzen mit ${K("EE")}, Wurzel ${KK("ctrl","x²")} um den ganzen Bruch. Für den Mars nur ${code("a:=2.279E11")} und die Formelzeile mit ${K("▲")} ${K("enter")} wiederholen. Oder gleich ${code("a:={1.496E11,2.279E11}")} (geschweifte Klammern ${KK("ctrl",")")}) – dann rechnet die Formel beide Planeten auf einmal.`,
-             SCR("Rechner",[["a:=1.496E11","1.496E11"],["gc:=6.674E−11","6.674E−11"],["m:=1.989E30","1.989E30"],["√(4π²·a³/(gc·m))/86400","365.201"],["a:=2.279E11","2.279E11"],["√(4π²·a³/(gc·m))/86400","686.7"],["a:={1.496E11,2.279E11}","{1.496E11,2.279E11}"],["√(4π²·a³/(gc·m))/86400","{365.201,686.7}"]],"Variablen sparen das Abtippen; eine Liste rechnet beide Planeten in einer Zeile")] }),
+    EIG({ auftrag:"Berechne den Doppelbruch exakt.", formel:fr(`3 − ${fr(2, `1 + ${fr(1,4)}`)}`, `${fr(2,3)} + ${fr(1,6)}`),
+      felder:[{label:"=", bruch:[42,25]}],
+      tipps:[`Bruchvorlage ${KK("ctrl","÷")}, im Zähler wieder eine Bruchvorlage. Klammern setzt die Vorlage von selbst.`, SCR("Rechner",[["(3−2/(1+1/4))/(2/3+1/6)",fr(42,25)]])] }),
+    EIG({ auftrag:"Umlaufzeit um die Sonne (3. Kepler-Gesetz). Speichere a, gc und m als Variablen, rechne T für den Mars – dann nur a neu speichern und die Formel mit ▲ zurückholen für den Jupiter. (m ist Sonne + Planet; die Planetenmasse fällt daneben nicht ins Gewicht.) Noch schneller: a als Liste speichern – eine Formel, beide Resultate.",
+      formel:`<span class="formel klein">T = √( ${fr("4π²·a³","gc·m")} ) ÷ 86400 &nbsp;&nbsp; ${code("a:=2.279E11")} (Mars) bzw. ${code("a:=7.785E11")} (Jupiter), &nbsp; ${code("gc:=6.674E-11")}, &nbsp; ${code("m:=1.989E30")}</span>`,
+      felder:[{label:"T Mars ≈", einheit:"Tage", wert:Math.sqrt(4*Math.PI**2*(2.279e11)**3/(6.674e-11*1.989e30))/86400, tol:{rel:0.002}, fehler:[{wert:Math.sqrt(4*Math.PI**2*(2.279e11)**3/(6.674e-11*1.989e30)), tol:{rel:0.002}, msg:"Das sind Sekunden – noch durch 86400 teilen."}]},
+              {label:"T Jupiter ≈", einheit:"Tage", wert:Math.sqrt(4*Math.PI**2*(7.785e11)**3/(6.674e-11*1.989e30))/86400, tol:{rel:0.002}}],
+      tipps:[`Drei Zeilen speichern (${code(":=")} mit ${KK("ctrl","Vorlagen")}), dann die Formel einmal tippen: Zehnerpotenzen mit ${K("EE")}, Wurzel ${KK("ctrl","x²")} um den ganzen Bruch. Für den Jupiter nur ${code("a:=7.785E11")} und die Formelzeile mit ${K("▲")} ${K("enter")} wiederholen – oder ${code("a:={2.279E11,7.785E11}")} (geschweifte Klammern ${KK("ctrl",")")}).`,
+             SCR("Rechner",[["a:=2.279E11","2.279E11"],["gc:=6.674E−11","6.674E−11"],["m:=1.989E30","1.989E30"],["√(4π²·a³/(gc·m))/86400","686.7"],["a:={2.279E11,7.785E11}","{2.279E11,7.785E11}"],["√(4π²·a³/(gc·m))/86400","{686.7,4332.4}"]],"Variablen sparen das Abtippen; eine Liste rechnet beide Planeten in einer Zeile")] }),
   ],
 ],
 terme: [
   [
-    SK("Algebra 2.4", { auftrag:"Multipliziere aus (Kontrolle mit expand).", formel:"(3 + x)<sup>2</sup>",
-      mc:shuffle([{html:poly([1,6,9]), ok:true},{html:poly([1,0,9]), warum:"Das Mittelglied 2·3·x fehlt."},{html:poly([1,3,9]), warum:"Das Mittelglied ist 2·3·x = 6x."},{html:poly([1,-6,9]), warum:"Vorzeichen: (3 + x)² hat +6x."}]),
-      tipps:[`${code("expand((3+x)^2)")}`, T.expand] }),
-    SK("Algebra 2.4", { auftrag:"Vereinfache (Kontrolle mit expand).", formel:"(6 + p)(p + 6) − (p − 6)<sup>2</sup>",
-      mc:shuffle([{html:"24p", ok:true},{html:"0", warum:"(p+6)² und (p−6)² sind nicht gleich – die Mittelglieder haben verschiedene Vorzeichen."},{html:"2p<sup>2</sup> + 72", warum:"Vorzeichen beim Subtrahieren der zweiten Klammer."},{html:"72", warum:"Die p-Glieder bleiben: 12p − (−12p) = 24p."}]),
+    EIG({ auftrag:"Multipliziere aus (Kontrolle mit expand).", formel:"(x − 4)<sup>2</sup>",
+      mc:shuffle([{html:poly([1,-8,16]), ok:true},{html:poly([1,0,16]), warum:"Das Mittelglied 2·4·x fehlt."},{html:poly([1,-4,16]), warum:"Das Mittelglied ist 2·4·x = 8x."},{html:poly([1,8,16]), warum:"Vorzeichen: (x − 4)² hat −8x."}]),
+      tipps:[`${code("expand((x-4)^2)")}`, T.expand] }),
+    EIG({ auftrag:"Vereinfache (Kontrolle mit expand).", formel:"(p + 5)(5 + p) − (p − 5)<sup>2</sup>",
+      mc:shuffle([{html:"20p", ok:true},{html:"0", warum:"(p+5)² und (p−5)² sind nicht gleich – die Mittelglieder haben verschiedene Vorzeichen."},{html:"2p<sup>2</sup> + 50", warum:"Vorzeichen beim Subtrahieren der zweiten Klammer."},{html:"50", warum:"Die p-Glieder bleiben: 10p − (−10p) = 20p."}]),
       tipps:[`Den ganzen Term in ${code("expand( )")} setzen.`, T.expand] }),
   ],
   [
-    SK("Algebra 2.6", { auftrag:"Faktorisiere.", formel:poly([1,14,-32]),
-      mc:shuffle([{html:"(x + 16)(x − 2)", ok:true},{html:"(x − 16)(x + 2)", warum:"Ausmultipliziert: −14x."},{html:"(x + 8)(x − 4)", warum:"Ausmultipliziert: x² + 4x − 32."},{html:"(x + 16)(x + 2)", warum:"Ausmultipliziert: +32."}]),
+    EIG({ auftrag:"Faktorisiere.", formel:poly([1,9,-22]),
+      mc:shuffle([{html:"(x + 11)(x − 2)", ok:true},{html:"(x − 11)(x + 2)", warum:"Ausmultipliziert: −9x."},{html:"(x + 22)(x − 1)", warum:"Ausmultipliziert: x² + 21x − 22."},{html:"(x + 11)(x + 2)", warum:"Ausmultipliziert: +22."}]),
       tipps:[`${code("factor( )")}.`, T.factor] }),
-    SK("Algebra 2.6", { auftrag:"Faktorisiere vollständig.", formel:"48 − 30f + 3f<sup>2</sup>",
-      mc:shuffle([{html:"3·(f − 2)·(f − 8)", ok:true},{html:"(f − 2)·(f − 8)", warum:"Der gemeinsame Faktor 3 fehlt."},{html:"3·(f + 2)·(f + 8)", warum:"Ausmultipliziert gibt das +30f."},{html:"3·(f − 4)·(f − 6)", warum:"Ausmultipliziert: 3f² − 30f + 72."}]),
+    EIG({ auftrag:"Faktorisiere vollständig.", formel:"24 − 16y + 2y<sup>2</sup>",
+      mc:shuffle([{html:"2·(y − 2)·(y − 6)", ok:true},{html:"(y − 2)·(y − 6)", warum:"Der gemeinsame Faktor 2 fehlt."},{html:"2·(y + 2)·(y + 6)", warum:"Ausmultipliziert gibt das +16y."},{html:"2·(y − 3)·(y − 4)", warum:"Ausmultipliziert: 2y² − 14y + 24."}]),
       tipps:[`${code("factor( )")} zieht auch den gemeinsamen Faktor heraus.`, T.factor] }),
-    SK("Algebra 2.6", { auftrag:"Faktorisiere vollständig.", formel:"16d<sup>3</sup> − 48d<sup>2</sup> + 36d",
-      mc:shuffle([{html:"4d·(2d − 3)<sup>2</sup>", ok:true},{html:"4d·(2d + 3)<sup>2</sup>", warum:"Vorzeichen: das Mittelglied ist negativ."},{html:"4·(2d − 3)<sup>2</sup>", warum:"Jedes Glied enthält d – das d fehlt."},{html:"4d·(2d − 3)(2d + 3)", warum:"Das wäre 4d·(4d² − 9) = 16d³ − 36d."}]),
+    EIG({ auftrag:"Faktorisiere vollständig.", formel:"27d<sup>3</sup> − 18d<sup>2</sup> + 3d",
+      mc:shuffle([{html:"3d·(3d − 1)<sup>2</sup>", ok:true},{html:"3d·(3d + 1)<sup>2</sup>", warum:"Vorzeichen: das Mittelglied ist negativ."},{html:"3·(3d − 1)<sup>2</sup>", warum:"Jedes Glied enthält d – das d fehlt."},{html:"3d·(3d − 1)(3d + 1)", warum:"Das wäre 3d·(9d² − 1) = 27d³ − 3d."}]),
       tipps:[`${code("factor( )")}.`, T.factor] }),
   ],
   [
-    SK("Algebra 3.3", { auftrag:"Multipliziere aus (Pascalsches Dreieck – Kontrolle mit expand).", formel:"(4x − 3y)<sup>3</sup>",
-      mc:shuffle([{html:"64x³ − 144x²y + 108xy² − 27y³", ok:true},{html:"64x³ − 27y³", warum:"Beim Kubieren gibt es vier Glieder."},{html:"64x³ + 144x²y + 108xy² + 27y³", warum:"Bei (a − b)³ wechseln die Vorzeichen."},{html:"64x³ − 144x²y − 108xy² − 27y³", warum:"Vorzeichen wechseln ab: + − + −."}]),
-      tipps:[`${code("expand((4x-3y)^3)")}`, T.expand] }),
-    SK("Algebra 2.7", { auftrag:"Vereinfache zu einem Bruch.", formel:`${fr("9a² + 9b²","6a − 6b")} − ${fr("9ab","3a − 3b")} − (a − b)`,
-      mc:shuffle([{html:fr("a − b","2"), ok:true},{html:fr("a + b","2"), warum:"Vorzeichen im Zähler."},{html:fr("a − b","6"), warum:"Nenner: nach dem Kürzen bleibt 2."},{html:"2(a − b)", warum:"Kehrwert – der Nenner 2 bleibt unten."}]),
+    EIG({ auftrag:"Multipliziere aus (Pascalsches Dreieck – Kontrolle mit expand).", formel:"(2x − 5y)<sup>3</sup>",
+      mc:shuffle([{html:"8x³ − 60x²y + 150xy² − 125y³", ok:true},{html:"8x³ − 125y³", warum:"Beim Kubieren gibt es vier Glieder."},{html:"8x³ + 60x²y + 150xy² + 125y³", warum:"Bei (a − b)³ wechseln die Vorzeichen."},{html:"8x³ − 60x²y − 150xy² − 125y³", warum:"Vorzeichen wechseln ab: + − + −."}]),
+      tipps:[`${code("expand((2x-5y)^3)")}`, T.expand] }),
+    EIG({ auftrag:"Vereinfache zu einem Bruch.", formel:`${fr("25a² + 25b²","10a − 10b")} − ${fr("25ab","5a − 5b")} − (a − b)`,
+      mc:shuffle([{html:fr("3(a − b)","2"), ok:true},{html:fr("3(a + b)","2"), warum:"Vorzeichen im Zähler."},{html:fr("a − b","2"), warum:"Der Faktor 3 fehlt: 5/2 − 1 = 3/2."},{html:"3(a − b)", warum:"Der Nenner 2 bleibt unten."}]),
       tipps:[`${code("comDenom( )")} um den ganzen Term, oder einfach eintippen und ${K("enter")} – das CAS vereinfacht selbst.`, T.comden] }),
   ],
 ],
 gleichungen: [
   [
-    SK("Algebra 4.2", { auftrag:"Löse nach x auf.", formel:"40(3 − 2x) = 60(2x − 5)", felder:[{label:"x =", wert:2.1, tol:{abs:1e-6}}],
-      tipps:[`${code("solve(40(3-2x)=60(2x-5),x)")}`, T.solve] }),
+    EIG({ auftrag:"Löse nach x auf.", formel:"15(3 − 2x) = 25(2x − 9)", felder:[{label:"x =", wert:3.375, tol:{abs:1e-6}}],
+      tipps:[`${code("solve(15(3-2x)=25(2x-9),x)")}`, T.solve] }),
   ],
   [
-    SK("Algebra 4.2", { auftrag:"Löse nach x auf (exakt, als Bruch).", formel:"3x(6 − x) = (x − 1)<sup>2</sup> + 8 − (2x + 1)<sup>2</sup>", felder:[{label:"x =", bruch:[1,3]}],
+    EIG({ auftrag:"Löse nach x auf (exakt, als Bruch).", formel:"4x(3 − x) = (2x + 1)<sup>2</sup> − 8x<sup>2</sup> + 5", felder:[{label:"x =", bruch:[3,4]}],
       tipps:[`${code("solve( ,x)")} – die Quadrate heben sich weg, übrig bleibt eine lineare Gleichung.`, T.solve] }),
-    SK("Algebra 4.6", { auftrag:"Zwei Zahlen haben die Summe 20 und das Produkt 36. Welche?", formel:"x<sup>2</sup> − 20x + 36 = 0",
-      felder:[{label:"x₁ =", wert:2, tol:{abs:1e-6}},{label:"x₂ =", wert:18, tol:{abs:1e-6}}],
-      tipps:[`${code("solve(x^2-20x+36=0,x)")}`, T.solve] }),
-    SK("Algebra 4.6", { auftrag:"Löse (exakt, als Brüche).", formel:"16x<sup>2</sup> + 2x − 3 = 0",
-      felder:[{label:"x₁ =", bruch:[-1,2], ph:"kleinere"},{label:"x₂ =", bruch:[3,8], ph:"grössere"}],
+    EIG({ auftrag:"Zwei Zahlen haben die Summe 15 und das Produkt 56. Welche?", formel:"x<sup>2</sup> − 15x + 56 = 0",
+      felder:[{label:"x₁ =", wert:7, tol:{abs:1e-6}},{label:"x₂ =", wert:8, tol:{abs:1e-6}}],
+      tipps:[`${code("solve(x^2-15x+56=0,x)")}`, T.solve] }),
+    EIG({ auftrag:"Löse (exakt, als Brüche).", formel:"12x<sup>2</sup> − x − 6 = 0",
+      felder:[{label:"x₁ =", bruch:[-2,3], ph:"kleinere"},{label:"x₂ =", bruch:[3,4], ph:"grössere"}],
       tipps:[`${code("solve( ,x)")} gibt beide Brüche.`, T.solve] }),
-    SK("Algebra 4.4", { auftrag:"Ein Fahrzeug startet bei s₀ = 0.12 km und fährt mit v = 65 dm/s. Wann ist es bei s = 4.8 km? (Zuerst alles in m und s.)",
-      formel:"s = s<sub>0</sub> + v·t", felder:[{label:"t =", einheit:"s", wert:720, tol:{abs:1}}],
-      tipps:[`0.12 km = 120 m, 65 dm/s = 6.5 m/s. ${code("solve(4800=120+6.5*t,t)")}`, T.formel] }),
-    SK("Algebra 4.4", { auftrag:"Ein Fahrzeug startet bei s₀ = 350 m und ist nach t = 4.1 min bei s = 2.4 km. Geschwindigkeit in km/h?",
-      formel:"s = s<sub>0</sub> + v·t", felder:[{label:"v ≈", einheit:"km/h", wert:30.0, tol:{rel:0.003}, fehler:[{wert:8.333, tol:{rel:0.003}, msg:"Das sind m/s – mal 3.6 für km/h."}]}],
+    EIG({ auftrag:"Ein Fahrzeug startet bei s₀ = 0.2 km und fährt mit v = 80 dm/s. Wann ist es bei s = 5.0 km? (Zuerst alles in m und s.)",
+      formel:"s = s<sub>0</sub> + v·t", felder:[{label:"t =", einheit:"s", wert:600, tol:{abs:1}}],
+      tipps:[`0.2 km = 200 m, 80 dm/s = 8 m/s. ${code("solve(5000=200+8*t,t)")}`, T.formel] }),
+    EIG({ auftrag:"Ein Fahrzeug startet bei s₀ = 420 m und ist nach t = 3.5 min bei s = 3.0 km. Geschwindigkeit in km/h?",
+      formel:"s = s<sub>0</sub> + v·t", felder:[{label:"v ≈", einheit:"km/h", wert:2580/210*3.6, tol:{rel:0.003}, fehler:[{wert:2580/210, tol:{rel:0.003}, msg:"Das sind m/s – mal 3.6 für km/h."}]}],
       tipps:[`Nach v auflösen, Zahlen in m und s einsetzen, am Schluss ·3.6.`, T.formel] }),
   ],
   [
-    SK("Physik 2.6", { auftrag:"Ein Auto startet aus dem Stand mit a = 2.00 m/s². Wie lange braucht es, um die 30.0 m breite Kreuzung zu überqueren?",
-      formel:`x = ${fr(1,2)}·a·t<sup>2</sup>`, felder:[{label:"t ≈", einheit:"s", wert:Math.sqrt(30), tol:{rel:0.003}}],
-      tipps:[`${code("solve(30=1/2*2*t^2,t)")}, negative Lösung streichen. ${MERKE_DELVAR}`, T.physik] }),
-    SK("Physik 2.6", { auftrag:"Ein Auto mit 25 m/s bremst auf 75 m bis zum Stillstand. Beschleunigung?",
-      formel:"v<sup>2</sup> = v<sub>0</sub><sup>2</sup> + 2·a·x", felder:[{label:"a ≈", einheit:"m/s²", wert:-25*25/150, tol:{rel:0.02}, fehler:[{wert:25*25/150, tol:{rel:0.02}, msg:"Vorzeichen: Bremsen ist eine negative Beschleunigung."}]}],
-      tipps:[`${code("solve(0=25^2+2*a*75,a)")}`, T.physik] }),
-    SK("Physik Übungen 2", { auftrag:"Eine Bremsspur ist 75 m lang, die Bremsverzögerung 7.00 m/s². Wie schnell war das Auto?",
+    EIG({ auftrag:"Ein Tram startet aus dem Stand mit a = 1.20 m/s². Wie lange braucht es für die ersten 60.0 m?",
+      formel:`x = ${fr(1,2)}·a·t<sup>2</sup>`, felder:[{label:"t ≈", einheit:"s", wert:Math.sqrt(2*60/1.2), tol:{rel:0.003}}],
+      tipps:[`${code("solve(60=1/2*1.2*t^2,t)")}, negative Lösung streichen. ${MERKE_DELVAR}`, T.physik] }),
+    EIG({ auftrag:"Ein Velo mit 8.0 m/s bremst auf 12 m bis zum Stillstand. Beschleunigung?",
+      formel:"v<sup>2</sup> = v<sub>0</sub><sup>2</sup> + 2·a·x", felder:[{label:"a ≈", einheit:"m/s²", wert:-64/24, tol:{rel:0.02}, fehler:[{wert:64/24, tol:{rel:0.02}, msg:"Vorzeichen: Bremsen ist eine negative Beschleunigung."}]}],
+      tipps:[`${code("solve(0=8^2+2*a*12,a)")}`, T.physik] }),
+    EIG({ auftrag:"Eine Bremsspur ist 48 m lang, die Bremsverzögerung 6.5 m/s². Wie schnell war das Auto?",
       formel:"v<sup>2</sup> = v<sub>0</sub><sup>2</sup> + 2·a·x",
-      felder:[{label:"v₀ ≈", einheit:"m/s", wert:Math.sqrt(2*7*75), tol:{rel:0.003}},{label:"v₀ ≈", einheit:"km/h", wert:Math.sqrt(2*7*75)*3.6, tol:{rel:0.005}}],
-      tipps:[`${code("solve(0=v^2+2*(-7)*75,v)")} – positive Lösung. Dann ·3.6.`, T.physik] }),
-    SK("Algebra 4.6", { auftrag:"Verkleinert man den Radius eines Kreises um 30 mm, hat er nur noch 80 % der Fläche. Ursprünglicher Radius?",
-      formel:"π(r − 30)<sup>2</sup> = 0.8·πr<sup>2</sup>",
-      felder:[{label:"r ≈", einheit:"mm", wert:284.16, tol:{rel:0.003}, fehler:[{wert:15.84, tol:{rel:0.01}, msg:"Die kleine Lösung ist unmöglich: Der Radius wird um 30 mm verkleinert, muss also grösser als 30 mm sein."}]}],
-      tipps:[`${code("solve(pi*(r-30)^2=0.8*pi*r^2,r)")} – zwei Lösungen, eine ist sinnlos.`, T.solve] }),
-    SK("Algebra 4.6", { auftrag:"10'000 Fr. wachsen mit Zinseszins in zwei Jahren auf 10'506.25 Fr. Zinssatz in Prozent?",
-      formel:"10000·(1 + p)<sup>2</sup> = 10506.25",
-      felder:[{label:"p =", einheit:"%", wert:2.5, tol:{abs:0.01}, fehler:[{wert:0.025, tol:{abs:1e-4}, msg:"Das ist p als Dezimalzahl – in Prozent: 2.5 %."},{wert:-202.5, tol:{abs:0.1}, msg:"Die negative Lösung ist kein Zinssatz."}]}],
-      tipps:[`${code("solve(10000*(1+p)^2=10506.25,p)")}`, T.solve] }),
-    SK("Physik Übungen 2", { auftrag:"Freier Fall gemessen: h = 1.382 m, t = 0.5309 s. Bestimme g daraus.",
-      formel:`h = ${fr(1,2)}·g·t<sup>2</sup>`, felder:[{label:"g ≈", einheit:"m/s²", wert:2*1.382/0.5309**2, tol:{abs:0.003}}],
-      tipps:[`${code("solve(1.382=1/2*g*0.5309^2,g)")} oder direkt 2h/t².`, T.physik] }),
+      felder:[{label:"v₀ ≈", einheit:"m/s", wert:Math.sqrt(2*6.5*48), tol:{rel:0.003}},{label:"v₀ ≈", einheit:"km/h", wert:Math.sqrt(2*6.5*48)*3.6, tol:{rel:0.005}}],
+      tipps:[`${code("solve(0=v^2+2*(-6.5)*48,v)")} – positive Lösung. Dann ·3.6.`, T.physik] }),
+    EIG({ auftrag:"Vergrössert man den Radius eines Kreises um 20 mm, wächst die Fläche um 50 %. Ursprünglicher Radius?",
+      formel:"π(r + 20)<sup>2</sup> = 1.5·πr<sup>2</sup>",
+      felder:[{label:"r ≈", einheit:"mm", wert:20/(Math.sqrt(1.5)-1), tol:{rel:0.003}, fehler:[{wert:20/(-Math.sqrt(1.5)-1), tol:{rel:0.01}, msg:"Die negative Lösung ist kein Radius."}]}],
+      tipps:[`${code("solve(pi*(r+20)^2=1.5*pi*r^2,r)")} – zwei Lösungen, eine ist sinnlos.`, T.solve] }),
+    EIG({ auftrag:"5'000 Fr. wachsen mit Zinseszins in zwei Jahren auf 5'618 Fr. Zinssatz in Prozent?",
+      formel:"5000·(1 + p)<sup>2</sup> = 5618",
+      felder:[{label:"p =", einheit:"%", wert:6, tol:{abs:0.01}, fehler:[{wert:0.06, tol:{abs:1e-4}, msg:"Das ist p als Dezimalzahl – in Prozent: 6 %."},{wert:-206, tol:{abs:0.1}, msg:"Die negative Lösung ist kein Zinssatz."}]}],
+      tipps:[`${code("solve(5000*(1+p)^2=5618,p)")}`, T.solve] }),
+    EIG({ auftrag:"Freier Fall gemessen: h = 2.000 m, t = 0.639 s. Bestimme g daraus.",
+      formel:`h = ${fr(1,2)}·g·t<sup>2</sup>`, felder:[{label:"g ≈", einheit:"m/s²", wert:2*2/0.639**2, tol:{abs:0.003}}],
+      tipps:[`${code("solve(2=1/2*g*0.639^2,g)")} oder direkt 2h/t².`, T.physik] }),
   ],
 ],
 variablen: [[],[],[
-    SK("Physik 2.6", { auftrag:"Anhalteweg bei 90 km/h mit Reaktionszeit 1.0 s – einmal mit a = −4.0 m/s² (trockene Strasse), einmal mit a = −8.0 m/s². Speichere v in m/s und tr, dann nur a wechseln.",
+    EIG({ auftrag:"Anhalteweg bei 72 km/h mit Reaktionszeit 0.8 s – einmal mit a = −5.0 m/s², einmal mit a = −7.5 m/s². Speichere v in m/s und tr, dann nur a wechseln.",
       formel:`<span class="formel klein">s = v·t<sub>r</sub> + ${fr("v²","2·|a|")}</span>`,
-      felder:[{label:"s(−4.0) ≈", einheit:"m", wert:25+625/8, tol:{rel:3e-3}},{label:"s(−8.0) ≈", einheit:"m", wert:25+625/16, tol:{rel:3e-3}}],
-      tipps:[`${code("v:=90/3.6")}, ${code("tr:=1")}, ${code("a:=4")}, dann ${code("v*tr+v^2/(2a)")}. Für den zweiten Fall nur ${code("a:=8")} und die Zeile mit ${K("▲")} nochmals holen.`, T.rezept] }),
+      felder:[{label:"s(−5.0) ≈", einheit:"m", wert:20*0.8+400/10, tol:{rel:3e-3}},{label:"s(−7.5) ≈", einheit:"m", wert:20*0.8+400/15, tol:{rel:3e-3}}],
+      tipps:[`${code("v:=72/3.6")}, ${code("tr:=0.8")}, ${code("a:=5")}, dann ${code("v*tr+v^2/(2a)")}. Für den zweiten Fall nur ${code("a:=7.5")} und die Zeile mit ${K("▲")} nochmals holen.`, T.rezept] }),
 ]],
 trig: [
   [
-    SK("Physik Übungen 1", { auftrag:"Rechne um: 142° ins Bogenmass und 3 rad in Grad.",
-      felder:[{label:"142° =", einheit:"rad", wert:142*Math.PI/180, tol:{abs:0.002}},{label:"3 rad =", einheit:"°", wert:3*180/Math.PI, tol:{abs:0.01}}],
-      tipps:[`Bogenmass = Grad · π/180. Oder im Grad-Modus: ${code("142°▸Rad")} (▸ im ${K("Katalog")} ▸ Reiter 3 (Einheiten) ▸ ganz oben «Umrechnungssymbol», ° aus dem Symbolkatalog ${KK("ctrl","Katalog")}).`, SCR("Rechner · Grad",[["142·π/180 &nbsp;≈","2.47837"],["3·180/π &nbsp;≈","171.887"]])] }),
+    EIG({ auftrag:"Rechne um: 215° ins Bogenmass und 2.5 rad in Grad.",
+      felder:[{label:"215° =", einheit:"rad", wert:215*Math.PI/180, tol:{abs:0.002}},{label:"2.5 rad =", einheit:"°", wert:2.5*180/Math.PI, tol:{abs:0.01}}],
+      tipps:[`Bogenmass = Grad · π/180. Oder im Grad-Modus: ${code("215°▸Rad")} (▸ im ${K("Katalog")} ▸ Reiter 3 (Einheiten) ▸ ganz oben «Umrechnungssymbol», ° aus dem Symbolkatalog ${KK("ctrl","Katalog")}).`, SCR("Rechner · Grad",[["215·π/180 &nbsp;≈","3.75246"],["2.5·180/π &nbsp;≈","143.239"]])] }),
   ],[],[],
 ],
 graphs: [
   [],
   [
-    SK("Physik Übungen 2", { auftrag:"Bauer A fährt mit 54 km/h los, gleichzeitig Bauer B mit 36 km/h aus dem 5 km entfernten Dorf entgegen. Zeichne beide Ort-Zeit-Geraden (x in s, y in m) und lies den Treffpunkt ab.",
-      formel:`<span class="formel klein">f1(x) = 15·x &nbsp;&nbsp; f2(x) = 5000 − 10·x</span>`,
-      felder:[{label:"t =", einheit:"s", wert:200, tol:{abs:1}},{label:"Ort =", einheit:"m", wert:3000, tol:{abs:10}}],
-      tipps:[`54 km/h = 15 m/s, 36 km/h = 10 m/s. Fenster: x 0 bis 400, y 0 bis 5000. ${M("6 Graph analysieren","4 Schnittpunkt")}.`, T.graph] }),
+    EIG({ auftrag:"Zwei Velofahrer: A startet mit 27 km/h, gleichzeitig fährt B mit 18 km/h aus dem 3 km entfernten Dorf entgegen. Zeichne beide Ort-Zeit-Geraden (x in s, y in m) und lies den Treffpunkt ab.",
+      formel:`<span class="formel klein">f1(x) = 7.5·x &nbsp;&nbsp; f2(x) = 3000 − 5·x</span>`,
+      felder:[{label:"t =", einheit:"s", wert:240, tol:{abs:1}},{label:"Ort =", einheit:"m", wert:1800, tol:{abs:10}}],
+      tipps:[`27 km/h = 7.5 m/s, 18 km/h = 5 m/s. Fenster: x 0 bis 400, y 0 bis 3000. ${M("6 Graph analysieren","4 Schnittpunkt")}.`, T.graph] }),
     SK("Physik Prüfung 1", { auftrag:"Ein Tram (36 km/h) startet hinter einer Velofahrerin (18 km/h), die 1.2 km Vorsprung hat. Wann und wo holt es sie ein?",
       formel:`<span class="formel klein">f1(x) = 10·x &nbsp;&nbsp; f2(x) = 5·x + 1200</span>`,
       felder:[{label:"t =", einheit:"s", wert:240, tol:{abs:1}},{label:"Ort =", einheit:"m", wert:2400, tol:{abs:10}}],
@@ -1265,14 +1289,14 @@ graphs: [
       tipps:[`x = x₀ + v₀·t + ½·a·t². Wertetabelle mit ${KK("ctrl","T")}, Schrittweite 1.`, `Kontrolle im Rechner: ${code("f1(10)")}.`] }),
   ],
   [
-    SK("Physik 2.7", { auftrag:"Ein Ball wird mit 15.0 m/s senkrecht hochgeworfen. Wann passiert er ein Fenster auf 5.0 m Höhe? (zweimal!)",
-      formel:`<span class="formel klein">f1(x) = 15·x − 4.905·x<sup>2</sup> &nbsp;&nbsp; f2(x) = 5</span>`,
-      felder:[{label:"t₁ ≈", einheit:"s", wert:(15-Math.sqrt(225-4*4.905*5))/9.81, tol:{abs:0.01}},{label:"t₂ ≈", einheit:"s", wert:(15+Math.sqrt(225-4*4.905*5))/9.81, tol:{abs:0.01}}],
-      tipps:[`Beide Schnittpunkte mit ${M("6 Graph analysieren","4 Schnittpunkt")} – einmal links, einmal rechts vom Scheitel.`, `Kontrolle: ${code("solve(15x-4.905x^2=5,x)")}`] }),
-    SK("Physik Übungen 2", { auftrag:"Aus einem Helikopter in 115 m Höhe, der mit 5.60 m/s steigt, fällt ein Päckchen. Wann landet es?",
-      formel:`<span class="formel klein">f1(x) = 115 + 5.6·x − 4.905·x<sup>2</sup></span>`,
-      felder:[{label:"t ≈", einheit:"s", wert:(5.6+Math.sqrt(5.6**2+4*4.905*115))/9.81, tol:{abs:0.01}}],
-      tipps:[`Fenster x 0 bis 7, y 0 bis 130. ${M("6 Graph analysieren","1 Nullstelle")}.`, `Kontrolle: ${code("solve(115+5.6x-4.905x^2=0,x)")}, positive Lösung.`] }),
+    EIG({ auftrag:"Ein Ball wird mit 12.0 m/s senkrecht hochgeworfen. Wann ist er auf 4.0 m Höhe? (zweimal!)",
+      formel:`<span class="formel klein">f1(x) = 12·x − 4.905·x<sup>2</sup> &nbsp;&nbsp; f2(x) = 4</span>`,
+      felder:[{label:"t₁ ≈", einheit:"s", wert:(12-Math.sqrt(144-4*4.905*4))/9.81, tol:{abs:0.01}},{label:"t₂ ≈", einheit:"s", wert:(12+Math.sqrt(144-4*4.905*4))/9.81, tol:{abs:0.01}}],
+      tipps:[`Beide Schnittpunkte mit ${M("6 Graph analysieren","4 Schnittpunkt")} – einmal links, einmal rechts vom Scheitel.`, `Kontrolle: ${code("solve(12x-4.905x^2=4,x)")}`] }),
+    EIG({ auftrag:"Aus einem Ballon in 80 m Höhe, der mit 3.0 m/s steigt, fällt ein Sandsack. Wann landet er?",
+      formel:`<span class="formel klein">f1(x) = 80 + 3·x − 4.905·x<sup>2</sup></span>`,
+      felder:[{label:"t ≈", einheit:"s", wert:(3+Math.sqrt(9+4*4.905*80))/9.81, tol:{abs:0.01}}],
+      tipps:[`Fenster x 0 bis 6, y 0 bis 90. ${M("6 Graph analysieren","1 Nullstelle")}.`, `Kontrolle: ${code("solve(80+3x-4.905x^2=0,x)")}, positive Lösung.`] }),
   ],
 ],
 einheiten: [
@@ -1280,29 +1304,29 @@ einheiten: [
     SK("Physik Prüfung 1", { auftrag:"Rechne um.", formel:"2.5 h", felder:[{label:"=", einheit:"s", wert:9000, tol:{abs:1}}], tipps:[`${code("2.5_hr")} ▸ ${code("_s")}`, T.einh] }),
     SK("Physik Prüfung 1", { auftrag:"Rechne um.", formel:"250 µm", felder:[{label:"=", einheit:"m", wert:2.5e-4, tol:{rel:1e-6}, ph:"z. B. 2.5E-4"}], tipps:[`µ = 10⁻⁶. ${code("250_μm")} ▸ ${code("_m")} (µ im Symbolkatalog) oder ${code("250E-6")}.`, T.einh] }),
     SK("Physik Prüfung 1", { auftrag:"Rechne um.", formel:"0.75 l", felder:[{label:"=", einheit:"cm³", wert:750, tol:{abs:0.5}}], tipps:[`1 l = 1 dm³ = 1000 cm³. ${code("0.75_l")} ▸ ${code("_cm^3")}`, T.einh] }),
-    SK("Physik Übungen 2", { auftrag:"Rechne um.", formel:"55 km/h", felder:[{label:"≈", einheit:"m/s", wert:55/3.6, tol:{rel:0.02}}], tipps:[`÷ 3.6, oder ${code("55_km/_hr")} ▸ ${code("_m/_s")}`, T.einh] }),
+    EIG({ auftrag:"Rechne um.", formel:"63 km/h", felder:[{label:"≈", einheit:"m/s", wert:63/3.6, tol:{rel:0.02}}], tipps:[`÷ 3.6, oder ${code("63_km/_hr")} ▸ ${code("_m/_s")}`, T.einh] }),
     SK("Physik Prüfung 1", { auftrag:"Rechne um.", formel:"4.5 km²", felder:[{label:"=", einheit:"m²", wert:4.5e6, tol:{rel:1e-6}, ph:"z. B. 4.5E6"}], tipps:[`1 km² = (1000 m)² = 10⁶ m². ${code("4.5_km^2")} ▸ ${code("_m^2")}`, T.einh] }),
   ],
   [
     SK("Physik Prüfung 1", { auftrag:"Rechne um.", formel:"1.5 g/cm³", felder:[{label:"=", einheit:"kg/m³", wert:1500, tol:{abs:0.5}}], tipps:[`${code("1.5_gm/_cm^3")} ▸ ${code("_kg/_m^3")} – Gramm heisst _gm!`, T.einh] }),
-    SK("Physik Übungen 1", { auftrag:"Rechne um.", formel:"130 km/h", felder:[{label:"≈", einheit:"m/s", wert:130/3.6, tol:{rel:0.003}}], tipps:[`${code("130_km/_hr")} ▸ ${code("_m/_s")}`, T.einh] }),
-    SK("Physik Übungen 1", { auftrag:"Rechne um.", formel:"80 N/mm²", felder:[{label:"=", einheit:"kN/m²", wert:80000, tol:{rel:1e-6}}], tipps:[`${code("80_N/_mm^2")} ▸ ${code("_kN/_m^2")}`, T.einh] }),
+    EIG({ auftrag:"Rechne um.", formel:"95 km/h", felder:[{label:"≈", einheit:"m/s", wert:95/3.6, tol:{rel:0.003}}], tipps:[`${code("95_km/_hr")} ▸ ${code("_m/_s")}`, T.einh] }),
+    EIG({ auftrag:"Rechne um.", formel:"45 N/mm²", felder:[{label:"=", einheit:"kN/m²", wert:45000, tol:{rel:1e-6}}], tipps:[`${code("45_N/_mm^2")} ▸ ${code("_kN/_m^2")}`, T.einh] }),
     SK("Physik Prüfung 1", { auftrag:"Rechne um.", formel:"12 mm³", felder:[{label:"=", einheit:"cm³", wert:0.012, tol:{rel:1e-6}}], tipps:[`1 cm³ = 1000 mm³. ${code("12_mm^3")} ▸ ${code("_cm^3")}`, T.einh] }),
-    SK("Physik Übungen 1", { auftrag:"Rechne um.", formel:"0.49 h", felder:[{label:"=", einheit:"s", wert:1764, tol:{abs:1}}], tipps:[`${code("0.49_hr")} ▸ ${code("_s")}`, T.einh] }),
+    EIG({ auftrag:"Rechne um.", formel:"0.35 h", felder:[{label:"=", einheit:"s", wert:1260, tol:{abs:1}}], tipps:[`${code("0.35_hr")} ▸ ${code("_s")}`, T.einh] }),
   ],
   [
-    SK("Physik Übungen 1", { auftrag:"Dichte der Sonne: m = 2.0·10³⁰ kg, V = 1.4·10³³ cm³.",
-      felder:[{label:"ρ ≈", einheit:"kg/m³", wert:1428.6, tol:{rel:0.003}, fehler:[{wert:1.4286e-3, tol:{rel:0.003}, msg:"Das ist kg/cm³ – das Volumen noch in m³ umrechnen."}]}],
-      tipps:[`${code("2E30_kg/(1.4E33_cm^3)")} ▸ ${code("_kg/_m^3")}`, T.einh] }),
-    SK("Algebra Übung 3.2", { auftrag:"Licht ist 300'000 km/s schnell. Wie viele km sind ein Lichtjahr (365 Tage)?",
-      felder:[{label:"1 LJ ≈", einheit:"km", wert:9.46e12, tol:{rel:0.002}, ph:"z. B. 9.46E12"}],
-      tipps:[`Strecke = v·t: ${code("300000_km/_s*365_day")} ▸ ${code("_km")}, oder 300000·365·24·3600.`, T.einh] }),
-    SK("Algebra Übung 1", { auftrag:"Addiere und gib das Resultat in kg an.", formel:`<span class="formel klein">0.170500 t + 12.53 kg − 7684.3 g − 0.0094 t + 20800 mg</span>`,
-      felder:[{label:"=", einheit:"kg", wert:165.9665, tol:{rel:5e-4}}],
-      tipps:[`Jede Grösse mit Einheit (${code("_t")}, ${code("_kg")}, ${code("_gm")}, ${code("_mg")}), am Schluss ▸ ${code("_kg")}.`, SCR("Rechner",[["0.1705·_t+12.53·_kg−7684.3·_gm−0.0094·_t+20800·_mg ▸ _kg","165.967·_kg"]])] }),
-    SK("Algebra Übung 3.2", { auftrag:"Widerstand eines Kupferkabels: R = ρ·L/A mit ρ = 17 µΩ·cm²/dm, L = 1.2·10⁻⁴ Mm, A = 0.0000012 m².",
-      felder:[{label:"R ≈", einheit:"Ω", wert:1.7, tol:{rel:0.003}}],
-      tipps:[`Alles in SI: ρ = 17·10⁻⁶ Ω · 10⁻⁴ m² / 0.1 m, L = 120 m. Oder dem Rechner die Einheiten überlassen: ${code("_Ω")} aus dem Symbolkatalog.`, SCR("Rechner",[["17E−6·1E−4/0.1·120/1.2E−6","1.7"]])] }),
+    EIG({ auftrag:"Mittlere Dichte der Erde: m = 5.97·10²⁴ kg, V = 1.08·10²⁷ cm³.",
+      felder:[{label:"ρ ≈", einheit:"kg/m³", wert:5.97e24/1.08e21, tol:{rel:0.003}, fehler:[{wert:5.97e24/1.08e27, tol:{rel:0.003}, msg:"Das ist kg/cm³ – das Volumen noch in m³ umrechnen."}]}],
+      tipps:[`${code("5.97E24_kg/(1.08E27_cm^3)")} ▸ ${code("_kg/_m^3")}`, T.einh] }),
+    EIG({ auftrag:"Licht ist 300'000 km/s schnell. Wie viele km legt es an einem Tag zurück?",
+      felder:[{label:"s ≈", einheit:"km", wert:3e5*86400, tol:{rel:0.002}, ph:"z. B. 2.6E10"}],
+      tipps:[`Strecke = v·t: ${code("300000_km/_s*1_day")} ▸ ${code("_km")}, oder 300000·24·3600.`, T.einh] }),
+    EIG({ auftrag:"Addiere und gib das Resultat in kg an.", formel:`<span class="formel klein">0.0425 t + 8.75 kg − 2350 g + 18'500 mg</span>`,
+      felder:[{label:"=", einheit:"kg", wert:42.5+8.75-2.35+0.0185, tol:{rel:5e-4}}],
+      tipps:[`Jede Grösse mit Einheit (${code("_t")}, ${code("_kg")}, ${code("_gm")}, ${code("_mg")}), am Schluss ▸ ${code("_kg")}.`, SCR("Rechner",[["0.0425·_t+8.75·_kg−2350·_gm+18500·_mg ▸ _kg","48.9185·_kg"]])] }),
+    EIG({ auftrag:"Widerstand eines Aluminiumkabels: R = ρ·L/A mit ρ = 2.8·10⁻⁸ Ω·m, L = 0.35 km, A = 2.5 mm².",
+      felder:[{label:"R ≈", einheit:"Ω", wert:2.8e-8*350/2.5e-6, tol:{rel:0.003}, fehler:[{wert:2.8e-8*0.35/2.5, tol:{rel:0.003}, msg:"km und mm² zuerst in m und m² umrechnen."}]}],
+      tipps:[`Alles in SI: L = 350 m, A = 2.5·10⁻⁶ m². Oder dem Rechner die Einheiten überlassen: ${code("_Ω")} aus dem Symbolkatalog.`, SCR("Rechner",[["2.8E−8·350/2.5E−6","3.92"]])] }),
   ],
 ],
 messreihen: [
@@ -1822,7 +1846,7 @@ const NAV = [{id:"start", name:"Start", stufen:null}, ...STATIONEN, {id:"sensore
    =================================================================== */
 // Aufgabe (Trainer oder Probier) als HTML; Eingabefelder heissen <pfx>f<i>
 function aufgabeHTML(t, pfx){
-  let h = (t.quelle ? `<div class="quelle">aus dem Skript · ${t.quelle}</div>` : "") + `<p class="auftrag">${t.auftrag}</p>`;
+  let h = (t.quelle ? `<div class="quelle">aus dem Unterricht · ${t.quelle}</div>` : "") + `<p class="auftrag">${t.auftrag}</p>`;
   if(t.formel) h += `<div class="formel">${t.formel}</div>`;
   if(t.bild) h += `<div class="bild">${t.bild}</div>`;
   if(t.felder){
