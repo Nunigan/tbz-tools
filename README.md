@@ -13,6 +13,11 @@ dort hierher kopiert.
 - `konstante-beschleunigung-animation.html` – Physik Kap. 2, Bewegung
   mit konstanter Beschleunigung: Fahrzeug, Zerlegung
   x = x₀ + v₀·t + ½·a·t² und die drei Diagramme x–t, v–t, a–t.
+- `konstante-beschleunigung-ohne-zeit.html` – Physik Kap. 2, Gleichung
+  ohne Zeit v² = v₀² + 2·a·(x − x₀): gesuchte Grösse wählen (v, v₀, a
+  oder x), Rechnung mit Vereinfachung und eingesetzten Zahlen, beide
+  Wurzel-Vorzeichen, Fahrzeug auf der Strecke, Diagramme v–x, v²–x und
+  v–t (Herkunft).
 - `schiefe-ebene-simulation.html` – Physik Versuch 1, Wagen auf der
   schiefen Ebene ohne Reibung, Höhe einstellbar; Diagramme s–t, v–t,
   a–t und Messreihe a(h) bzw. a(α).

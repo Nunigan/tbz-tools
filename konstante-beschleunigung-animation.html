@@ -63,6 +63,7 @@
   .diagrams{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
   @media (max-width:900px){.diagrams{grid-template-columns:1fr}.readout{grid-template-columns:repeat(2,1fr)}.tile .op{display:none}.formula{margin-left:0}}
   .hint{color:var(--ink-soft);font-size:13px;margin:10px 2px 0}
+  .hint a{color:var(--blue)}
   footer{margin-top:26px;color:var(--ink-soft);font-size:12px}
 </style>
 </head>
@@ -111,7 +112,8 @@
 </main>
 <p class="hint">Leertaste: Start/Stopp · Pfeiltasten ←/→: Zeit schrittweise · in ein Diagramm klicken oder ziehen: Zeit setzen.
 Farben: <span class="cx">Ort</span>, <span class="cv">Geschwindigkeit</span>, <span class="ca">Beschleunigung</span>.
-Die Fläche unter der v-Kurve ist der zurückgelegte Weg, die Fläche unter der a-Kurve die Geschwindigkeitsänderung.</p>
+Die Fläche unter der v-Kurve ist der zurückgelegte Weg, die Fläche unter der a-Kurve die Geschwindigkeitsänderung.
+Ohne Zeit: <a href="konstante-beschleunigung-ohne-zeit.html">Animation zu v² = v₀² + 2·a·(x − x₀)</a>.</p>
 <footer>Nur für den Unterrichtsgebrauch. M. Schmid, Technische Berufsschule Zürich.</footer>
 
 <script>
@@ -126,6 +128,7 @@ const C = {};
   .forEach(n => C[n.slice(2)] = css(n));
 const $ = id => document.getElementById(id);
 const fmt = (n, d=1) => (Math.abs(n) < 5e-12 ? 0 : n).toFixed(d).replace('-', '−');
+const dec = st => Number.isInteger(st) ? 0 : (Number.isInteger(st*10) ? 1 : 2);   // Dezimalstellen fuer Ticks
 
 // ---------- Skalen ----------
 function niceStep(range, target){
@@ -217,9 +220,9 @@ function drawDiagram(d){
   g.fillText('t (s)', w-m.r+18, y0);
   g.textAlign='left'; g.textBaseline='middle'; g.fillText(d.label, m.l+10, m.t-8);
   g.textAlign='center'; g.textBaseline='top'; g.fillStyle=C['ink-soft']; g.font='12px '+css('--font');
-  for(let tt=tStep; tt<=tEnd+1e-9; tt+=tStep) g.fillText(fmt(tt, tStep<1?1:0), px(tt), y0+4);
+  for(let tt=tStep; tt<=tEnd+1e-9; tt+=tStep) g.fillText(fmt(tt, dec(tStep)), px(tt), y0+4);
   g.textAlign='right'; g.textBaseline='middle';
-  for(let y=sc.lo; y<=sc.hi+1e-9; y+=sc.step) if(Math.abs(y)>1e-9) g.fillText(fmt(y, sc.step<1?1:0), m.l-6, py(y));
+  for(let y=sc.lo; y<=sc.hi+1e-9; y+=sc.step) if(Math.abs(y)>1e-9) g.fillText(fmt(y, dec(sc.step)), m.l-6, py(y));
   g.fillText('0', m.l-6, y0);
   g.font='13px '+css('--font');
 
@@ -269,7 +272,7 @@ function drawTrack(){
   g.fillStyle=C['ink-soft']; g.font='12px '+css('--font'); g.textAlign='center';
   for(let x=sc.lo; x<=sc.hi+1e-9; x+=sc.step){
     g.strokeStyle=C.ink; g.lineWidth=1; g.beginPath(); g.moveTo(px(x),yRoad+2); g.lineTo(px(x),yRoad+8); g.stroke();
-    g.fillText(fmt(x, sc.step<1?1:0), px(x), yRoad+10);
+    g.fillText(fmt(x, dec(sc.step)), px(x), yRoad+10);
   }
   g.font='13px '+css('--font');
 

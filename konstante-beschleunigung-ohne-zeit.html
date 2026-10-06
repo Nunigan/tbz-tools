@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Konstante Beschleunigung ohne Zeit – v² = v₀² + 2a(x − x₀)</title>
+<!--
+  Eigenständige Animation (keine Abhängigkeiten, läuft lokal im Browser)
+  zur Gleichung (2.11c) aus Physik Skript 2.5:  v² = v₀² + 2·a·(x − x₀).
+  Schwester von konstante-beschleunigung-animation.html (Gl. 2.11b).
+  Idee: Die Gleichung verbindet Ort und Geschwindigkeit OHNE die Zeit.
+  Man wählt, welche Grösse gesucht ist (v, v₀, a oder x); die Seite
+  rechnet sie aus, zeigt die Umformung mit eingesetzten Zahlen, bewegt
+  das Fahrzeug von x₀ nach x und zeichnet v gegen x (Wurzelkurve),
+  v² gegen x (Gerade mit Steigung 2a) und zur Herkunft das v–t-Diagramm
+  (Fläche = Weg). Zahlenbeispiele selbst erfunden bzw. aus Prüfung 1
+  (Reserveaufgabe). Selbst erstellt, 06.10.2026.
+-->
+<style>
+  :root{
+    --paper:#F6F7F4; --grid:#E3E7E0; --ink:#1E2A38; --ink-soft:#5B6878;
+    --rule:#9AA6B4; --blue:#005AC8; --blue-wash:#DCE4F5;
+    --x:#CC0000; --v:#008C00; --a:#D96D00;
+    --x-wash:rgba(204,0,0,.10); --v-wash:rgba(0,140,0,.16); --a-wash:rgba(217,109,0,.20);
+    --x0:#5B6878; --x0-wash:rgba(91,104,120,.18); --warn:#B3261E; --warn-wash:#FBE9E7;
+    --font:"Avenir Next","Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:24px 24px}
+  body{padding:18px 22px 40px;max-width:1240px;margin:0 auto;font-size:15px;line-height:1.4}
+
+  header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 28px;border-bottom:1.5px solid var(--ink);padding-bottom:10px;margin-bottom:14px}
+  h1{font-size:22px;font-weight:600;margin:0;letter-spacing:-.01em}
+  h1 span{color:var(--blue);font-weight:500}
+  .formula{margin-left:auto;font-size:20px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .formula i{font-style:italic}
+  .cx0{color:var(--x0)} .cv{color:var(--v)} .ca{color:var(--a)} .cx{color:var(--x)} .cb{color:var(--blue)}
+
+  .controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-bottom:10px}
+  .controls label{display:flex;align-items:center;gap:6px;white-space:nowrap}
+  .controls input[type=number]{width:74px;font:inherit;padding:4px 6px;border:1px solid var(--rule);border-radius:3px;background:#fff;color:var(--ink);text-align:right}
+  .controls input.sought{background:var(--blue-wash);color:var(--blue);font-weight:600;border:1.5px solid var(--blue)}
+  .controls select{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--rule);padding:4px 8px;border-radius:3px}
+  .controls select#unknown{border:1.5px solid var(--blue);color:var(--blue);font-weight:600}
+  button{font:inherit;padding:6px 14px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);border-radius:3px;cursor:pointer}
+  button.primary{background:var(--ink);color:#fff;min-width:96px}
+  button:hover{background:var(--blue-wash)} button.primary:hover{background:var(--blue)}
+  .msg{display:none;background:var(--warn-wash);border:1.5px solid var(--warn);color:var(--warn);padding:8px 12px;margin:4px 0 10px;border-radius:3px;line-height:1.45}
+  .msg.show{display:block}
+  .timebar{display:flex;align-items:center;gap:12px;margin:6px 0 14px;flex-wrap:wrap}
+  .timebar input[type=range]{flex:1;min-width:200px;accent-color:var(--blue)}
+  .timebar b{font-variant-numeric:tabular-nums;font-size:17px;white-space:nowrap}
+  .timebar small{color:var(--ink-soft);white-space:nowrap}
+
+  .sheet{background:#fff;border:1.5px solid var(--ink);position:relative}
+  .sheet .title{position:absolute;left:0;top:0;background:var(--ink);color:#fff;font-size:12px;padding:3px 9px;letter-spacing:.02em;z-index:1}
+  canvas{display:block;width:100%;height:auto}
+  .diagrams canvas{cursor:col-resize;touch-action:none}
+
+  .readout{display:grid;grid-template-columns:repeat(3,1fr) .9fr;gap:12px;margin:12px 0 10px}
+  .tile{background:#fff;border:1.5px solid var(--rule);padding:5px 10px;font-variant-numeric:tabular-nums;line-height:1.2;position:relative}
+  .tile small{display:block;color:var(--ink-soft);font-size:11px;margin-bottom:2px}
+  .tile b{font-size:16px;font-weight:600}
+  .tile .op{position:absolute;right:-12px;top:9px;font-size:19px;color:var(--ink-soft);background:var(--paper);padding:0 2px}
+  .tile.v{border-color:var(--v);border-width:2px} .tile.v0{border-color:var(--v)} .tile.a{border-color:var(--a)}
+  .tile.t{border-style:dashed} .tile.t b{color:var(--ink-soft);font-weight:500}
+
+  .calc{background:#fff;border:2px solid var(--blue);padding:34px 22px 18px;font-size:26px;line-height:1.9;font-variant-numeric:tabular-nums;margin-bottom:14px;position:relative;box-shadow:0 2px 0 var(--blue-wash)}
+  .calc .title{position:absolute;left:0;top:0;background:var(--blue);color:#fff;font-size:12px;padding:3px 9px;letter-spacing:.02em}
+  .calc .lead{color:var(--ink-soft);font-size:14px;display:block;margin-bottom:6px;line-height:1.4}
+  .calc .zero{display:block;font-size:15px;line-height:1.45;margin:0 0 6px;padding:4px 10px;border-left:3px solid var(--blue);background:var(--blue-wash);white-space:normal}
+  .calc .zero span{font-weight:600}
+  .calc .zero.none{color:var(--ink-soft);background:transparent;border-left-color:var(--rule)}
+  .calc .steps{display:block;overflow-x:auto;white-space:nowrap;padding:6px 0 8px}
+  .calc .note{display:block;font-size:15px;color:var(--ink-soft);line-height:1.5;margin-top:10px;white-space:normal}
+  .calc b{color:var(--blue);font-weight:600;background:var(--blue-wash);padding:3px 12px;border-radius:4px;font-size:1.08em}
+  .calc .unk{font-weight:600}
+  .frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.9em;line-height:1.25;margin:0 3px}
+  .frac span:first-child{border-bottom:2px solid currentColor;padding:0 5px}
+  .frac span{padding:0 4px}
+  .sqrt{white-space:nowrap}
+  .sqrt span{border-top:2px solid currentColor;padding:0 4px 0 1px;margin-left:-1px}
+
+  .diagrams{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+  @media (max-width:900px){.diagrams{grid-template-columns:1fr}.readout{grid-template-columns:repeat(2,1fr)}.tile .op{display:none}.formula{margin-left:0}}
+  .hint{color:var(--ink-soft);font-size:13px;margin:10px 2px 0}
+  .hint a{color:var(--blue)}
+  footer{margin-top:26px;color:var(--ink-soft);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Konstante Beschleunigung <span>ohne Zeit</span></h1>
+  <div class="formula"><i class="cv">v</i>² = <i class="cv">v₀</i>² + 2·<i class="ca">a</i>·(<i class="cx">x</i> − <i class="cx0">x₀</i>)</div>
+</header>
+
+<section class="controls">
+  <label>Beispiel <select id="preset">
+    <option value="0,20,?,50,0,a,1">Bremsen bis zum Stillstand: a gesucht</option>
+    <option value="0,30,-6,?,0,x,1">Bremsweg: x gesucht</option>
+    <option value="0,0,1.5,48,?,v,1">Anfahren: v gesucht</option>
+    <option value="10,?,2,22,8,v0,1">Anfangsgeschwindigkeit: v₀ gesucht</option>
+    <option value="0,6,-2,5,?,v,1">Bergauf und zurück: v gesucht (zwei Lösungen)</option>
+    <option value="0,6,-2,12,?,v,1">Zu weit: x wird nie erreicht</option>
+    <option value="0,10,0,40,?,v,1">Gleichförmig (a = 0)</option>
+  </select></label>
+  <label>Gesucht <select id="unknown">
+    <option value="v">v (Endgeschwindigkeit)</option>
+    <option value="v0">v₀ (Anfangsgeschwindigkeit)</option>
+    <option value="a" selected>a (Beschleunigung)</option>
+    <option value="x">x (Ort)</option>
+  </select></label>
+  <label id="signwrap">Vorzeichen der Wurzel <select id="sign"><option value="1">+</option><option value="-1">−</option></select></label>
+</section>
+<section class="controls">
+  <label><span class="cx0">x₀</span> <input id="x0" type="number" step="1" value="0"> m</label>
+  <label><span class="cv">v₀</span> <input id="v0" type="number" step="0.5" value="20"> m/s</label>
+  <label><span class="ca">a</span> <input id="a" type="number" step="0.5" value=""> m/s²</label>
+  <label><span class="cx">x</span> <input id="x" type="number" step="1" value="50"> m</label>
+  <label><span class="cv">v</span> <input id="v" type="number" step="0.5" value="0"> m/s</label>
+  <label>Tempo <select id="speed"><option value="0.25">¼×</option><option value="0.5">½×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label>
+  <button id="play" class="primary">▶ Start</button>
+  <button id="reset">↺ Zurück</button>
+</section>
+<div id="msg" class="msg"></div>
+<div class="timebar">
+  <span>Bewegung</span>
+  <input id="pslider" type="range" min="0" max="1" step="0.002" value="0">
+  <b id="pos">x = 0.0 m · v = 0.0 m/s</b>
+  <small id="tinfo">t = 0.0 s (wird nicht gebraucht)</small>
+</div>
+
+<section class="sheet"><span class="title">Strecke (Ort x)</span><canvas id="track" height="236"></canvas></section>
+
+<section class="readout">
+  <div class="tile v"><small id="lv2">v²</small><b id="rv2">0.0 m²/s²</b><span class="op">=</span></div>
+  <div class="tile v0"><small id="lv02">v₀²</small><b id="rv02">0.0 m²/s²</b><span class="op">+</span></div>
+  <div class="tile a"><small id="l2adx">2 · a · (x − x₀)</small><b id="r2adx">0.0 m²/s²</b></div>
+  <div class="tile t"><small>Zeit – kommt in der Gleichung nicht vor</small><b id="rt">0.0 s</b></div>
+</section>
+
+<section class="calc"><span class="title">Rechnung</span><div id="calc"></div></section>
+
+<main class="diagrams">
+  <section class="sheet"><span class="title">Ort-Geschwindigkeits-Diagramm (v gegen x)</span><canvas id="dvx" height="300"></canvas></section>
+  <section class="sheet"><span class="title">v² gegen x: eine Gerade mit Steigung 2a</span><canvas id="dv2" height="300"></canvas></section>
+  <section class="sheet"><span class="title">Herkunft: v–t-Diagramm, Fläche = Weg</span><canvas id="dvt" height="300"></canvas></section>
+</main>
+<p class="hint">Leertaste: Start/Stopp · Pfeiltasten ←/→: Bewegung schrittweise · in ein Diagramm klicken oder ziehen: Position setzen.
+Farben: <span class="cx">Ort</span>, <span class="cv">Geschwindigkeit</span>, <span class="ca">Beschleunigung</span>.
+Die Gleichung (2.11c) gilt in jedem Augenblick der Fahrt – die drei Kästchen oben stimmen immer.
+Mit Zeit: <a href="konstante-beschleunigung-animation.html">Animation zu x = x₀ + v₀·t + ½·a·t²</a>.</p>
+<footer>Nur für den Unterrichtsgebrauch. M. Schmid, Technische Berufsschule Zürich.</footer>
+
+<script>
+(function(){
+'use strict';
+// Eingaben: die gesuchte Groesse ist NaN und wird in solve() berechnet.
+const S = {x0:0, v0:20, a:NaN, x:50, v:0, unknown:'a', sign:1, p:0, playing:false, speed:1};
+let D = {};                                   // abgeleitete Groessen (solve)
+const X = t => D.x0 + D.v0*t + 0.5*D.a*t*t;
+const V = t => D.v0 + D.a*t;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const C = {};
+['--ink','--ink-soft','--rule','--grid','--blue','--x','--v','--a','--x-wash','--v-wash','--a-wash','--x0','--x0-wash','--warn']
+  .forEach(n => C[n.slice(2)] = css(n));
+const $ = id => document.getElementById(id);
+const fmt = (n, d=1) => !isFinite(n) ? '?' : (Math.abs(n) < 5e-12 ? 0 : n).toFixed(d).replace('-', '−');
+const num = n => !isFinite(n) ? '?' : (Math.abs(n) < 5e-12 ? 0 : n).toFixed(2).replace(/\.?0+$/, '').replace('-', '−');
+const par = n => n < 0 ? '(' + num(n) + ')' : num(n);           // negative Zahlen in Klammern
+const sq  = n => par(n) + '²';
+const frac = (z, n) => `<span class="frac"><span>${z}</span><span>${n}</span></span>`;
+const near = (a, b) => Math.abs(a - b) < 1e-9;
+const dec = st => Number.isInteger(st) ? 0 : (Number.isInteger(st*10) ? 1 : 2);   // Dezimalstellen fuer Ticks
+
+// ---------- Physik ----------
+function solve(){
+  const u = S.unknown, sgn = S.sign;
+  let {x0, v0, a, x, v} = S;
+  let err = '', r = NaN, unreachable = false;
+  if(u === 'v'){
+    r = v0*v0 + 2*a*(x - x0);
+    if(r < -1e-9){ unreachable = Math.abs(a) > 1e-12; v = NaN; }
+    else v = sgn*Math.sqrt(Math.max(r, 0));
+  } else if(u === 'v0'){
+    r = v*v - 2*a*(x - x0);
+    if(r < -1e-9){
+      err = `Keine Lösung: v₀² = v² − 2·a·(x − x₀) wäre negativ (${num(r)} m²/s²). Diese Kombination von a, x − x₀ und v gibt es bei konstanter Beschleunigung nicht.`;
+      v0 = NaN;
+    } else v0 = sgn*Math.sqrt(Math.max(r, 0));
+  } else if(u === 'a'){
+    if(near(x, x0)){ err = 'x − x₀ = 0: Die Gleichung wird zu v² = v₀² und sagt nichts über a. Für a braucht es eine Strecke.'; a = NaN; }
+    else a = (v*v - v0*v0)/(2*(x - x0));
+  } else if(u === 'x'){
+    if(Math.abs(a) < 1e-12){
+      err = near(v, v0)
+        ? 'a = 0: Die Gleichung wird zu v² = v₀² und stimmt für jeden Ort x. Ohne Beschleunigung ändert sich v nicht – x ist nicht bestimmbar.'
+        : 'a = 0, aber v ≠ v₀: Ohne Beschleunigung kann sich die Geschwindigkeit nicht ändern – keine Lösung.';
+      x = NaN;
+    } else x = x0 + (v*v - v0*v0)/(2*a);
+  }
+  const xu = Math.abs(a) > 1e-12 ? x0 - v0*v0/(2*a) : NaN;     // Umkehrpunkt (v = 0)
+  if(unreachable){
+    err = `x = ${num(x)} m wird nie erreicht: v² wäre ${num(r)} m²/s² &lt; 0. Mit v₀ = ${num(v0)} m/s und a = ${num(a)} m/s² kommt das Fahrzeug nur bis zum Umkehrpunkt x = x₀ − v₀²/(2a) = ${num(xu)} m (dort ist v = 0) und fährt dann zurück.`;
+  }
+  // Dauer der Bewegung von x0 nach x (nur intern fuer die Animation)
+  let T = 0;
+  if(!err){
+    if(Math.abs(a) > 1e-12) T = (v - v0)/a;
+    else if(!near(v, v0)) err = `a = 0: Dann bleibt v = v₀ = ${num(v0)} m/s. Ein anderes v${u==='v'||u==='v0' ? ' (bzw. ein anderes Vorzeichen)' : ''} ist nicht möglich.`;
+    else if(Math.abs(v0) > 1e-12) T = (x - x0)/v0;
+    else if(!near(x, x0)) err = 'v₀ = 0 und a = 0: Das Fahrzeug steht still und kommt nie bei x an.';
+    if(!err && T < -1e-9){
+      err = `Diese Werte passen nicht zu einer Fahrt von x₀ nach x: Die Zeit t = (v − v₀)/a = ${num(T)} s wäre negativ. Die Gleichung (2.11c) prüft nicht, ob x in Fahrtrichtung liegt.`
+        + ((u==='v'||u==='v0') ? ' Das andere Vorzeichen der Wurzel probieren.' : '');
+      T = 0;
+    }
+  }
+  if(unreachable) { T = -v0/a; v = 0; }      // Fahrt bis zum Umkehrpunkt zeigen
+  // Fenster fuer die Ortsachse
+  const xs = [x0]; if(isFinite(S.x)) xs.push(S.x); if(isFinite(x)) xs.push(x);
+  for(let i = 0; i <= 100; i++){ const t = i/100*T; xs.push(x0 + v0*t + 0.5*(a||0)*t*t); }
+  D = {x0, v0, a: isFinite(a) ? a : 0, x, v, u, r, xu, T, err, unreachable,
+       xTarget: isFinite(S.x) ? S.x : x, xr: spanVals(xs.filter(isFinite), false)};
+}
+function rootsX(xb){                          // Zeiten t mit X(t) = xb
+  const {x0, v0, a} = D;
+  if(Math.abs(a) < 1e-12) return Math.abs(v0) > 1e-12 ? [(xb - x0)/v0] : [];
+  const disc = v0*v0 - 2*a*(x0 - xb);
+  if(disc < 0) return [];
+  const s = Math.sqrt(disc);
+  return [(-v0 - s)/a, (-v0 + s)/a];
+}
+
+// ---------- Skalen ----------
+function niceStep(range, target){
+  const raw = range/target, p = Math.pow(10, Math.floor(Math.log10(raw)));
+  for(const m of [1,2,2.5,5,10]) if(m*p >= raw) return m*p;
+  return 10*p;
+}
+function spanVals(vals, withZero=true){
+  let lo = withZero ? 0 : Infinity, hi = withZero ? 0 : -Infinity;
+  for(const y of vals){ lo = Math.min(lo, y); hi = Math.max(hi, y); }
+  if(!isFinite(lo)){ lo = 0; hi = 1; }
+  if(hi - lo < 1e-9) hi = lo + 1;
+  const st = niceStep(hi - lo, 5);
+  return {lo: Math.floor(lo/st + 1e-9)*st, hi: Math.ceil(hi/st - 1e-9)*st, step: st};
+}
+
+// ---------- Canvas-Hilfen ----------
+function setup(cv, h){
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth;
+  cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
+  cv.style.height = h+'px';
+  const g = cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  g.font = '13px '+css('--font'); g.lineJoin='round'; g.lineCap='round';
+  return {g, w, h};
+}
+function arrow(g, x1,y1,x2,y2, color, width, head){
+  head = head || 7;
+  g.strokeStyle=color; g.fillStyle=color; g.lineWidth=width;
+  const dx=x2-x1, dy=y2-y1, L=Math.hypot(dx,dy); if(L<0.5) return;
+  const ux=dx/L, uy=dy/L;
+  g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2-ux*head*0.6, y2-uy*head*0.6); g.stroke();
+  g.beginPath(); g.moveTo(x2,y2); g.lineTo(x2-ux*head-uy*head*0.45, y2-uy*head+ux*head*0.45);
+  g.lineTo(x2-ux*head+uy*head*0.45, y2-uy*head-ux*head*0.45); g.closePath(); g.fill();
+}
+function dashed(g, x1,y1,x2,y2, color){
+  g.save(); g.setLineDash([4,4]); g.strokeStyle=color; g.lineWidth=1;
+  g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke(); g.restore();
+}
+function outlined(g, txt, x, y, color, font){      // Text mit weissem Rand
+  g.font = font || '600 12px '+css('--font');
+  g.lineWidth=4; g.strokeStyle='#fff'; g.strokeText(txt, x, y);
+  g.fillStyle=color; g.fillText(txt, x, y);
+  g.font = '13px '+css('--font');
+}
+function polyline(g, pts, style, width){
+  g.strokeStyle=style; g.lineWidth=width; g.beginPath();
+  pts.forEach((p,i)=> i ? g.lineTo(p[0],p[1]) : g.moveTo(p[0],p[1]));
+  g.stroke();
+}
+function dot(g, x, y, col){
+  g.fillStyle=col; g.beginPath(); g.arc(x,y,5,0,Math.PI*2); g.fill();
+  g.strokeStyle='#fff'; g.lineWidth=1.5; g.stroke();
+}
+// Achsenkreuz mit Raster; x-Achse liegt auf y = 0 (falls im Fenster)
+function frameAxes(cv, h, xr, yr, xlab, ylab, softX, mb){
+  const {g,w} = setup(cv, h), m = {l:58, r:50, t:40, b:mb||40};
+  const pw = w-m.l-m.r, ph = h-m.t-m.b;
+  const px = x => m.l + (x-xr.lo)/(xr.hi-xr.lo)*pw;
+  const py = y => h-m.b - (y-yr.lo)/(yr.hi-yr.lo)*ph;
+  const x1 = Math.ceil(xr.lo/xr.step - 1e-9)*xr.step;
+  g.strokeStyle=C.grid; g.lineWidth=1;
+  for(let x=x1; x<=xr.hi+1e-9; x+=xr.step){ g.beginPath(); g.moveTo(px(x),m.t); g.lineTo(px(x),h-m.b); g.stroke(); }
+  for(let y=yr.lo; y<=yr.hi+1e-9; y+=yr.step){ g.beginPath(); g.moveTo(m.l,py(y)); g.lineTo(w-m.r,py(y)); g.stroke(); }
+  const yAx = py(Math.min(Math.max(0, yr.lo), yr.hi));
+  const axCol = softX ? C['ink-soft'] : C.ink;
+  arrow(g, m.l,yAx, w-m.r+14,yAx, axCol, 1.5, 8);
+  arrow(g, m.l,h-m.b, m.l,m.t-14, C.ink, 1.5, 8);
+  g.textAlign='left'; g.textBaseline='middle';
+  g.fillStyle=axCol; g.fillText(xlab, w-m.r+18, yAx);
+  g.fillStyle=C.ink; g.fillText(ylab, m.l+10, m.t-8);
+  g.fillStyle=C['ink-soft']; g.font='12px '+css('--font'); g.textAlign='center'; g.textBaseline='top';
+  for(let x=x1; x<=xr.hi+1e-9; x+=xr.step) g.fillText(fmt(x, dec(xr.step)), px(x), yAx+4);
+  g.textAlign='right'; g.textBaseline='middle';
+  for(let y=yr.lo; y<=yr.hi+1e-9; y+=yr.step) if(Math.abs(py(y)-yAx)>8 || Math.abs(y)>1e-9) g.fillText(fmt(y, dec(yr.step)), m.l-6, py(y));
+  g.font='13px '+css('--font');
+  const clip = () => { g.save(); g.beginPath(); g.rect(m.l, m.t, pw, ph); g.clip(); };
+  return {g, w, h, m, px, py, yAx, pw, ph, clip, xr, yr};
+}
+function valueTag(F, xpx, ypx, txt, col){          // Wert neben einem Punkt
+  const {g, w, m} = F, right = xpx > w*0.62;
+  g.textAlign = right ? 'right' : 'left'; g.textBaseline='bottom';
+  const yy = ypx-6 < m.t+14 ? ypx+18 : ypx-6;
+  outlined(g, txt, xpx+(right?-10:10), yy, col, '600 13px '+css('--font'));
+}
+
+// ---------- Strecke ----------
+function car(g, cx, cy, flip, ghost){
+  g.save();
+  if(flip){ g.translate(cx,0); g.scale(-1,1); g.translate(-cx,0); }
+  g.beginPath();
+  g.moveTo(cx-22,cy+6); g.lineTo(cx-22,cy-2); g.lineTo(cx-12,cy-2); g.lineTo(cx-6,cy-11); g.lineTo(cx+9,cy-11);
+  g.lineTo(cx+15,cy-2); g.lineTo(cx+22,cy-1); g.lineTo(cx+22,cy+6); g.closePath();
+  if(ghost){
+    g.fillStyle='#fff'; g.fill();
+    g.setLineDash([3,3]); g.strokeStyle=C.x0; g.lineWidth=1.5; g.stroke(); g.setLineDash([]);
+    [cx-12,cx+12].forEach(wx=>{ g.beginPath(); g.arc(wx,cy+7,4.5,0,Math.PI*2); g.stroke(); });
+  } else {
+    g.fillStyle=C.x; g.fill();
+    g.fillStyle=C.ink; [cx-12,cx+12].forEach(wx=>{ g.beginPath(); g.arc(wx,cy+7,4.5,0,Math.PI*2); g.fill(); });
+    g.fillStyle='#fff'; g.beginPath(); g.moveTo(cx-4,cy-9); g.lineTo(cx+7,cy-9); g.lineTo(cx+11,cy-3); g.lineTo(cx-4,cy-3); g.closePath(); g.fill();
+  }
+  g.restore();
+}
+function drawTrack(tc){
+  const cv = $('track'), {g,w,h} = setup(cv, 236);
+  const xr = D.xr, m = {l:40, r:70}, yRoad = 150;
+  const px = x => m.l + (x-xr.lo)/(xr.hi-xr.lo)*(w-m.l-m.r);
+  const xc = X(tc), vc = V(tc);
+  // Strasse und Achse
+  g.fillStyle='#EEF0EC'; g.fillRect(m.l-10, yRoad-30, w-m.l-m.r+20, 32);
+  arrow(g, m.l-10,yRoad+2, w-m.r+22,yRoad+2, C.ink, 1.5, 8);
+  g.fillStyle=C.ink; g.textAlign='left'; g.textBaseline='middle'; g.fillText('x (m)', w-m.r+28, yRoad+2);
+  g.fillStyle=C['ink-soft']; g.font='12px '+css('--font'); g.textAlign='center'; g.textBaseline='top';
+  for(let x=Math.ceil(xr.lo/xr.step-1e-9)*xr.step; x<=xr.hi+1e-9; x+=xr.step){
+    g.strokeStyle=C.ink; g.lineWidth=1; g.beginPath(); g.moveTo(px(x),yRoad+2); g.lineTo(px(x),yRoad+8); g.stroke();
+    g.fillText(fmt(x, dec(xr.step)), px(x), yRoad+10);
+  }
+  g.font='13px '+css('--font');
+
+  // Startmarke x0 mit Geisterauto, Zielmarke x
+  const xT = D.xTarget, close = isFinite(xT) && Math.abs(px(xT)-px(D.x0)) < 110;
+  dashed(g, px(D.x0),yRoad-88, px(D.x0),yRoad+2, C.x0);
+  car(g, px(D.x0), yRoad-14, D.v0 < 0, true);
+  g.textAlign='center'; g.textBaseline='bottom';
+  outlined(g, 'x₀ = '+num(D.x0)+' m', px(D.x0), yRoad-(close?106:92), C.x0);
+  if(isFinite(xT)){
+    dashed(g, px(xT),yRoad-88, px(xT),yRoad+2, C.x);
+    outlined(g, 'x = '+num(xT)+' m', px(xT), yRoad-92, C.x);
+  }
+  // Umkehrpunkt (falls im Fenster und erreicht)
+  if(isFinite(D.xu) && D.xu >= xr.lo && D.xu <= xr.hi && (D.unreachable || (D.v0 !== 0 && (-D.v0/D.a) > 1e-9 && (-D.v0/D.a) < D.T - 1e-9))){
+    g.fillStyle=C.x0; g.beginPath(); g.arc(px(D.xu), yRoad+2, 3.5, 0, Math.PI*2); g.fill();
+    g.textAlign='center'; g.textBaseline='top';
+    outlined(g, 'Umkehrpunkt (v = 0)', px(D.xu), yRoad+26, C.x0, '12px '+css('--font'));
+  }
+  // Weg-Pfeil x − x0 unter der Achse
+  const y = yRoad+46;
+  if(Math.abs(xc-D.x0) > 1e-9){
+    arrow(g, px(D.x0),y, px(xc),y, C.x, 3, 7);
+    const wide = Math.abs(px(xc)-px(D.x0)) > 110, txt = 'x − x₀ = '+fmt(xc-D.x0)+' m';
+    g.textBaseline = wide ? 'bottom' : 'middle';
+    g.textAlign = wide ? 'center' : (xc>=D.x0 ? 'left' : 'right');
+    outlined(g, txt, wide ? (px(xc)+px(D.x0))/2 : (xc>=D.x0 ? px(xc)+8 : px(xc)-8), wide ? y-5 : y, C.x);
+  }
+  dashed(g, px(xc),yRoad-34, px(xc),y+8, C.x);
+
+  // Fahrzeug mit v- und a-Pfeil
+  const cx = px(xc), cy = yRoad-14;
+  car(g, cx, cy, vc < -1e-9 || (Math.abs(vc)<1e-9 && D.v0<0), false);
+  const vmax = Math.max(Math.abs(D.v0), Math.abs(D.v), 1e-9), vScale = (w-m.l-m.r)*0.14/vmax;
+  const label = (txt, x0px, x1px, yy, c) => {
+    g.textBaseline='bottom'; g.textAlign='center';
+    const tw = g.measureText(txt).width/2 + 10, mid = (x0px+x1px)/2;
+    outlined(g, txt, Math.max(m.l+tw, Math.min(w-6-tw, mid)), yy, c, '600 13px '+css('--font'));
+  };
+  const vl = vc*vScale;
+  if(Math.abs(vl) > 2){ arrow(g, cx, cy-24, cx+vl, cy-24, C.v, 3, 8); label('v = '+fmt(vc)+' m/s', cx, cx+vl, cy-29, C.v); }
+  else { g.textAlign='center'; g.textBaseline='bottom'; outlined(g, 'v = 0', cx, cy-29, C.v, '600 13px '+css('--font')); }
+  if(Math.abs(D.a) > 1e-9){
+    const ar = Math.abs(D.a), al = D.a/ar*Math.min(70, 18+16*ar);
+    arrow(g, cx, cy-50, cx+al, cy-50, C.a, 3, 8); label('a = '+fmt(D.a)+' m/s²', cx, cx+al, cy-55, C.a);
+  }
+}
+
+// ---------- Diagramm 1: v gegen x ----------
+function drawVX(tc){
+  const cv = $('dvx'), xr = D.xr;
+  let ts = [0, D.T]; for(const xb of [xr.lo, xr.hi]) ts = ts.concat(rootsX(xb));
+  const tA = Math.min(...ts), tB = Math.max(...ts);
+  const yr = spanVals([V(tA), V(tB), V(0), V(D.T)]);
+  const F = frameAxes(cv, 300, xr, yr, 'x (m)', 'v (m/s)');
+  const {g, px, py} = F;
+  F.clip();
+  // Hilfslinien
+  dashed(g, px(D.x0),F.m.t, px(D.x0),F.h-F.m.b, C.x0);
+  dashed(g, F.m.l,py(D.v0), F.w-F.m.r,py(D.v0), C.v);
+  if(isFinite(D.xTarget)) dashed(g, px(D.xTarget),F.m.t, px(D.xTarget),F.h-F.m.b, C.x);
+  if(isFinite(D.v) && !D.unreachable) dashed(g, F.m.l,py(D.v), F.w-F.m.r,py(D.v), C.v);
+  g.font='11px '+css('--font'); g.textBaseline='bottom';
+  g.textAlign='left'; g.fillStyle=C.v; g.fillText('v₀', F.m.l+4, py(D.v0)-2);
+  g.textAlign='right'; g.fillStyle=C.x0; g.fillText('x₀', px(D.x0)-3, F.m.t+12);
+  if(isFinite(D.xTarget)){ g.fillStyle=C.x; g.textAlign='left'; g.fillText('x', px(D.xTarget)+3, F.m.t+12); }
+  g.font='13px '+css('--font');
+  // ganze Kurve blass (beide Wurzel-Aeste), gefahrener Teil kraeftig
+  const pts = (t1,t2,n) => { const o=[]; for(let i=0;i<=n;i++){ const t=t1+(t2-t1)*i/n; o.push([px(X(t)),py(V(t))]); } return o; };
+  g.save(); g.globalAlpha=0.28; polyline(g, pts(tA,tB,300), C.v, 2); g.restore();
+  if(tc > 0) polyline(g, pts(0,tc,200), C.v, 3);
+  // Umkehrpunkt
+  if(isFinite(D.xu) && D.xu >= xr.lo && D.xu <= xr.hi && Math.abs(D.xu-D.x0) > 1e-9){
+    g.fillStyle=C.x0; g.beginPath(); g.arc(px(D.xu), py(0), 3.5, 0, Math.PI*2); g.fill();
+    g.textAlign = px(D.xu) > F.w*0.6 ? 'right' : 'left'; g.textBaseline='top';
+    outlined(g, 'Umkehrpunkt', px(D.xu)+(px(D.xu) > F.w*0.6 ? -6 : 6), py(0)+17, C.x0, '11px '+css('--font'));
+  }
+  g.restore();
+  dot(g, px(X(tc)), py(V(tc)), C.v);
+  valueTag(F, px(X(tc)), py(V(tc)), 'v = '+fmt(V(tc))+' m/s', C.v);
+  F.fromPx = (xpx) => xr.lo + (xpx-F.m.l)/F.pw*(xr.hi-xr.lo);   // Pixel -> Ort
+  return F;
+}
+
+// ---------- Diagramm 2: v² gegen x ----------
+function drawV2(tc){
+  const cv = $('dv2'), xr = D.xr, {x0, v0, a} = D;
+  const y = x => v0*v0 + 2*a*(x-x0);
+  const xc = X(tc), vc = V(tc);
+  const yr = spanVals([Math.max(0,y(xr.lo)), Math.max(0,y(xr.hi)), v0*v0, vc*vc, isFinite(D.v)?D.v*D.v:0]);
+  const F = frameAxes(cv, 300, xr, yr, 'x (m)', 'v² (m²/s²)');
+  const {g, px, py} = F;
+  F.clip();
+  dashed(g, px(x0),F.m.t, px(x0),F.h-F.m.b, C.x0);
+  if(isFinite(D.xTarget)) dashed(g, px(D.xTarget),F.m.t, px(D.xTarget),F.h-F.m.b, C.x);
+  // Gerade (nur wo v² >= 0), blass; gefahrener Teil kraeftig
+  let xa = xr.lo, xb = xr.hi;
+  if(Math.abs(a) > 1e-12){ if(a > 0) xa = Math.max(xa, D.xu); else xb = Math.min(xb, D.xu); }
+  g.save(); g.globalAlpha=0.28; polyline(g, [[px(xa),py(y(xa))],[px(xb),py(y(xb))]], C.v, 2); g.restore();
+  let labelBelow = false;
+  if(tc > 0){
+    let lo = x0, hi = x0;                       // ueberstrichener Bereich
+    for(let i=0;i<=100;i++){ const xx = X(tc*i/100); lo=Math.min(lo,xx); hi=Math.max(hi,xx); }
+    polyline(g, [[px(lo),py(y(lo))],[px(hi),py(y(hi))]], C.v, 3);
+    // Steigungsdreieck: waagrecht x − x0 (rot), senkrecht 2a(x − x0) (orange)
+    if(Math.abs(xc-x0) > 1e-9){
+      dashed(g, px(x0),py(v0*v0), px(xc),py(v0*v0), C.x);
+      arrow(g, px(x0),py(v0*v0), px(xc),py(v0*v0), C.x, 2.5, 7);
+      let below = a*(xc-x0) >= 0;                 // Label auf der Seite ohne senkrechten Pfeil
+      if(!below && py(v0*v0)-18 < F.m.t) below = true;
+      if(below && py(v0*v0)+18 > F.h-F.m.b) below = false;
+      labelBelow = below;
+      g.textAlign='center'; g.textBaseline = below ? 'top' : 'bottom';
+      outlined(g, 'x − x₀ = '+fmt(xc-x0)+' m', (px(x0)+px(xc))/2, py(v0*v0)+(below ? 6 : -6), C.x);
+      if(Math.abs(py(vc*vc)-py(v0*v0)) > 3){
+        arrow(g, px(xc),py(v0*v0), px(xc),py(vc*vc), C.a, 2.5, 7);
+        const right = px(xc) > F.w*0.55;
+        g.textAlign = right ? 'right' : 'left'; g.textBaseline='middle';
+        outlined(g, '2·a·(x − x₀) = '+fmt(2*a*(xc-x0)), px(xc)+(right?-8:8), (py(v0*v0)+py(vc*vc))/2, C.a);
+      }
+    }
+  }
+  // Achsenabschnitt v0²
+  g.font='11px '+css('--font'); g.textAlign='left'; g.fillStyle=C.v;
+  const v0Above = labelBelow || tc <= 0, roomBelow = py(v0*v0)+16 < F.h-F.m.b;
+  if(v0Above || roomBelow){
+    g.textBaseline = v0Above ? 'bottom' : 'top';
+    g.fillText('v₀² = '+fmt(v0*v0), px(x0)+4, py(v0*v0)+(v0Above ? -3 : 3));
+  }
+  g.font='13px '+css('--font');
+  g.restore();
+  dot(g, px(xc), py(vc*vc), C.v);
+  valueTag(F, px(xc), py(vc*vc), 'v² = '+fmt(vc*vc), C.v);
+  F.fromPx = (xpx) => xr.lo + (xpx-F.m.l)/F.pw*(xr.hi-xr.lo);
+  return F;
+}
+
+// ---------- Diagramm 3: v gegen t (Herkunft) ----------
+function drawVT(tc){
+  const cv = $('dvt'), T = D.T > 0 ? D.T : 1;
+  const tr = spanVals([T]); tr.step = niceStep(tr.hi, 6);
+  const yr = spanVals([D.v0, V(D.T)]);
+  const F = frameAxes(cv, 300, tr, yr, 't (s)', 'v (m/s)', true, 62);
+  const {g, px, py} = F;
+  F.clip();
+  // Flaeche = Weg (Trapez; bei Umkehr zwei Dreiecke, das untere zaehlt negativ)
+  if(tc > 0){
+    g.fillStyle=C['v-wash']; g.beginPath();
+    g.moveTo(px(0),py(0)); g.lineTo(px(0),py(D.v0)); g.lineTo(px(tc),py(V(tc))); g.lineTo(px(tc),py(0)); g.closePath(); g.fill();
+    const vm = (D.v0+V(tc))/2;
+    dashed(g, px(0),py(vm), px(tc),py(vm), C.v);
+    g.textAlign='center'; g.textBaseline='middle';
+    outlined(g, 'Fläche = x − x₀ = '+fmt(X(tc)-D.x0)+' m', (px(0)+px(tc))/2, py(vm/2) , C.x);
+    g.font='11px '+css('--font'); g.textAlign='left'; g.textBaseline='bottom'; g.fillStyle=C.v;
+    g.fillText('v̄ = (v₀ + v)/2', px(0)+4, py(vm)-3);
+    g.font='13px '+css('--font');
+  }
+  g.save(); g.globalAlpha=0.28; polyline(g, [[px(0),py(D.v0)],[px(D.T),py(V(D.T))]], C.v, 2); g.restore();
+  if(tc > 0) polyline(g, [[px(0),py(D.v0)],[px(tc),py(V(tc))]], C.v, 3);
+  dashed(g, px(tc),F.m.t, px(tc),F.h-F.m.b, C.blue);
+  g.restore();
+  dot(g, px(tc), py(V(tc)), C.v);
+  valueTag(F, px(tc), py(V(tc)), 'v = '+fmt(V(tc))+' m/s', C.v);
+  // Hinweis zur Zeit
+  g.fillStyle=C['ink-soft']; g.font='11px '+css('--font'); g.textAlign='left'; g.textBaseline='bottom';
+  g.fillText('Fläche = v̄ · t = (v + v₀)/2 · (v − v₀)/a = (v² − v₀²)/(2a)', F.m.l, F.h-17);
+  g.fillText('Die Zeit t fällt heraus – das ist Gleichung (2.11c).', F.m.l, F.h-5);
+  g.font='13px '+css('--font');
+  F.fromPx = (xpx) => (xpx-F.m.l)/F.pw*T;        // Pixel -> Zeit
+  return F;
+}
+
+// ---------- Rechnung ----------
+// Terme in drei Stufen: 'sym' = allgemeine Formel, 'simp' = mit Variablen, aber
+// Nullterme (v = 0, x₀ = 0, ...) weggelassen, 'num' = Zahlen eingesetzt.
+const z = n => Math.abs(n) < 1e-12;
+const sqrt = n => `<span class="sqrt">√<span>${num(n)}</span></span>`;
+function tDiffSq(v, v0, mode){                 // v² − v₀²
+  if(mode === 'sym') return 'v² − v₀²';
+  const [V, V0] = mode === 'num' ? [sq(v), sq(v0)] : ['v²', 'v₀²'];
+  if(z(v) && z(v0)) return '0';
+  if(z(v0)) return V;
+  if(z(v)) return '−' + V0;
+  return `${V} − ${V0}`;
+}
+function tDx(x, x0, mode){                     // (x − x₀)
+  if(mode === 'sym') return '(x − x₀)';
+  const [Xn, X0] = mode === 'num' ? [num(x), par(x0)] : ['x', 'x₀'];
+  if(z(x0)) return mode === 'num' ? par(x) : 'x';
+  if(z(x)) return mode === 'num' ? par(-x0) : '(−x₀)';
+  return `(${Xn} − ${X0})`;
+}
+const tTwoDx = (x, x0, mode) => '2·' + tDx(x, x0, mode);                        // 2·(x − x₀)
+function tTwoADx(a, x, x0, mode){                                               // 2·a·(x − x₀)
+  if(mode !== 'sym' && (z(a) || z(x - x0))) return '0';
+  return `2·${mode === 'num' ? par(a) : 'a'}·${tDx(x, x0, mode)}`;
+}
+function tSum(v0, a, x, x0, mode){             // v₀² + 2·a·(x − x₀)
+  const q = tTwoADx(a, x, x0, mode), V0 = mode === 'num' ? sq(v0) : 'v₀²';
+  if(mode === 'sym') return `${V0} + ${q}`;
+  if(z(v0) && q === '0') return '0';
+  if(z(v0)) return q;
+  if(q === '0') return V0;
+  return `${V0} + ${q}`;
+}
+function tDiff(v, a, x, x0, mode){             // v² − 2·a·(x − x₀)
+  const q = tTwoADx(a, x, x0, mode), V = mode === 'num' ? sq(v) : 'v²';
+  if(mode === 'sym') return `${V} − ${q}`;
+  if(z(v) && q === '0') return '0';
+  if(q === '0') return V;
+  if(z(v)) return '−' + q;
+  return `${V} − ${q}`;
+}
+const chain = parts => parts.filter((p, i) => p && p !== parts[i-1]).join(' = ');   // doppelte Schritte weg
+function calcHTML(){
+  const {x0, v0, a, x, v, u, r, xu, err} = D, dx = x - x0;
+  // Welche gegebenen Groessen sind 0? (die gesuchte zaehlt nicht)
+  const names = {x0:'x₀', v0:'v₀', a:'a', x:'x', v:'v'}, cls = {x0:'cx0', v0:'cv', a:'ca', x:'cx', v:'cv'};
+  const zeros = ['x0','v0','a','x','v'].filter(k => k !== u && z(D[k])).map(k => `<span class="${cls[k]}">${names[k]}</span> = 0`);
+  const zeroInfo = zeros.length
+    ? `<span class="zero">Hier ist ${zeros.join(' und ')} – diese Glieder fallen weg, bevor wir Zahlen einsetzen.</span>`
+    : `<span class="zero none">Keine gegebene Grösse ist 0 – es fällt nichts weg.</span>`;
+  const lead = '<span class="lead">Nach der gesuchten Grösse aufgelöst, Formel vereinfacht, Zahlen eingesetzt:</span>' + zeroInfo;
+  let s = '', note = '';
+  if(u === 'a'){
+    const parts = [`<span class="ca unk">a</span>`,
+      frac(tDiffSq(v, v0, 'sym'), tTwoDx(x, x0, 'sym')),
+      frac(tDiffSq(v, v0, 'simp'), tTwoDx(x, x0, 'simp')),
+      frac(tDiffSq(v, v0, 'num'), tTwoDx(x, x0, 'num'))];
+    if(!err) parts.push(frac(num(v*v - v0*v0), num(2*dx)), `<b>${num(a)} m/s²</b>`);
+    s = chain(parts);
+  } else if(u === 'x'){
+    s = `<span class="cx unk">x</span> − x₀ = ${frac(tDiffSq(v, v0, 'sym'), '2·a')}`;
+    const lhs = z(x0) ? '<span class="cx unk">x</span>' : '<span class="cx unk">x</span> − x₀';
+    const parts = [frac(tDiffSq(v, v0, 'simp'), '2·a'), frac(tDiffSq(v, v0, 'num'), '2·'+par(a))];
+    if(!err) parts.push(frac(num(v*v - v0*v0), num(2*a)), z(x0) ? `<b>${num(x)} m</b>` : `${num(dx)} m`);
+    const simp = chain(parts);
+    if(z(x0) || parts[0] !== frac(tDiffSq(v, v0, 'sym'), '2·a')) s += `@@${lhs} = ${simp}`;
+    else s += ' = ' + simp;
+    if(!err && !z(x0)) s += `@@also <span class="cx unk">x</span> = x₀ + ${par(dx)} m = ${par(x0)} m + ${par(dx)} m = <b>${num(x)} m</b>`;
+  } else if(u === 'v'){
+    s = chain([`<span class="cv unk">v</span>²`, tSum(v0, a, x, x0, 'sym'), tSum(v0, a, x, x0, 'simp'), tSum(v0, a, x, x0, 'num'), `${num(r)} m²/s²`]);
+    if(D.unreachable) s += ' &lt; 0 – ein Quadrat kann nicht negativ sein: keine Lösung für v.';
+    if(!err){
+      const w = Math.sqrt(Math.max(r, 0));
+      s += `@@also <span class="cv unk">v</span> = ±${sqrt(r)} = ±${num(w)} m/s → <b>v = ${S.sign>0?'+':'−'}${num(w)} m/s</b>`;
+      if(w > 1e-9 && Math.abs(a) > 1e-12){
+        const Tother = (-v - v0)/a;
+        note = `Die Gleichung hat zwei Lösungen, +${num(w)} und −${num(w)} m/s, denn sie weiss nichts von der Zeit. `
+          + (Tother > 1e-9
+            ? `Hier kommen beide vor: das Fahrzeug passiert x = ${num(x)} m zuerst mit ${num(w)} m/s, kehrt bei x = ${num(xu)} m um und kommt mit −${num(w)} m/s zurück. Vorzeichen umschalten und vergleichen.`
+            : `Hier passt nur das gewählte Vorzeichen: mit dem anderen müsste das Fahrzeug schon vor dem Start bei x gewesen sein (negative Zeit).`);
+      }
+    }
+  } else if(u === 'v0'){
+    s = chain([`<span class="cv unk">v₀</span>²`, tDiff(v, a, x, x0, 'sym'), tDiff(v, a, x, x0, 'simp'), tDiff(v, a, x, x0, 'num'), `${num(r)} m²/s²`]);
+    if(!err){
+      const w = Math.sqrt(Math.max(r, 0));
+      s += `@@also <span class="cv unk">v₀</span> = ±${sqrt(r)} = ±${num(w)} m/s → <b>v₀ = ${S.sign>0?'+':'−'}${num(w)} m/s</b>`;
+      if(w > 1e-9 && Math.abs(a) > 1e-12){
+        const Tother = (v + v0)/a;
+        note = `Auch v₀ hat zwei Lösungen, +${num(w)} und −${num(w)} m/s. `
+          + (Tother > 1e-9
+            ? `Beide sind möglich: Start in die eine oder andere Richtung – einmal direkt nach x, einmal zuerst weg von x, Umkehr bei x = ${num(x0 - w*w/(2*a))} m und dann zurück. Vorzeichen umschalten.`
+            : `Hier passt nur das gewählte Vorzeichen (sonst wäre die Zeit negativ).`);
+      }
+    }
+  }
+  if(!err && !note && Math.abs(a) < 1e-12) note = 'Mit a = 0 bleibt die Geschwindigkeit konstant: v² = v₀².';
+  return lead + `<span class="steps">${s.replace('@@', '</span><span class="steps">')}</span>` + (note ? `<span class="note">${note}</span>` : '');
+}
+
+// ---------- Anzeige ----------
+let frames = {};
+function render(){
+  solve();
+  const tc = S.p*D.T, xc = X(tc), vc = V(tc);
+  const msg = $('msg'); msg.innerHTML = D.err; msg.classList.toggle('show', !!D.err);
+  // gesuchtes Feld anzeigen
+  const sought = $(S.unknown);
+  sought.value = isFinite(D[S.unknown]) && !D.unreachable ? num(D[S.unknown]).replace('−','-') : '';
+  sought.placeholder = '?';
+  $('pos').textContent = 'x = '+fmt(xc)+' m · v = '+fmt(vc)+' m/s';
+  $('tinfo').textContent = 't = '+fmt(tc)+' s (wird nicht gebraucht)';
+  $('rv2').textContent  = fmt(vc*vc)+' m²/s²';
+  $('lv2').textContent  = 'v²  (v = '+fmt(vc)+' m/s)';
+  $('rv02').textContent = fmt(D.v0*D.v0)+' m²/s²';
+  $('lv02').textContent = 'v₀²  (v₀ = '+fmt(D.v0)+' m/s)';
+  $('r2adx').textContent = fmt(2*D.a*(xc-D.x0))+' m²/s²';
+  $('l2adx').textContent = '2 · a · (x − x₀) = 2 · '+par(D.a)+' · '+par(xc-D.x0);
+  $('rt').textContent = fmt(tc)+' s';
+  $('calc').innerHTML = calcHTML();
+  drawTrack(tc);
+  frames.dvx = drawVX(tc); frames.dv2 = drawV2(tc); frames.dvt = drawVT(tc);
+}
+
+// ---------- Animation ----------
+let last = null;
+function frame(ts){
+  if(!S.playing) return;
+  if(last !== null && D.T > 0){ S.p = Math.min(1, S.p + (ts-last)/1000*S.speed/D.T); }
+  last = ts; render(); $('pslider').value = S.p;
+  if(S.p >= 1 || D.T <= 0){ setPlaying(false); return; }
+  requestAnimationFrame(frame);
+}
+function setPlaying(p){
+  S.playing = p; last = null;
+  $('play').textContent = p ? '❚❚ Stopp' : '▶ Start';
+  if(p){ if(S.p >= 1) S.p = 0; requestAnimationFrame(frame); }
+}
+function setP(p){ S.p = Math.max(0, Math.min(1, p)); $('pslider').value = S.p; render(); }
+
+// ---------- Eingaben ----------
+const FIELDS = ['x0','v0','a','x','v'];
+function applyUnknown(){
+  FIELDS.forEach(id => { const el = $(id); const s = id === S.unknown; el.classList.toggle('sought', s); el.readOnly = s; el.tabIndex = s ? -1 : 0; });
+  $('signwrap').style.display = (S.unknown === 'v' || S.unknown === 'v0') ? '' : 'none';
+}
+function readInputs(){
+  FIELDS.forEach(id => { S[id] = id === S.unknown ? NaN : (+$(id).value || 0); });
+  S.sign = +$('sign').value; S.unknown = $('unknown').value;
+  render();
+}
+FIELDS.forEach(id => $(id).addEventListener('input', () => { setPlaying(false); readInputs(); }));
+$('unknown').addEventListener('change', () => {
+  // bisher berechneter Wert bleibt als Eingabe stehen, neues Feld wird gesucht
+  const old = S.unknown; S.unknown = $('unknown').value;
+  if(isFinite(D[old])) $(old).value = num(D[old]).replace('−','-');
+  applyUnknown(); setPlaying(false); S.p = 0; $('pslider').value = 0; readInputs();
+});
+$('sign').addEventListener('change', () => { setPlaying(false); S.p = 0; $('pslider').value = 0; readInputs(); });
+$('preset').addEventListener('change', e => {
+  const [x0,v0,a,x,v,u,sg] = e.target.value.split(',');
+  const vals = {x0,v0,a,x,v};
+  $('unknown').value = u; S.unknown = u; $('sign').value = sg;
+  FIELDS.forEach(id => $(id).value = vals[id] === '?' ? '' : vals[id]);
+  applyUnknown(); setPlaying(false); S.p = 0; $('pslider').value = 0; readInputs();
+});
+$('speed').addEventListener('change', e => S.speed = +e.target.value);
+$('play').addEventListener('click', () => setPlaying(!S.playing));
+$('reset').addEventListener('click', () => { setPlaying(false); setP(0); });
+$('pslider').addEventListener('input', e => { setPlaying(false); S.p = +e.target.value; render(); });
+document.addEventListener('keydown', e => {
+  if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if(e.code === 'Space'){ e.preventDefault(); setPlaying(!S.playing); }
+  if(e.code === 'ArrowRight'){ setPlaying(false); setP(S.p + 0.05); }
+  if(e.code === 'ArrowLeft'){ setPlaying(false); setP(S.p - 0.05); }
+});
+// Position setzen durch Klicken/Ziehen: in den x-Diagrammen ueber den Ort, im t-Diagramm ueber die Zeit
+['dvx','dv2','dvt'].forEach(id => {
+  const cv = $(id); let drag = false;
+  const set = e => {
+    const F = frames[id]; if(!F || D.T <= 0) return;
+    const r = cv.getBoundingClientRect(), val = F.fromPx(e.clientX - r.left);
+    if(id === 'dvt'){ setP(val/D.T); return; }
+    // Ort -> fruehester Zeitpunkt in [0,T], an dem X(t) = val
+    const ts = rootsX(val).filter(t => t > -1e-9 && t < D.T + 1e-9);
+    if(ts.length) setP(Math.min(...ts)/D.T);
+    else setP((val - D.x0)*(D.x - D.x0) > 0 ? 1 : 0);
+  };
+  cv.addEventListener('pointerdown', e => { drag = true; cv.setPointerCapture(e.pointerId); setPlaying(false); set(e); });
+  cv.addEventListener('pointermove', e => { if(drag) set(e); });
+  cv.addEventListener('pointerup', () => drag = false); cv.addEventListener('pointercancel', () => drag = false);
+});
+window.addEventListener('resize', render);
+const q = new URLSearchParams(location.search);
+if(q.has('beispiel')){ const o = $('preset').options[+q.get('beispiel')]; if(o){ $('preset').value = o.value; $('preset').dispatchEvent(new Event('change')); } }
+applyUnknown(); readInputs();
+if(q.has('p')) setP(+q.get('p'));
+})();
+</script>
+</body>
+</html>
