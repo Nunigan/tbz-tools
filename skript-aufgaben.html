@@ -123,7 +123,7 @@
   <summary>So arbeitest du mit den Skript-Aufgaben</summary>
   <ol>
     <li><b>Aufgabe wählen.</b> Die Werkstücke entsprechen den Übungen im Skript «PL1 Darstellung eines Körpers», Seiten 18 bis 21 und 24 (Übung 2.3.3). Ansichten, die im Skript vorgegeben sind, stehen bereits im Feld (gegeben).</li>
-    <li><b>Übung 2.3.3 (ISO-Teile).</b> Hier sind V, D und SL gegeben, gesucht ist der Körper in isometrischer Darstellung. Das 3D-Modell ist darum zuerst verdeckt – erst auf dem ISO-Blatt zeichnen, dann «Körper aufdecken». Die Tasten unter «Isometrie» drehen das Modell in eine der isometrischen Lagen: welche zwei Seiten sichtbar sind (V oder R, SL oder SR) und mit «von unten» die Unter- statt der Draufsicht – so lassen sich alle acht Blickrichtungen vergleichen; «verdeckte Kanten» blendet die unsichtbaren Kanten gestrichelt ein oder aus.</li>
+    <li><b>Übung 2.3.3 (ISO-Teile).</b> Hier sind V, D und SL gegeben, gesucht ist der Körper in isometrischer Darstellung. Das 3D-Modell ist darum zuerst verdeckt – erst auf dem ISO-Blatt zeichnen, dann «Körper aufdecken». «Isometrie ↻» zeigt den Körper isometrisch und schaltet bei jedem Klick durch alle 24 Lagen (jede der 6 Flächen oben, je 4 Drehungen; Umschalt-Klick geht zurück). Die Anzeige sagt, welche Fläche oben, links und rechts liegt – die Buchstaben bezeichnen die Fläche, die man in dieser Ansicht sieht; «verdeckte Kanten» blendet die unsichtbaren Kanten gestrichelt ein oder aus.</li>
     <li><b>Zuerst selbst zeichnen.</b> Modell drehen, Ansichten auf Papier konstruieren – wie im Skript verlangt. Erst danach die Felder mit dem Fragezeichen anklicken: sie zeigen die Lösung.</li>
     <li><b>Modus «Quiz».</b> Statt aufzudecken wählst du wie im Trainer zwischen vier Vorschlägen. Fehlerhinweise stehen unter der Frage.</li>
     <li><b>Hinweis.</b> Die Modelle sind nach den Skizzen im Skript nachgebaut; Masse sind Rastereinheiten, nicht M1:1.</li>
@@ -142,9 +142,8 @@
     <p class="hint">Ziehen zum Drehen. Der blaue Pfeil zeigt die Blickrichtung der Vorderansicht V.</p>
     <p class="hint"><button class="ghost" id="reset">Ansicht zurücksetzen</button>
       <button class="ghost" data-cam="V">V</button><button class="ghost" data-cam="D">D</button><button class="ghost" data-cam="SL">SL</button><button class="ghost" data-cam="SR">SR</button><button class="ghost" data-cam="U">U</button><button class="ghost" data-cam="R">R</button></p>
-    <p class="hint isobar"><span>Isometrie:</span>
-      <button class="ghost" data-iso="V,SL" title="von vorn links">V + SL</button><button class="ghost" data-iso="V,SR" title="von vorn rechts">V + SR</button><button class="ghost" data-iso="R,SL" title="von hinten links">R + SL</button><button class="ghost" data-iso="R,SR" title="von hinten rechts">R + SR</button>
-      <button class="ghost" id="isoUnten" aria-pressed="false" title="Blick von unten statt von oben">von unten</button></p>
+    <p class="hint isobar"><button class="ghost" id="isoNext" title="nächste Lage (Umschalt-Klick: vorherige)">Isometrie ↻</button>
+      <span id="isoInfo">alle 24 Lagen des Körpers durchschalten</span></p>
     <p class="hint">
       <button class="ghost on" id="hidden" aria-pressed="true">verdeckte Kanten</button></p>
     <div class="aufgabe" id="aufgabe"></div>
@@ -525,22 +524,23 @@ function draw3d(){
   const W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
   if(!shape)return;
   const [nx,ny,nz]=shape.dims,c=[nx/2,ny/2,nz/2],S=Math.min(W,H)/(Math.max(nx,ny,nz)*2.1);
-  const P=p=>{const [x,y,z]=rot(sub(p,c));return {x:W/2+x*S,y:H/2-y*S,d:z};};
-  // Grundplatte
-  const g=[[-0.6,0,-0.6],[nx+0.6,0,-0.6],[nx+0.6,0,nz+0.6],[-0.6,0,nz+0.6]].map(P);
+  const Pw=q=>{const [x,y,z]=rot(q);return {x:W/2+x*S,y:H/2-y*S,d:z};};
+  const P=p=>Pw(lg(sub(p,c)));
+  // Grundplatte unter dem (evtl. umgelegten) Körper
+  const e=lg(c).map(Math.abs),g=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>Pw([a*(e[0]+0.6),-e[1],b*(e[2]+0.6)]));
   ctx.beginPath();g.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();
   ctx.fillStyle="rgba(30,42,56,.05)";ctx.fill();ctx.strokeStyle="rgba(30,42,56,.25)";ctx.setLineDash([6,4]);ctx.lineWidth=1;ctx.stroke();ctx.setLineDash([]);
   // Flächen in Tiefenpuffer rastern
   const img=octx.createImageData(W,H),px=img.data,zb=new Float32Array(W*H).fill(-1e9);
   shape.mesh.faces.forEach(f=>{
-    if(rot(f.n)[2]<=1e-6)return;
-    const col=shape.voxel?SHADE[f.n.map(Math.round).join(",")]:shadeFor(f.n);
+    const n=lg(f.n);if(rot(n)[2]<=1e-6)return;
+    const col=shape.voxel?SHADE[n.map(Math.round).join(",")]:shadeFor(n);
     const pts=f.pts.map(P);
     for(let i=1;i<pts.length-1;i++)rasterTri(pts[0],pts[i],pts[i+1],col,px,zb,W,H);
   });
   octx.putImageData(img,0,0);ctx.drawImage(off,0,0);
   // Kanten: Sichtbarkeit analytisch gegen zugewandte Flächen
-  const faces2=shape.mesh.faces.map(f=>({pts:f.pts.map(p=>{const q=P(p);return [q.x,q.y,-q.d*S];}),n:(()=>{const n=rot(f.n);return [n[0],-n[1],-n[2]];})()}));
+  const faces2=shape.mesh.faces.map(f=>({pts:f.pts.map(p=>{const q=P(p);return [q.x,q.y,-q.d*S];}),n:(()=>{const n=rot(lg(f.n));return [n[0],-n[1],-n[2]];})()}));
   const edges2=shape.mesh.edges.map(([A,B])=>[A,B].map(p=>{const q=P(p);return [q.x,q.y,-q.d*S];}));
   const runs=edgeRuns(faces2,edges2,32);
   const line=r=>{const x=t=>r.P[0]+(r.Q[0]-r.P[0])*t,y=t=>r.P[1]+(r.Q[1]-r.P[1])*t;
@@ -554,7 +554,7 @@ function draw3d(){
   runs.filter(r=>r.t===2).forEach(line);
   // Blickrichtungspfeil V
   const a0=P([nx/2,ny/2,nz+2.6]),a1=P([nx/2,ny/2,nz+0.9]);
-  ctx.globalAlpha=rot([0,0,1])[2]>-0.2?1:0.35;
+  ctx.globalAlpha=rot(lg([0,0,1]))[2]>-0.2?1:0.35;
   ctx.strokeStyle="#2F5DA8";ctx.fillStyle="#2F5DA8";ctx.lineWidth=3;
   ctx.beginPath();ctx.moveTo(a0.x,a0.y);ctx.lineTo(a1.x,a1.y);ctx.stroke();
   const ang=Math.atan2(a1.y-a0.y,a1.x-a0.x);
@@ -575,10 +575,11 @@ function rasterTri(a,b,c,col,px,zb,W,H){
   }
 }
 let drag=null;
-cv.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY};anim=null;if(isoSeite){isoSeite=null;markIso();}cv.setPointerCapture(e.pointerId);});
+cv.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY};anim=null;cv.setPointerCapture(e.pointerId);});
 cv.addEventListener("pointermove",e=>{if(!drag)return;cam.yaw+=(e.clientX-drag.x)*0.01;cam.pitch=Math.max(-1.5,Math.min(1.5,cam.pitch+(e.clientY-drag.y)*0.01));drag={x:e.clientX,y:e.clientY};draw3d();});
 cv.addEventListener("pointerup",()=>drag=null);cv.addEventListener("pointercancel",()=>drag=null);
 function animateTo(target,ms,then){
+  if(target!==ISO_CAM)clearIso(); // Standardansichten gelten für die Grundlage des Körpers
   const from={...cam},t0=performance.now();
   const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
   anim=function step(now){
@@ -593,10 +594,25 @@ function animateTo(target,ms,then){
 const CAMS={V:{yaw:0,pitch:0},R:{yaw:Math.PI,pitch:0},SL:{yaw:Math.PI/2,pitch:0},SR:{yaw:-Math.PI/2,pitch:0},D:{yaw:0,pitch:Math.PI/2-0.001},U:{yaw:0,pitch:-Math.PI/2+0.001},
 };
 // Isometrie: Blick diagonal auf eine Ecke, alle drei Achsen gleich verkürzt (Neigung atan(1/√2) ≈ 35.3°)
-const ISO_YAW={"V,SL":Math.PI/4,"V,SR":-Math.PI/4,"R,SL":3*Math.PI/4,"R,SR":-3*Math.PI/4};
-let isoSeite=null,isoUnten=false;
-const isoCam=()=>({yaw:ISO_YAW[isoSeite],pitch:(isoUnten?-1:1)*Math.atan(Math.SQRT1_2)});
-function markIso(){document.querySelectorAll("[data-iso]").forEach(b=>b.classList.toggle("on",b.dataset.iso===isoSeite));}
+// Isometrie: Kamera fest auf die Ecke rechts-vorn-oben (alle drei Achsen gleich verkürzt, Neigung atan(1/√2)),
+// der Körper wird in eine seiner 24 Lagen gedreht: 6 Flächen nach oben × 4 Drehungen um die Senkrechte
+const ISO_CAM={yaw:-Math.PI/4,pitch:Math.atan(Math.SQRT1_2)};
+const FACE_N={V:[0,0,1],R:[0,0,-1],D:[0,1,0],U:[0,-1,0],SL:[-1,0,0],SR:[1,0,0]};
+const UP_ROT={D:v=>v,U:([x,y,z])=>[-x,-y,z],V:([x,y,z])=>[x,z,-y],R:([x,y,z])=>[x,-z,y],SL:([x,y,z])=>[y,-x,z],SR:([x,y,z])=>[-y,x,z]};
+const turnY=(j,[x,y,z])=>{for(let i=0;i<j;i++)[x,z]=[z,-x];return [x,y,z];};
+const LAGEN=["D","V","SR","R","SL","U"].flatMap(up=>[0,1,2,3].map(j=>{
+  const f=v=>turnY(j,UP_ROT[up](v)).map(t=>t+0);
+  const face=w=>Object.keys(FACE_N).find(k=>f(FACE_N[k]).join()===w.join());
+  return {f,oben:face([0,1,0]),links:face([0,0,1]),rechts:face([1,0,0])};
+}));
+let lage=-1;
+const lg=v=>lage<0?v:LAGEN[lage].f(v);
+function isoInfo(){
+  const L=LAGEN[lage];
+  $("isoInfo").innerHTML=lage<0?"alle 24 Lagen des Körpers durchschalten":`Lage ${lage+1}/24 · oben <b>${L.oben}</b> · links <b>${L.links}</b> · rechts <b>${L.rechts}</b>`;
+  $("isoNext").classList.toggle("on",lage>=0);
+}
+function clearIso(){if(lage<0)return;lage=-1;isoInfo();draw3d();}
 document.getElementById("reset").onclick=()=>animateTo(home,500);
 
 /* ---------- Werkstücke aus dem Skript (Rastereinheiten, V blickt von +z) ---------- */
@@ -679,7 +695,7 @@ AUFGABEN.forEach((a,i)=>{const b=document.createElement("button");b.innerHTML=`$
 function load(i){
   idx=i;const a=AUFGABEN[i];
   [...nav.children].forEach((b,k)=>b.classList.toggle("on",k===i));
-  shape=a.shape;Object.assign(cam,home);anim=null;isoSeite=null;markIso();draw3d();
+  shape=a.shape;Object.assign(cam,home);anim=null;lage=-1;isoInfo();draw3d();
   $("cover").classList.toggle("show",!!a.iso);
   document.querySelector(".sheet .title").textContent="Werkstück – 3D · "+a.name;
   $("aufgabe").innerHTML=`<b>Aufgabe ${i+1} – ${a.name}</b>${a.text}<span class="src">Skript «PL1 Darstellung eines Körpers», ${a.page}. Modell nach der Skizze nachgebaut.</span>`;
@@ -707,11 +723,12 @@ document.querySelectorAll(".slot[data-v]").forEach(s=>s.addEventListener("click"
 $("uncover").onclick=()=>$("cover").classList.remove("show");
 $("all").onclick=()=>{if(mode==="quiz")setMode("reveal");$("cover").classList.remove("show");VIEWS.forEach(v=>{if(slotEl(v).classList.contains("hidden"))fillSlot(v,task.proj[v],true);});};
 $("clear").onclick=()=>resetBoard();
-document.querySelectorAll("[data-cam]").forEach(b=>b.onclick=()=>{isoSeite=null;markIso();animateTo(CAMS[b.dataset.cam],500);});
-document.querySelectorAll("[data-iso]").forEach(b=>b.onclick=()=>{isoSeite=b.dataset.iso;markIso();animateTo(isoCam(),600);});
-$("isoUnten").onclick=e=>{isoUnten=!isoUnten;e.currentTarget.classList.toggle("on",isoUnten);e.currentTarget.setAttribute("aria-pressed",isoUnten);
-  if(!isoSeite){isoSeite="V,SR";markIso();}animateTo(isoCam(),600);};
-$("reset").onclick=()=>{isoSeite=null;markIso();animateTo(home,500);};
+document.querySelectorAll("[data-cam]").forEach(b=>b.onclick=()=>{clearIso();animateTo(CAMS[b.dataset.cam],500);});
+$("isoNext").onclick=e=>{
+  const first=lage<0;lage=first?0:(lage+(e.shiftKey?23:1))%24;isoInfo();
+  if(first)animateTo(ISO_CAM,600);else{anim=null;Object.assign(cam,ISO_CAM);draw3d();}
+};
+$("reset").onclick=()=>{clearIso();animateTo(home,500);};
 $("hidden").onclick=e=>{showHidden=!showHidden;e.currentTarget.classList.toggle("on",showHidden);e.currentTarget.setAttribute("aria-pressed",showHidden);draw3d();};
 
 function setMode(m){mode=m;$("mReveal").classList.toggle("on",m==="reveal");$("mQuiz").classList.toggle("on",m==="quiz");resetBoard();}
