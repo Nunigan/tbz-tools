@@ -106,6 +106,8 @@
   .modes button{font:inherit;background:#fff;border:0;padding:6px 12px;cursor:pointer;color:var(--ink-soft)}
   .modes button.on{background:var(--ink);color:#fff}
   button.ghost.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .isobar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .isobar span{margin-right:2px}
   a.back{color:var(--blue);font-size:13px;text-decoration:none;margin-left:auto}
   a.back:hover{text-decoration:underline}
   #quiz{display:none}#quiz.show{display:block}
@@ -121,7 +123,7 @@
   <summary>So arbeitest du mit den Skript-Aufgaben</summary>
   <ol>
     <li><b>Aufgabe wählen.</b> Die Werkstücke entsprechen den Übungen im Skript «PL1 Darstellung eines Körpers», Seiten 18 bis 21 und 24 (Übung 2.3.3). Ansichten, die im Skript vorgegeben sind, stehen bereits im Feld (gegeben).</li>
-    <li><b>Übung 2.3.3 (ISO-Teile).</b> Hier sind V, D und SL gegeben, gesucht ist der Körper in isometrischer Darstellung. Das 3D-Modell ist darum zuerst verdeckt – erst auf dem ISO-Blatt zeichnen, dann «Körper aufdecken». Die Taste «ISO» dreht das Modell in die isometrische Lage, «verdeckte Kanten» blendet die unsichtbaren Kanten gestrichelt ein oder aus.</li>
+    <li><b>Übung 2.3.3 (ISO-Teile).</b> Hier sind V, D und SL gegeben, gesucht ist der Körper in isometrischer Darstellung. Das 3D-Modell ist darum zuerst verdeckt – erst auf dem ISO-Blatt zeichnen, dann «Körper aufdecken». Die Tasten unter «Isometrie» drehen das Modell in eine der isometrischen Lagen: welche zwei Seiten sichtbar sind (V oder R, SL oder SR) und mit «von unten» die Unter- statt der Draufsicht – so lassen sich alle acht Blickrichtungen vergleichen; «verdeckte Kanten» blendet die unsichtbaren Kanten gestrichelt ein oder aus.</li>
     <li><b>Zuerst selbst zeichnen.</b> Modell drehen, Ansichten auf Papier konstruieren – wie im Skript verlangt. Erst danach die Felder mit dem Fragezeichen anklicken: sie zeigen die Lösung.</li>
     <li><b>Modus «Quiz».</b> Statt aufzudecken wählst du wie im Trainer zwischen vier Vorschlägen. Fehlerhinweise stehen unter der Frage.</li>
     <li><b>Hinweis.</b> Die Modelle sind nach den Skizzen im Skript nachgebaut; Masse sind Rastereinheiten, nicht M1:1.</li>
@@ -139,7 +141,11 @@
     </div>
     <p class="hint">Ziehen zum Drehen. Der blaue Pfeil zeigt die Blickrichtung der Vorderansicht V.</p>
     <p class="hint"><button class="ghost" id="reset">Ansicht zurücksetzen</button>
-      <button class="ghost" data-cam="V">V</button><button class="ghost" data-cam="D">D</button><button class="ghost" data-cam="SL">SL</button><button class="ghost" data-cam="SR">SR</button><button class="ghost" data-cam="U">U</button><button class="ghost" data-cam="R">R</button><button class="ghost" data-cam="ISO">ISO</button>
+      <button class="ghost" data-cam="V">V</button><button class="ghost" data-cam="D">D</button><button class="ghost" data-cam="SL">SL</button><button class="ghost" data-cam="SR">SR</button><button class="ghost" data-cam="U">U</button><button class="ghost" data-cam="R">R</button></p>
+    <p class="hint isobar"><span>Isometrie:</span>
+      <button class="ghost" data-iso="V,SL" title="von vorn links">V + SL</button><button class="ghost" data-iso="V,SR" title="von vorn rechts">V + SR</button><button class="ghost" data-iso="R,SL" title="von hinten links">R + SL</button><button class="ghost" data-iso="R,SR" title="von hinten rechts">R + SR</button>
+      <button class="ghost" id="isoUnten" aria-pressed="false" title="Blick von unten statt von oben">von unten</button></p>
+    <p class="hint">
       <button class="ghost on" id="hidden" aria-pressed="true">verdeckte Kanten</button></p>
     <div class="aufgabe" id="aufgabe"></div>
   </section>
@@ -569,7 +575,7 @@ function rasterTri(a,b,c,col,px,zb,W,H){
   }
 }
 let drag=null;
-cv.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY};anim=null;cv.setPointerCapture(e.pointerId);});
+cv.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY};anim=null;if(isoSeite){isoSeite=null;markIso();}cv.setPointerCapture(e.pointerId);});
 cv.addEventListener("pointermove",e=>{if(!drag)return;cam.yaw+=(e.clientX-drag.x)*0.01;cam.pitch=Math.max(-1.5,Math.min(1.5,cam.pitch+(e.clientY-drag.y)*0.01));drag={x:e.clientX,y:e.clientY};draw3d();});
 cv.addEventListener("pointerup",()=>drag=null);cv.addEventListener("pointercancel",()=>drag=null);
 function animateTo(target,ms,then){
@@ -585,7 +591,12 @@ function animateTo(target,ms,then){
   requestAnimationFrame(anim);
 }
 const CAMS={V:{yaw:0,pitch:0},R:{yaw:Math.PI,pitch:0},SL:{yaw:Math.PI/2,pitch:0},SR:{yaw:-Math.PI/2,pitch:0},D:{yaw:0,pitch:Math.PI/2-0.001},U:{yaw:0,pitch:-Math.PI/2+0.001},
-  ISO:{yaw:-Math.PI/4,pitch:Math.atan(Math.SQRT1_2)}}; // isometrisch: alle drei Achsen gleich verkürzt
+};
+// Isometrie: Blick diagonal auf eine Ecke, alle drei Achsen gleich verkürzt (Neigung atan(1/√2) ≈ 35.3°)
+const ISO_YAW={"V,SL":Math.PI/4,"V,SR":-Math.PI/4,"R,SL":3*Math.PI/4,"R,SR":-3*Math.PI/4};
+let isoSeite=null,isoUnten=false;
+const isoCam=()=>({yaw:ISO_YAW[isoSeite],pitch:(isoUnten?-1:1)*Math.atan(Math.SQRT1_2)});
+function markIso(){document.querySelectorAll("[data-iso]").forEach(b=>b.classList.toggle("on",b.dataset.iso===isoSeite));}
 document.getElementById("reset").onclick=()=>animateTo(home,500);
 
 /* ---------- Werkstücke aus dem Skript (Rastereinheiten, V blickt von +z) ---------- */
@@ -668,7 +679,7 @@ AUFGABEN.forEach((a,i)=>{const b=document.createElement("button");b.innerHTML=`$
 function load(i){
   idx=i;const a=AUFGABEN[i];
   [...nav.children].forEach((b,k)=>b.classList.toggle("on",k===i));
-  shape=a.shape;Object.assign(cam,home);anim=null;draw3d();
+  shape=a.shape;Object.assign(cam,home);anim=null;isoSeite=null;markIso();draw3d();
   $("cover").classList.toggle("show",!!a.iso);
   document.querySelector(".sheet .title").textContent="Werkstück – 3D · "+a.name;
   $("aufgabe").innerHTML=`<b>Aufgabe ${i+1} – ${a.name}</b>${a.text}<span class="src">Skript «PL1 Darstellung eines Körpers», ${a.page}. Modell nach der Skizze nachgebaut.</span>`;
@@ -696,8 +707,11 @@ document.querySelectorAll(".slot[data-v]").forEach(s=>s.addEventListener("click"
 $("uncover").onclick=()=>$("cover").classList.remove("show");
 $("all").onclick=()=>{if(mode==="quiz")setMode("reveal");$("cover").classList.remove("show");VIEWS.forEach(v=>{if(slotEl(v).classList.contains("hidden"))fillSlot(v,task.proj[v],true);});};
 $("clear").onclick=()=>resetBoard();
-document.querySelectorAll("[data-cam]").forEach(b=>b.onclick=()=>animateTo(CAMS[b.dataset.cam],500));
-$("reset").onclick=()=>animateTo(home,500);
+document.querySelectorAll("[data-cam]").forEach(b=>b.onclick=()=>{isoSeite=null;markIso();animateTo(CAMS[b.dataset.cam],500);});
+document.querySelectorAll("[data-iso]").forEach(b=>b.onclick=()=>{isoSeite=b.dataset.iso;markIso();animateTo(isoCam(),600);});
+$("isoUnten").onclick=e=>{isoUnten=!isoUnten;e.currentTarget.classList.toggle("on",isoUnten);e.currentTarget.setAttribute("aria-pressed",isoUnten);
+  if(!isoSeite){isoSeite="V,SR";markIso();}animateTo(isoCam(),600);};
+$("reset").onclick=()=>{isoSeite=null;markIso();animateTo(home,500);};
 $("hidden").onclick=e=>{showHidden=!showHidden;e.currentTarget.classList.toggle("on",showHidden);e.currentTarget.setAttribute("aria-pressed",showHidden);draw3d();};
 
 function setMode(m){mode=m;$("mReveal").classList.toggle("on",m==="reveal");$("mQuiz").classList.toggle("on",m==="quiz");resetBoard();}
