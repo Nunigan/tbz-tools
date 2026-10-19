@@ -105,6 +105,7 @@
   .modes{display:inline-flex;border:1.5px solid var(--rule);border-radius:3px;overflow:hidden}
   .modes button{font:inherit;background:#fff;border:0;padding:6px 12px;cursor:pointer;color:var(--ink-soft)}
   .modes button.on{background:var(--ink);color:#fff}
+  button.ghost.on{background:var(--ink);color:#fff;border-color:var(--ink)}
   a.back{color:var(--blue);font-size:13px;text-decoration:none;margin-left:auto}
   a.back:hover{text-decoration:underline}
   #quiz{display:none}#quiz.show{display:block}
@@ -120,7 +121,7 @@
   <summary>So arbeitest du mit den Skript-Aufgaben</summary>
   <ol>
     <li><b>Aufgabe wählen.</b> Die Werkstücke entsprechen den Übungen im Skript «PL1 Darstellung eines Körpers», Seiten 18 bis 21 und 24 (Übung 2.3.3). Ansichten, die im Skript vorgegeben sind, stehen bereits im Feld (gegeben).</li>
-    <li><b>Übung 2.3.3 (ISO-Teile).</b> Hier sind V, D und SL gegeben, gesucht ist der Körper in isometrischer Darstellung. Das 3D-Modell ist darum zuerst verdeckt – erst auf dem ISO-Blatt zeichnen, dann «Körper aufdecken». Die Taste «ISO» dreht das Modell in die isometrische Lage.</li>
+    <li><b>Übung 2.3.3 (ISO-Teile).</b> Hier sind V, D und SL gegeben, gesucht ist der Körper in isometrischer Darstellung. Das 3D-Modell ist darum zuerst verdeckt – erst auf dem ISO-Blatt zeichnen, dann «Körper aufdecken». Die Taste «ISO» dreht das Modell in die isometrische Lage, «verdeckte Kanten» blendet die unsichtbaren Kanten gestrichelt ein oder aus.</li>
     <li><b>Zuerst selbst zeichnen.</b> Modell drehen, Ansichten auf Papier konstruieren – wie im Skript verlangt. Erst danach die Felder mit dem Fragezeichen anklicken: sie zeigen die Lösung.</li>
     <li><b>Modus «Quiz».</b> Statt aufzudecken wählst du wie im Trainer zwischen vier Vorschlägen. Fehlerhinweise stehen unter der Frage.</li>
     <li><b>Hinweis.</b> Die Modelle sind nach den Skizzen im Skript nachgebaut; Masse sind Rastereinheiten, nicht M1:1.</li>
@@ -138,7 +139,8 @@
     </div>
     <p class="hint">Ziehen zum Drehen. Der blaue Pfeil zeigt die Blickrichtung der Vorderansicht V.</p>
     <p class="hint"><button class="ghost" id="reset">Ansicht zurücksetzen</button>
-      <button class="ghost" data-cam="V">V</button><button class="ghost" data-cam="D">D</button><button class="ghost" data-cam="SL">SL</button><button class="ghost" data-cam="SR">SR</button><button class="ghost" data-cam="U">U</button><button class="ghost" data-cam="R">R</button><button class="ghost" data-cam="ISO">ISO</button></p>
+      <button class="ghost" data-cam="V">V</button><button class="ghost" data-cam="D">D</button><button class="ghost" data-cam="SL">SL</button><button class="ghost" data-cam="SR">SR</button><button class="ghost" data-cam="U">U</button><button class="ghost" data-cam="R">R</button><button class="ghost" data-cam="ISO">ISO</button>
+      <button class="ghost on" id="hidden" aria-pressed="true">verdeckte Kanten</button></p>
     <div class="aufgabe" id="aufgabe"></div>
   </section>
 
@@ -502,7 +504,7 @@ function makeTask(level){
 const cv=document.getElementById("c3d"),ctx=cv.getContext("2d");
 const off=document.createElement("canvas");off.width=cv.width;off.height=cv.height;const octx=off.getContext("2d");
 const cam={yaw:-0.62,pitch:0.42};const home={yaw:-0.62,pitch:0.42};
-let anim=null,shape=null;
+let anim=null,shape=null,showHidden=true;
 function rot(p){
   const [x,y,z]=p,cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw),cp=Math.cos(cam.pitch),sp=Math.sin(cam.pitch);
   const x1=x*cy+z*sy,z1=-x*sy+z*cy;
@@ -534,11 +536,16 @@ function draw3d(){
   // Kanten: Sichtbarkeit analytisch gegen zugewandte Flächen
   const faces2=shape.mesh.faces.map(f=>({pts:f.pts.map(p=>{const q=P(p);return [q.x,q.y,-q.d*S];}),n:(()=>{const n=rot(f.n);return [n[0],-n[1],-n[2]];})()}));
   const edges2=shape.mesh.edges.map(([A,B])=>[A,B].map(p=>{const q=P(p);return [q.x,q.y,-q.d*S];}));
-  ctx.strokeStyle="#1E2A38";ctx.lineWidth=1.8;ctx.lineCap="round";
-  edgeRuns(faces2,edges2,32).filter(r=>r.t===2).forEach(r=>{
-    const x=t=>r.P[0]+(r.Q[0]-r.P[0])*t,y=t=>r.P[1]+(r.Q[1]-r.P[1])*t;
-    ctx.beginPath();ctx.moveTo(x(r.t0),y(r.t0));ctx.lineTo(x(r.t1),y(r.t1));ctx.stroke();
-  });
+  const runs=edgeRuns(faces2,edges2,32);
+  const line=r=>{const x=t=>r.P[0]+(r.Q[0]-r.P[0])*t,y=t=>r.P[1]+(r.Q[1]-r.P[1])*t;
+    ctx.beginPath();ctx.moveTo(x(r.t0),y(r.t0));ctx.lineTo(x(r.t1),y(r.t1));ctx.stroke();};
+  ctx.lineCap="round";
+  if(showHidden){ // verdeckte Kanten gestrichelt, wie in der Zeichnung
+    ctx.strokeStyle="rgba(30,42,56,.7)";ctx.lineWidth=1.2;ctx.setLineDash([6,4]);
+    runs.filter(r=>r.t===1).forEach(line);ctx.setLineDash([]);
+  }
+  ctx.strokeStyle="#1E2A38";ctx.lineWidth=1.8;
+  runs.filter(r=>r.t===2).forEach(line);
   // Blickrichtungspfeil V
   const a0=P([nx/2,ny/2,nz+2.6]),a1=P([nx/2,ny/2,nz+0.9]);
   ctx.globalAlpha=rot([0,0,1])[2]>-0.2?1:0.35;
@@ -691,6 +698,7 @@ $("all").onclick=()=>{if(mode==="quiz")setMode("reveal");$("cover").classList.re
 $("clear").onclick=()=>resetBoard();
 document.querySelectorAll("[data-cam]").forEach(b=>b.onclick=()=>animateTo(CAMS[b.dataset.cam],500));
 $("reset").onclick=()=>animateTo(home,500);
+$("hidden").onclick=e=>{showHidden=!showHidden;e.currentTarget.classList.toggle("on",showHidden);e.currentTarget.setAttribute("aria-pressed",showHidden);draw3d();};
 
 function setMode(m){mode=m;$("mReveal").classList.toggle("on",m==="reveal");$("mQuiz").classList.toggle("on",m==="quiz");resetBoard();}
 $("mReveal").onclick=()=>setMode("reveal");
