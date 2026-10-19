@@ -39,6 +39,10 @@
 
   .sheet{background:#fff;border:1.5px solid var(--ink);position:relative}
   .sheet .title{position:absolute;left:0;top:0;background:var(--ink);color:#fff;font-size:12px;padding:3px 9px;letter-spacing:.02em}
+  .cover{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:30px;color:var(--ink-soft);font-size:14px;
+    background:#fff;background-image:linear-gradient(30deg,transparent 49.4%,var(--grid) 49.4%,var(--grid) 50.6%,transparent 50.6%),linear-gradient(150deg,transparent 49.4%,var(--grid) 49.4%,var(--grid) 50.6%,transparent 50.6%),linear-gradient(90deg,transparent 49.4%,var(--grid) 49.4%,var(--grid) 50.6%,transparent 50.6%);background-size:28px 16.2px}
+  .cover.show{display:flex}
+  .cover p{margin:0;max-width:330px;background:#fff;padding:6px 10px}
   canvas{display:block;width:100%;height:auto;cursor:grab;touch-action:none}
   canvas:active{cursor:grabbing}
   .hint{color:var(--ink-soft);font-size:13px;margin:8px 2px 0}
@@ -108,14 +112,15 @@
 </head>
 <body>
 <header>
-  <h1>Aufgaben aus dem Skript <span>· Kapitel 2.3, Seiten 18–21</span></h1>
+  <h1>Aufgaben aus dem Skript <span>· Kapitel 2.3, Seiten 18–24</span></h1>
   <a class="back" href="projektionsmethode-trainer.html">← zum Trainer mit Zufallsmodellen</a>
 </header>
 
 <details class="howto">
   <summary>So arbeitest du mit den Skript-Aufgaben</summary>
   <ol>
-    <li><b>Aufgabe wählen.</b> Die sechs Werkstücke entsprechen den Übungen im Skript «PL1 Darstellung eines Körpers», Seiten 18 bis 21. Ansichten, die im Skript vorgegeben sind, stehen bereits im Feld (gegeben).</li>
+    <li><b>Aufgabe wählen.</b> Die Werkstücke entsprechen den Übungen im Skript «PL1 Darstellung eines Körpers», Seiten 18 bis 21 und 24 (Übung 2.3.3). Ansichten, die im Skript vorgegeben sind, stehen bereits im Feld (gegeben).</li>
+    <li><b>Übung 2.3.3 (ISO-Teile).</b> Hier sind V, D und SL gegeben, gesucht ist der Körper in isometrischer Darstellung. Das 3D-Modell ist darum zuerst verdeckt – erst auf dem ISO-Blatt zeichnen, dann «Körper aufdecken». Die Taste «ISO» dreht das Modell in die isometrische Lage.</li>
     <li><b>Zuerst selbst zeichnen.</b> Modell drehen, Ansichten auf Papier konstruieren – wie im Skript verlangt. Erst danach die Felder mit dem Fragezeichen anklicken: sie zeigen die Lösung.</li>
     <li><b>Modus «Quiz».</b> Statt aufzudecken wählst du wie im Trainer zwischen vier Vorschlägen. Fehlerhinweise stehen unter der Frage.</li>
     <li><b>Hinweis.</b> Die Modelle sind nach den Skizzen im Skript nachgebaut; Masse sind Rastereinheiten, nicht M1:1.</li>
@@ -129,10 +134,11 @@
     <div class="sheet">
       <div class="title">Werkstück – 3D</div>
       <canvas id="c3d" width="520" height="440" aria-label="Drehbares 3D-Modell"></canvas>
+      <div class="cover" id="cover"><p>Der Körper ist hier die Lösung. Zeichnen Sie ihn zuerst selbst auf dem ISO-Blatt.</p><button class="primary" id="uncover">Körper aufdecken</button></div>
     </div>
     <p class="hint">Ziehen zum Drehen. Der blaue Pfeil zeigt die Blickrichtung der Vorderansicht V.</p>
     <p class="hint"><button class="ghost" id="reset">Ansicht zurücksetzen</button>
-      <button class="ghost" data-cam="V">V</button><button class="ghost" data-cam="D">D</button><button class="ghost" data-cam="SL">SL</button><button class="ghost" data-cam="SR">SR</button><button class="ghost" data-cam="U">U</button><button class="ghost" data-cam="R">R</button></p>
+      <button class="ghost" data-cam="V">V</button><button class="ghost" data-cam="D">D</button><button class="ghost" data-cam="SL">SL</button><button class="ghost" data-cam="SR">SR</button><button class="ghost" data-cam="U">U</button><button class="ghost" data-cam="R">R</button><button class="ghost" data-cam="ISO">ISO</button></p>
     <div class="aufgabe" id="aufgabe"></div>
   </section>
 
@@ -571,10 +577,21 @@ function animateTo(target,ms,then){
   };
   requestAnimationFrame(anim);
 }
-const CAMS={V:{yaw:0,pitch:0},R:{yaw:Math.PI,pitch:0},SL:{yaw:Math.PI/2,pitch:0},SR:{yaw:-Math.PI/2,pitch:0},D:{yaw:0,pitch:Math.PI/2-0.001},U:{yaw:0,pitch:-Math.PI/2+0.001}};
+const CAMS={V:{yaw:0,pitch:0},R:{yaw:Math.PI,pitch:0},SL:{yaw:Math.PI/2,pitch:0},SR:{yaw:-Math.PI/2,pitch:0},D:{yaw:0,pitch:Math.PI/2-0.001},U:{yaw:0,pitch:-Math.PI/2+0.001},
+  ISO:{yaw:-Math.PI/4,pitch:Math.atan(Math.SQRT1_2)}}; // isometrisch: alle drei Achsen gleich verkürzt
 document.getElementById("reset").onclick=()=>animateTo(home,500);
 
 /* ---------- Werkstücke aus dem Skript (Rastereinheiten, V blickt von +z) ---------- */
+// rechtwinklige Teile als Voxelkörper aus Quadern [x0,y0,z0,x1,y1,z1] (ganze Rastereinheiten)
+function voxelShape(boxes){
+  const occ=new Set();
+  boxes.forEach(([x0,y0,z0,x1,y1,z1])=>{for(let x=x0;x<x1;x++)for(let y=y0;y<y1;y++)for(let z=z0;z<z1;z++)occ.add(key(x,y,z));});
+  const cells=[...occ].map(k=>k.split(",").map(Number));
+  const shape={occ,cells,dims:[0,1,2].map(i=>Math.max(...cells.map(c=>c[i]))+1),voxel:true};
+  shape.mesh=voxelMesh(shape);
+  return shape;
+}
+const ISO_TEXT="Übung 2.3.3: Das Teil ist mit den drei Ansichten V, D und SL dargestellt. Zeichnen Sie die isometrische Darstellung auf dem ISO-Blatt (Raster 5 mm). Teile 1–3: Masse aus dem 5-mm-Raster ablesen, Teil 4 gemäss den Massangaben.";
 const AUFGABEN=[
   {name:"Winkelklotz mit schräger Ecke",page:"S. 18 oben",
    text:"Übungen zur Projektion (Raumeck): Das Werkstück steht in der Mitte – konstruieren Sie mit Hilfslinien die Vorderansicht auf der hinteren Ebene, die Seitenansicht von links auf der rechten Ebene und die Draufsicht auf der Bodenebene.",
@@ -613,7 +630,24 @@ const AUFGABEN=[
           prism("x",0,0.75,[[2,0],[6,0],[6,3],[2,3]]),
           prism("x",3.25,4,[[2,0],[6,0],[6,3],[2,3]]),
           prism("x",0.75,3.25,[[2,0],[6,0],[4,3],[2,3]])]},
-].map(a=>({...a,shape:angledShape(a.name,0,a.parts)}));
+  // 2.3.3: V, D und SL gegeben, gesucht ist die ISO-Darstellung -> der Körper selbst ist die Lösung
+  {name:"ISO Teil 1: Würfel mit Ausschnitt",page:"S. 24",iso:true,
+   text:ISO_TEXT,given:["V","D","SL"],
+   // Würfel 6 x 6 x 6 Kästchen, unten rechts 3 x 3 über die ganze Tiefe weggenommen
+   shape:voxelShape([[0,0,0,3,6,6],[3,3,0,6,6,6]])},
+  {name:"ISO Teil 2: Profil mit Steg",page:"S. 24",iso:true,
+   text:ISO_TEXT,given:["V","D","SL"],
+   // Flügel 2 breit bis Höhe 4, Steg in der Mitte von Höhe 2 bis 6, durchgehend 6 tief
+   shape:voxelShape([[0,0,0,2,4,6],[2,2,0,4,6,6],[4,0,0,6,4,6]])},
+  {name:"ISO Teil 3: Säule auf Fuss mit Kanal",page:"S. 24",iso:true,
+   text:ISO_TEXT,given:["V","D","SL"],
+   // Fuss 6 x 2 x 6 mit Kanal unten (2 breit, 1 hoch, quer durch); Säule links 2 breit, bis Höhe 4, Mitte bis 6
+   shape:voxelShape([[0,0,0,6,1,2],[0,0,4,6,1,6],[0,1,0,6,2,6],
+                     [0,2,0,2,4,6],[0,4,2,2,6,4]])},
+  {name:"ISO Teil 4: Rahmen auf Sockel",page:"S. 24",iso:true,
+   text:ISO_TEXT+" Im Modell ist 1 Einheit = 10 mm: Sockel □50 × 20, Rahmen 30 tief und 80 hoch, Fenster 30 × 40 durchgehend.",given:["V","D","SL"],
+   shape:voxelShape([[0,0,0,5,2,5],[0,2,1,1,8,4],[4,2,1,5,8,4],[1,6,1,4,8,4]])},
+].map(a=>({...a,shape:a.shape||angledShape(a.name,0,a.parts)}));
 
 /* ---------- Ablauf ---------- */
 let idx=0,mode="reveal",task=null,queue=[],current=null,attempts=0;
@@ -628,6 +662,7 @@ function load(i){
   idx=i;const a=AUFGABEN[i];
   [...nav.children].forEach((b,k)=>b.classList.toggle("on",k===i));
   shape=a.shape;Object.assign(cam,home);anim=null;draw3d();
+  $("cover").classList.toggle("show",!!a.iso);
   document.querySelector(".sheet .title").textContent="Werkstück – 3D · "+a.name;
   $("aufgabe").innerHTML=`<b>Aufgabe ${i+1} – ${a.name}</b>${a.text}<span class="src">Skript «PL1 Darstellung eines Körpers», ${a.page}. Modell nach der Skizze nachgebaut.</span>`;
   task=buildOptions(shape);
@@ -651,7 +686,8 @@ document.querySelectorAll(".slot[data-v]").forEach(s=>s.addEventListener("click"
   if(mode!=="reveal"||!s.classList.contains("hidden"))return;
   const v=s.dataset.v;fillSlot(v,task.proj[v],true);animateTo(CAMS[v],600,()=>setTimeout(()=>animateTo(home,600),700));
 }));
-$("all").onclick=()=>{if(mode==="quiz")setMode("reveal");VIEWS.forEach(v=>{if(slotEl(v).classList.contains("hidden"))fillSlot(v,task.proj[v],true);});};
+$("uncover").onclick=()=>$("cover").classList.remove("show");
+$("all").onclick=()=>{if(mode==="quiz")setMode("reveal");$("cover").classList.remove("show");VIEWS.forEach(v=>{if(slotEl(v).classList.contains("hidden"))fillSlot(v,task.proj[v],true);});};
 $("clear").onclick=()=>resetBoard();
 document.querySelectorAll("[data-cam]").forEach(b=>b.onclick=()=>animateTo(CAMS[b.dataset.cam],500));
 $("reset").onclick=()=>animateTo(home,500);
