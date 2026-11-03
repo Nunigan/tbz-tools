@@ -23,6 +23,11 @@ dort hierher kopiert.
 - `schiefe-ebene-simulation.html` – Physik Versuch 1, Wagen auf der
   schiefen Ebene ohne Reibung, Höhe einstellbar; Diagramme s–t, v–t,
   a–t und Messreihe a(h) bzw. a(α).
+- `wurf-simulator.html` – Physik Kap. 3, Wurfbewegungen: schiefer
+  Wurf mit Vektoren und Diagrammen, zwei Kugeln (waagrechter Wurf und
+  freier Fall gleichzeitig), Affenschuss (Ziel fällt im Schussmoment),
+  Reichweite gegen Winkel und virtuelles Labor «g bestimmen» auf einem
+  unbekannten Planeten.
 - `ti-nspire.html` – Physik/Algebra Kap. 0, TI-Nspire CX II-T CAS:
   Tutorial und Trainer in zehn Stationen (Lernen mit Tastenfeld und
   Bildschirm-Nachbau, Üben in drei Stufen mit Aufgaben aus den Skripten).

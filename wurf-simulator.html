@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wurf-Simulator</title>
+<!--
+  Eigenständiger Wurf-Simulator (keine Abhängigkeiten, läuft lokal im
+  Browser) zu Physik Kapitel 3 «Kinematik in zwei Raumrichtungen»,
+  Abschnitte waagrechter und schiefer Wurf. Fünf Modi:
+    1 Schiefer Wurf      – v0, α, h0 frei; Bahn, Geschwindigkeitsvektor mit
+                           Komponenten, «Schatten» auf den Achsen,
+                           Stroboskop, Diagramme x–t, y–t, v–t.
+    2 Zwei Kugeln        – Einstiegsversuch: waagrechter Wurf und freier Fall
+                           gleichzeitig; Flugzeit hängt nicht von v0 ab.
+    3 Affenschuss        – Kanone zielt auf ein Ziel, das im Schussmoment
+                           fällt (digitaler Ersatz für den Demoversuch
+                           «Affenschuss» / monkey and hunter).
+    4 Reichweite & Winkel – Messreihe w(α) bei festem v0, Maximum bei 45°,
+                           Komplementärwinkel.
+    5 g bestimmen        – virtuelles Labor: unbekannter Planet, waagrechter
+                           Wurf vom Tisch, Lichtschranke/Messband/Stoppuhr
+                           mit Messrauschen; g = 2·h·v0²/x² bzw. 2·h/t².
+  Idealisiert: kein Luftwiderstand, punktförmige Kugel.
+  Selbst erstellt, 03.11.2026. Eigenes Material (keine Buchinhalte).
+-->
+<style>
+  :root{
+    --paper:#F6F7F4; --grid:#E3E7E0; --ink:#1E2A38; --ink-soft:#5B6878;
+    --rule:#9AA6B4; --blue:#005AC8; --blue-wash:#DCE4F5;
+    --x:#005AC8; --y:#CC0000; --v:#008C00; --g:#D96D00; --ziel:#6B3FA0;
+    --ok:#2E7D4F; --ok-wash:#DDEFE3; --bad:#B3402F; --bad-wash:#F5DDD8;
+    --font:"Avenir Next","Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:24px 24px}
+  body{padding:18px 22px 40px;max-width:1240px;margin:0 auto;font-size:15px;line-height:1.4}
+
+  header{display:flex;flex-wrap:wrap;align-items:center;gap:8px 22px;border-bottom:1.5px solid var(--ink);padding-bottom:10px;margin-bottom:12px}
+  h1{font-size:22px;font-weight:600;margin:0;letter-spacing:-.01em;white-space:nowrap}
+  h1 span{color:var(--blue);font-weight:500}
+  nav.modes{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
+  nav.modes button{font:inherit;font-size:14px;padding:5px 12px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);border-radius:3px;cursor:pointer}
+  nav.modes button.on{background:var(--ink);color:#fff}
+  nav.modes button:hover:not(.on){background:var(--blue-wash)}
+
+  .intro{margin:0 0 12px;font-size:14.5px;max-width:900px}
+  .assume{display:inline-block;background:#fff;border:1.5px dashed var(--ink-soft);padding:4px 10px;margin:0 0 12px;font-size:14px}
+  .assume b{font-weight:600}
+  i{font-style:italic}
+  .cx{color:var(--x)} .cy{color:var(--y)} .cv{color:var(--v)} .cg{color:var(--g)} .cz{color:var(--ziel)}
+
+  .controls{display:none;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-bottom:10px}
+  .controls.show{display:flex}
+  .controls label{display:flex;align-items:center;gap:6px;white-space:nowrap}
+  .controls input[type=number]{width:74px;font:inherit;padding:4px 6px;border:1px solid var(--rule);border-radius:3px;background:#fff;color:var(--ink);text-align:right}
+  .controls input[type=range]{width:170px;accent-color:var(--blue)}
+  .controls input[type=checkbox]{width:16px;height:16px;accent-color:var(--g)}
+  .controls select{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--rule);padding:4px 8px;border-radius:3px}
+  .controls .sep{width:1px;height:26px;background:var(--rule)}
+  button{font:inherit;padding:6px 14px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);border-radius:3px;cursor:pointer}
+  button.primary{background:var(--ink);color:#fff;min-width:96px}
+  button:hover{background:var(--blue-wash)} button.primary:hover{background:var(--blue)}
+  button:disabled{opacity:.45;cursor:default}
+  .timebar{display:flex;align-items:center;gap:12px;margin:4px 0 12px}
+  .timebar input[type=range]{flex:1;accent-color:var(--blue)}
+  .timebar b{font-variant-numeric:tabular-nums;min-width:82px;font-size:18px}
+
+  .sheet{background:#fff;border:1.5px solid var(--ink);position:relative}
+  .sheet .title{position:absolute;left:0;top:0;background:var(--ink);color:#fff;font-size:12px;padding:3px 9px;letter-spacing:.02em;z-index:1}
+  canvas{display:block;width:100%;height:auto}
+  #scene{touch-action:none}
+  .diagrams canvas{cursor:col-resize;touch-action:none}
+  .banner{position:absolute;right:12px;top:10px;font-size:18px;font-weight:600;padding:6px 14px;border-radius:3px;display:none;z-index:1}
+  .banner.ok{display:block;background:var(--ok-wash);color:var(--ok);border:1.5px solid var(--ok)}
+  .banner.bad{display:block;background:var(--bad-wash);color:var(--bad);border:1.5px solid var(--bad)}
+
+  .readout{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:14px 0}
+  .tile{background:#fff;border:1.5px solid var(--rule);padding:8px 12px;font-variant-numeric:tabular-nums;line-height:1.2;min-width:0}
+  .tile small{display:block;color:var(--ink-soft);font-size:12px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tile b{font-size:21px;font-weight:600;white-space:nowrap}
+  .tile.long b{font-size:17px}
+  .tile.x{border-color:var(--x)} .tile.y{border-color:var(--y)} .tile.v{border-color:var(--v)} .tile.g{border-color:var(--g);border-width:2px} .tile.z{border-color:var(--ziel)}
+
+  .lower{display:none} .lower.show{display:block}
+  .diagrams{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  h2{font-size:18px;font-weight:600;margin:24px 0 10px;border-bottom:1.5px solid var(--ink);padding-bottom:6px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline}
+  h2 .tools{margin-left:auto;display:flex;gap:14px;align-items:center;font-size:15px;font-weight:400;flex-wrap:wrap}
+  h2 .tools label{display:flex;align-items:center;gap:6px;cursor:pointer}
+  h2 .tools input{accent-color:var(--g);width:16px;height:16px}
+  table{border-collapse:collapse;width:100%;background:#fff;border:1.5px solid var(--ink);font-variant-numeric:tabular-nums;font-size:14px}
+  th,td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--grid)}
+  th{background:var(--ink);color:#fff;font-weight:500;font-size:13px}
+  td.empty{text-align:left;color:var(--ink-soft);padding:14px 10px;line-height:1.5}
+  tr.hl td{background:var(--blue-wash)}
+  .rev{display:none} .reveal .rev{display:table-cell}
+  .box{background:#fff;border:1.5px solid var(--rule);border-left:5px solid var(--g);padding:10px 14px;font-size:14px;margin-bottom:12px}
+  .box p{margin:0 0 6px} .box p:last-child{margin:0}
+  .box.hidden{display:none}
+  .formula{font-size:17px;font-variant-numeric:tabular-nums;margin:6px 0}
+  .eval{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin:10px 0}
+  .eval input[type=number]{width:96px;font:inherit;font-size:16px;padding:5px 8px;border:1.5px solid var(--ink);border-radius:3px;background:#fff;text-align:right}
+  .msg{font-weight:600;min-height:1.4em}
+  .msg.ok{color:var(--ok)} .msg.bad{color:var(--bad)} .msg.near{color:var(--g)}
+
+  @media (max-width:900px){.diagrams,.two{grid-template-columns:1fr}.readout{grid-template-columns:repeat(3,1fr)}nav.modes{margin-left:0}}
+  @media (max-width:520px){.readout{grid-template-columns:repeat(2,1fr)}.controls input[type=range]{width:120px}}
+  .hint{color:var(--ink-soft);font-size:13px;margin:10px 2px 0}
+  footer{margin-top:26px;color:var(--ink-soft);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Wurf-Simulator: <span id="subtitle">Schiefer Wurf</span></h1>
+  <nav class="modes" id="modes">
+    <button data-mode="wurf" class="on">1 Schiefer Wurf</button>
+    <button data-mode="zwei">2 Zwei Kugeln</button>
+    <button data-mode="affe">3 Affenschuss</button>
+    <button data-mode="reichweite">4 Reichweite &amp; Winkel</button>
+    <button data-mode="gmessen">5 g bestimmen</button>
+  </nav>
+</header>
+
+<p class="intro" id="intro"></p>
+<div class="assume" id="assume"><b>Idealisiert:</b> kein Luftwiderstand, punktförmige Kugel, <i>g</i> = 9.81 m/s².</div>
+
+<section class="controls" id="ctl-wurf">
+  <label><span class="cv">Abschussgeschwindigkeit <i>v</i>₀</span><input id="w-v0s" type="range" min="1" max="30" step="0.5" value="12"><input id="w-v0" type="number" min="1" max="30" step="0.5" value="12"> m/s</label>
+  <label>Winkel <i>α</i><input id="w-als" type="range" min="0" max="90" step="1" value="45"><input id="w-al" type="number" min="0" max="90" step="1" value="45"> °</label>
+  <label>Abwurfhöhe <i>h</i>₀<input id="w-h0s" type="range" min="0" max="20" step="0.5" value="0"><input id="w-h0" type="number" min="0" max="20" step="0.5" value="0"> m</label>
+  <span class="sep"></span>
+  <label><input id="w-vec" type="checkbox" checked> Vektoren</label>
+  <label><input id="w-shadow" type="checkbox"> Schatten auf den Achsen</label>
+  <label><input id="w-strobe" type="checkbox" checked> Stroboskop</label>
+</section>
+
+<section class="controls" id="ctl-zwei">
+  <label>Höhe <i>h</i><input id="z-hs" type="range" min="0.5" max="5" step="0.1" value="2"><input id="z-h" type="number" min="0.5" max="5" step="0.1" value="2"> m</label>
+  <label><span class="cv">Abschussgeschwindigkeit <i>v</i>₀</span><input id="z-v0s" type="range" min="0" max="10" step="0.5" value="3"><input id="z-v0" type="number" min="0" max="10" step="0.5" value="3"> m/s (waagrecht)</label>
+</section>
+
+<section class="controls" id="ctl-affe">
+  <label><span class="cv">Abschussgeschwindigkeit <i>v</i>₀</span><input id="a-v0s" type="range" min="3" max="30" step="0.5" value="12"><input id="a-v0" type="number" min="3" max="30" step="0.5" value="12"> m/s</label>
+  <label><span class="cz">Ziel: Abstand</span><input id="a-xs" type="range" min="1" max="30" step="0.5" value="8"><input id="a-x" type="number" min="1" max="30" step="0.5" value="8"> m</label>
+  <label><span class="cz">Ziel: Höhe</span><input id="a-ys" type="range" min="0.5" max="25" step="0.5" value="6"><input id="a-y" type="number" min="0.5" max="25" step="0.5" value="6"> m</label>
+  <span class="sep"></span>
+  <label><input id="a-fall" type="checkbox" checked> Ziel fällt im Schussmoment</label>
+  <label><input id="a-explain" type="checkbox"> Erklärung (ohne Schwerkraft)</label>
+</section>
+
+<section class="controls" id="ctl-reichweite">
+  <label><span class="cv">Abschussgeschwindigkeit <i>v</i>₀</span><input id="r-v0s" type="range" min="5" max="30" step="1" value="15"><input id="r-v0" type="number" min="5" max="30" step="1" value="15"> m/s</label>
+  <label>Winkel <i>α</i><input id="r-als" type="range" min="0" max="90" step="1" value="45"><input id="r-al" type="number" min="0" max="90" step="1" value="45"> °</label>
+  <label>Abwurfhöhe <i>h</i>₀<input id="r-h0s" type="range" min="0" max="10" step="0.5" value="0"><input id="r-h0" type="number" min="0" max="10" step="0.5" value="0"> m</label>
+  <span class="sep"></span>
+  <button id="r-serie" title="trägt die Würfe für α = 10°, 20°, …, 80° ein">Messreihe 10°–80°</button>
+  <button id="r-clear">Messreihe löschen</button>
+</section>
+
+<section class="controls" id="ctl-gmessen">
+  <label>Tischhöhe <i>h</i><input id="g-hs" type="range" min="0.5" max="2" step="0.05" value="1"><input id="g-h" type="number" min="0.5" max="2" step="0.05" value="1"> m</label>
+  <label>Abschussstärke (Druck)<input id="g-ps" type="range" min="1" max="10" step="1" value="5"><input id="g-p" type="number" min="1" max="10" step="1" value="5"></label>
+  <span class="sep"></span>
+  <button id="g-new">Neuer Planet</button>
+</section>
+
+<section class="controls show" id="ctl-common">
+  <label>Tempo <select id="speed"><option value="0.1">⅒×</option><option value="0.25">¼×</option><option value="0.5">½×</option><option value="1" selected>1×</option></select></label>
+  <button id="play" class="primary">▶ Start</button>
+  <button id="reset">↺ Zurück</button>
+</section>
+<div class="timebar">
+  <span><i>t</i> =</span><b id="tval">0.00 s</b>
+  <input id="tslider" type="range" min="0" max="1" step="any" value="0">
+</div>
+
+<section class="sheet"><span class="title" id="scenetitle">Bahn (massstäblich)</span><div class="banner" id="banner"></div><canvas id="scene" height="420"></canvas></section>
+
+<section class="readout" id="readout"></section>
+
+<!-- Modus 1 -->
+<div class="lower" id="lower-wurf">
+  <h2><span>Diagramme</span>
+    <span class="tools"><label><input id="w-eq" type="checkbox"> Gleichungen zeigen</label></span>
+  </h2>
+  <div class="box hidden" id="w-eqbox">
+    <p class="formula"><span class="cx"><i>x</i> = <i>v</i>₀·cos <i>α</i> · <i>t</i></span>&emsp;&emsp;<span class="cy"><i>y</i> = <i>h</i>₀ + <i>v</i>₀·sin <i>α</i> · <i>t</i> − ½·<i>g</i>·<i>t</i>²</span></p>
+    <p class="formula"><span class="cx"><i>v</i><sub>x</sub> = <i>v</i>₀·cos <i>α</i> = konstant</span>&emsp;&emsp;<span class="cy"><i>v</i><sub>y</sub> = <i>v</i>₀·sin <i>α</i> − <i>g</i>·<i>t</i></span>&emsp;&emsp;<span class="cv"><i>v</i> = √(<i>v</i><sub>x</sub>² + <i>v</i><sub>y</sub>²)</span></p>
+    <p>Waagrecht: gleichförmige Bewegung. Senkrecht: senkrechter Wurf (freier Fall mit Anfangsgeschwindigkeit). Beide laufen unabhängig voneinander ab, nur die Zeit <i>t</i> ist gemeinsam.</p>
+  </div>
+  <main class="diagrams">
+    <section class="sheet"><span class="title">Zeit-Ort x–t</span><canvas class="dg" id="w-dx" height="250"></canvas></section>
+    <section class="sheet"><span class="title">Zeit-Ort y–t</span><canvas class="dg" id="w-dy" height="250"></canvas></section>
+    <section class="sheet"><span class="title">Zeit-Geschwindigkeit v–t</span><canvas class="dg" id="w-dv" height="250"></canvas></section>
+  </main>
+</div>
+
+<!-- Modus 2 -->
+<div class="lower" id="lower-zwei">
+  <h2><span>Messreihe: Flugzeit bei verschiedenen <i>v</i>₀</span>
+    <span class="tools"><label><input id="z-reveal" type="checkbox"> Zusammenhang zeigen</label><button id="z-clear">Messreihe löschen</button></span>
+  </h2>
+  <div class="two">
+    <div>
+      <table id="z-table"><thead><tr><th>Nr.</th><th>h (m)</th><th class="cv">v₀ (m/s)</th><th>Weite w (m)</th><th>Flugzeit T (s)</th><th class="rev">√(2h/g) (s)</th></tr></thead><tbody></tbody></table>
+      <div class="box" id="z-q">
+        <p><b>Vorhersage:</b> Landet die geworfene Kugel früher, später oder gleichzeitig mit der fallenden? Ändert sich die Flugzeit, wenn <i>v</i>₀ verdoppelt wird?</p>
+        <p>Jeder vollständige Wurf (bis <i>t</i> = <i>T</i>) wird in die Tabelle eingetragen. Variieren Sie <i>v</i>₀ bei gleicher Höhe.</p>
+      </div>
+      <div class="box hidden" id="z-a">
+        <p class="formula"><i>T</i> = √(2·<i>h</i>/<i>g</i>)&emsp; <i>w</i> = <i>v</i>₀·<i>T</i></p>
+        <p>Die Flugzeit hängt nur von der Höhe ab, nicht von <i>v</i>₀: Die senkrechte Bewegung ist ein freier Fall, egal wie schnell sich die Kugel waagrecht bewegt. Darum landen beide Kugeln gleichzeitig (ein einziges «Klack»).</p>
+        <p><b>Im Labor:</b> phyphox «Akustische Stoppuhr» startet beim Abschussknall und stoppt beim Aufprall. Bei gleicher Höhe und verschiedener Abschussstärke bleibt <i>T</i> gleich.</p>
+      </div>
+    </div>
+    <div class="diagrams" style="grid-template-columns:1fr">
+      <section class="sheet"><span class="title">Zeit-Ort y–t (beide Kugeln)</span><canvas class="dg" id="z-dy" height="220"></canvas></section>
+      <section class="sheet"><span class="title">Zeit-Ort x–t</span><canvas class="dg" id="z-dx" height="220"></canvas></section>
+    </div>
+  </div>
+</div>
+
+<!-- Modus 3 -->
+<div class="lower" id="lower-affe">
+  <h2><span>Warum trifft die Kanone?</span></h2>
+  <div class="box" id="a-q">
+    <p><b>Versuch:</b> Die Kanone zielt genau auf das hängende Ziel. Im Moment des Abschusses wird das Ziel losgelassen und fällt. Trifft die Kugel?</p>
+    <p>Probieren Sie verschiedene <i>v</i>₀ (auch sehr kleine) und Zielpositionen. Das Ziel lässt sich mit der Maus verschieben. Schalten Sie dann «Ziel fällt im Schussmoment» aus und vergleichen Sie.</p>
+  </div>
+  <div class="box hidden" id="a-a">
+    <p><b>Ohne Schwerkraft</b> würde die Kugel geradlinig der Ziellinie folgen (grauer Geisterball) und das Ziel bliebe hängen: Treffer.</p>
+    <p><b>Mit Schwerkraft</b> fallen beide in der gleichen Zeit um die gleiche Strecke <span class="cg">½·<i>g</i>·<i>t</i>²</span> unter ihre schwerelose Position (orange Pfeile). Der Vorsprung der Kugel gegenüber der Ziellinie und der Fall des Ziels heben sich auf: Die Kugel trifft, <i>unabhängig von v₀</i>.</p>
+    <p><b>Bedingung:</b> Entlang der Ziellinie nähert sich die Kugel dem Ziel gleichförmig mit <i>v</i>₀. Treffer nach <i>t</i> = <i>d</i>/<i>v</i>₀ (<i>d</i> = Abstand Kanone–Ziel), sofern das Ziel bis dahin nicht am Boden ist: ½·<i>g</i>·<i>t</i>² &lt; Zielhöhe. Bei zu kleinem <i>v</i>₀ landet das Ziel vorher.</p>
+    <p><b>Fällt das Ziel nicht</b>, fliegt die Kugel um ½·<i>g</i>·<i>t</i>² unter dem Ziel durch: Man müsste höher zielen.</p>
+  </div>
+</div>
+
+<!-- Modus 4 -->
+<div class="lower" id="lower-reichweite">
+  <h2><span>Messreihe: Reichweite <i>w</i> in Abhängigkeit vom Winkel <i>α</i></span>
+    <span class="tools"><label><input id="r-reveal" type="checkbox"> Zusammenhang zeigen</label></span>
+  </h2>
+  <div class="two">
+    <section class="sheet"><span class="title">Reichweite–Winkel-Diagramm</span><canvas id="r-chart" height="300"></canvas></section>
+    <div>
+      <table id="r-table"><thead><tr><th>α (°)</th><th>Weite w (m)</th><th>Flugzeit T (s)</th><th>max. Höhe (m)</th><th class="rev">90° − α</th></tr></thead><tbody></tbody></table>
+      <div class="box" id="r-q">
+        <p><b>Fragen:</b> Bei welchem Winkel ist die Reichweite am grössten? Welche Winkel ergeben die gleiche Reichweite? Wie ändert sich das Bild bei einer Abwurfhöhe <i>h</i>₀ &gt; 0?</p>
+        <p>Jeder vollständige Wurf wird eingetragen; «Messreihe 10°–80°» füllt die Tabelle auf einmal. Ändert sich <i>v</i>₀ oder <i>h</i>₀, beginnt eine neue Messreihe.</p>
+      </div>
+      <div class="box hidden" id="r-a">
+        <p class="formula">für <i>h</i>₀ = 0:&emsp; <i>w</i> = <i>v</i>₀²·sin(2<i>α</i>) / <i>g</i>&emsp;&emsp; <i>w</i><sub>max</sub> = <i>v</i>₀²/<i>g</i> bei <i>α</i> = 45°</p>
+        <p>sin(2<i>α</i>) ist für <i>α</i> und 90° − <i>α</i> gleich gross: 30° und 60° (oder 20° und 70°) haben die gleiche Reichweite, aber verschiedene Flugzeit und Höhe. Bei <i>h</i>₀ &gt; 0 liegt der beste Winkel unter 45°.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modus 5 -->
+<div class="lower" id="lower-gmessen">
+  <h2><span>Auswertung: Fallbeschleunigung des Planeten</span>
+    <span class="tools"><button id="g-solve">Auflösen</button><button id="g-clear">Messreihe löschen</button></span>
+  </h2>
+  <div class="two">
+    <div>
+      <table id="g-table"><thead><tr><th>Nr.</th><th>h (m)</th><th class="cv">v₀ (m/s)</th><th>x (m)</th><th>t (s)</th><th class="rev">g aus x</th><th class="rev">g aus t</th></tr></thead><tbody></tbody></table>
+      <div class="box" id="g-q">
+        <p><b>Aufgabe:</b> Sie sind auf einem unbekannten Planeten. Die Kugel verlässt den Tisch waagrecht; die Lichtschranke misst <i>v</i>₀, das Messband die Wurfweite <i>x</i>, die akustische Stoppuhr die Flugzeit <i>t</i>.</p>
+        <p>Bestimmen Sie <i>g</i> aus den Messwerten (zwei Wege: über <i>x</i> oder über <i>t</i>). Mehrere Schüsse mitteln, dann unten eintragen.</p>
+      </div>
+      <div class="box hidden" id="g-a">
+        <p class="formula"><i>t</i> = √(2<i>h</i>/<i>g</i>) ⇒ <i>g</i> = 2·<i>h</i>/<i>t</i>²&emsp;&emsp; <i>x</i> = <i>v</i>₀·<i>t</i> ⇒ <i>g</i> = 2·<i>h</i>·<i>v</i>₀²/<i>x</i>²</p>
+        <p id="g-planet"></p>
+      </div>
+    </div>
+    <div>
+      <div class="eval">
+        <label>Mein Resultat: <i>g</i> = <input id="g-in" type="number" step="0.01" min="0" max="50"> m/s²</label>
+        <button id="g-check" class="primary">Prüfen</button>
+        <span class="msg" id="g-msg"></span>
+      </div>
+      <p class="hint">Messrauschen wie im Labor: Lichtschranke ±1 %, Messband ±0.5 cm, Stoppuhr ±5 ms. Toleranz für «richtig»: 3 %.</p>
+    </div>
+  </div>
+</div>
+
+<p class="hint" id="hint"></p>
+<footer>Wurf-Simulator · Physik Kapitel 3 (Kinematik in zwei Raumrichtungen) · M. Schmid, Technische Berufsschule Zürich · eine HTML-Datei, keine Abhängigkeiten.</footer>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const G=9.81;
+const FONT='"Avenir Next","Segoe UI",Helvetica,Arial,sans-serif';
+const C={ink:'#1E2A38',soft:'#5B6878',rule:'#9AA6B4',grid:'#E3E7E0',x:'#005AC8',y:'#CC0000',v:'#008C00',g:'#D96D00',ghost:'#9AA6B4',ok:'#2E7D4F',bad:'#B3402F',ziel:'#6B3FA0',board:'#8A5A2B'};
+const fmt=(v,d)=>(Math.abs(v)<5e-13?0:v).toFixed(d);
+function niceStep(raw){if(!(raw>0))return 1;const p=Math.pow(10,Math.floor(Math.log10(raw)));const m=raw/p;return (m<1.5?1:m<3.5?2:m<7.5?5:10)*p;}
+
+// ---------- Physik ----------
+function proj(x0,y0,v0,alphaDeg,g){
+  const a=alphaDeg*Math.PI/180,vx=v0*Math.cos(a),vy=v0*Math.sin(a);
+  const T=(vy+Math.sqrt(Math.max(0,vy*vy+2*g*y0)))/g;
+  return{x0,y0,v0,alpha:alphaDeg,vx,vy,g,T,
+    pos:t=>({x:x0+vx*t,y:y0+vy*t-0.5*g*t*t}),
+    vel:t=>({vx,vy:vy-g*t}),
+    range:x0+vx*T,
+    hmax:vy>0?y0+vy*vy/(2*g):y0,
+    thmax:vy>0?vy/g:0};
+}
+
+// ---------- Zustand ----------
+let mode='wurf',t=0,playing=false,speed=1,lastTs=null,cur=null,view=null;
+const S={
+  wurf:{v0:12,al:45,h0:0,vec:true,shadow:false,strobe:true},
+  zwei:{h:2,v0:3,rows:[],reveal:false},
+  affe:{v0:12,xT:8,yT:6,hK:1,fall:true,explain:false},
+  reichweite:{v0:15,al:45,h0:0,rows:[],reveal:false},
+  gmessen:{h:1,p:5,planet:null,v0:null,shots:[],solved:false}
+};
+const PLANETS=[{n:'Mond',g:1.62},{n:'Mars',g:3.71},{n:'Venus',g:8.87},{n:'Erde',g:9.81},{n:'Saturn',g:10.4},{n:'Neptun',g:11.2},{n:'Jupiter',g:24.8},{n:'Planet X',g:0}];
+const INTRO={
+  wurf:'Eine Kugel wird mit v₀ unter dem Winkel α aus der Höhe h₀ abgeworfen. Beobachten Sie, wie sich der Geschwindigkeitsvektor und seine Komponenten entlang der Bahn ändern. «Schatten» zeigt die waagrechte und die senkrechte Bewegung getrennt auf den Achsen.',
+  zwei:'Einstiegsversuch: Eine Kugel wird waagrecht abgeschossen, gleichzeitig wird daneben eine zweite fallen gelassen. Welche landet zuerst?',
+  affe:'Eine Kanone zielt genau auf ein hängendes Ziel. Im Moment des Abschusses fällt das Ziel. Trifft die Kugel trotzdem? Der klassische Demoversuch («Affenschuss»), hier digital.',
+  reichweite:'Bei festem v₀: Wie weit fliegt die Kugel je nach Abwurfwinkel α? Jeder Wurf wird als Messpunkt eingetragen, die Bahn bleibt grau stehen.',
+  gmessen:'Virtuelles Labor: Auf einem unbekannten Planeten rollt eine Kugel vom Tisch. Lichtschranke, Messband und akustische Stoppuhr liefern v₀, x und t mit Messrauschen. Bestimmen Sie g.'
+};
+const HINT={
+  wurf:'Leertaste: Start/Stopp · ←/→: Zeit schrittweise · R: zurück · in ein Diagramm klicken oder ziehen: Zeit setzen.',
+  zwei:'Leertaste: Start/Stopp · ←/→: Zeit schrittweise · R: zurück · Wurf bis zum Ende laufen lassen, damit er in die Tabelle kommt.',
+  affe:'Ziel mit der Maus verschieben (die Kanone zielt automatisch) · Leertaste: Schuss/Stopp · ←/→: Zeit schrittweise · R: zurück.',
+  reichweite:'Leertaste: Start/Stopp · ←/→: Zeit schrittweise · R: zurück · frühere Würfe bleiben grau stehen.',
+  gmessen:'Jeder Schuss liefert neue Messwerte (Lichtschranke, Messband, Stoppuhr) · Leertaste: Schuss · R: zurück.'
+};
+const SUB={wurf:'Schiefer Wurf',zwei:'Zwei Kugeln',affe:'Affenschuss',reichweite:'Reichweite & Winkel',gmessen:'g bestimmen'};
+
+// ---------- Aufbau des aktuellen Versuchs ----------
+function build(keepT){
+  const s=S[mode];
+  if(mode==='wurf'){
+    const p=proj(0,s.h0,s.v0,s.al,G);
+    const xmax=Math.max(p.range,p.hmax*0.6,2)*1.06, ymax=Math.max(p.hmax,s.h0,1)*1.15;
+    cur={T:p.T,p,bounds:{xmin:-xmax*0.04,xmax,ymin:0,ymax}};
+  }else if(mode==='zwei'){
+    const A=proj(0,s.h,s.v0,0,G), B=proj(-0.3,s.h,0,0,G);
+    const xmax=Math.max(A.range,0.8)*1.1+0.3;
+    cur={T:A.T,p:A,q:B,bounds:{xmin:-0.6,xmax,ymin:0,ymax:s.h*1.2+0.1},logged:false};
+  }else if(mode==='affe'){
+    const dx=s.xT,dy=s.yT-s.hK,d=Math.hypot(dx,dy),al=Math.atan2(dy,dx)*180/Math.PI;
+    const p=proj(0,s.hK,s.v0,al,G);
+    const tHit=d/s.v0, yTargetHit=s.yT-0.5*G*tHit*tHit;
+    const hit=s.fall&&yTargetHit>=0;
+    const tTargetGround=s.fall?Math.sqrt(2*s.yT/G):Infinity;
+    const Tend=hit?tHit:Math.min(p.T,tTargetGround);
+    const xmax=Math.max(s.xT*1.2,Math.min(p.range,s.xT*2.5),3), ymax=Math.max(s.yT,p.pos(Math.min(Tend,p.thmax)).y,s.hK)*1.2;
+    cur={T:Tend,p,d,al,tHit,hit,bounds:{xmin:-xmax*0.05,xmax,ymin:0,ymax}};
+  }else if(mode==='reichweite'){
+    const p=proj(0,s.h0,s.v0,s.al,G);
+    const wmax=proj(0,s.h0,s.v0,45,G).range, hm=s.h0+s.v0*s.v0/(2*G);
+    cur={T:p.T,p,bounds:{xmin:-wmax*0.03,xmax:wmax*1.08,ymin:0,ymax:hm*1.12},logged:false};
+  }else if(mode==='gmessen'){
+    if(!s.planet)newPlanet();
+    if(s.v0===null)s.v0=launchSpeed(s.p);
+    const p=proj(0,s.h,s.v0,0,s.planet.g);
+    cur={T:p.T,p,bounds:{xmin:-0.7,xmax:Math.max(p.range*1.12,1.0),ymin:0,ymax:s.h*1.25+0.1},logged:false,meas:null};
+  }
+  if(!keepT)t=0; else t=Math.min(t,cur.T);
+  $('tslider').max=cur.T; $('tslider').value=t;
+  $('banner').className='banner';
+  draw();
+}
+function launchSpeed(p){return (0.5+0.45*p)*(1+(Math.random()-0.5)*0.03);}
+function newPlanet(){
+  const s=S.gmessen; let pl=PLANETS[Math.floor(Math.random()*PLANETS.length)];
+  if(pl.g===0)pl={n:'Planet X',g:Math.round((2+Math.random()*23)*100)/100};
+  s.planet=pl; s.shots=[]; s.solved=false; s.v0=launchSpeed(s.p);
+  $('g-in').value=''; $('g-msg').textContent=''; $('g-msg').className='msg';
+  $('lower-gmessen').classList.remove('reveal'); $('g-a').classList.add('hidden');
+  renderGTable();
+}
+
+// ---------- Zeichnen ----------
+function fit(cv,cssH){
+  const dpr=window.devicePixelRatio||1,w=cv.clientWidth||600;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(cssH*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(cssH*dpr);cv.style.height=cssH+'px';}
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);return{c,W:w,H:cssH};
+}
+function makeView(W,H,b){
+  const padL=48,padR=18,padT=30,padB=38;
+  const s=Math.min((W-padL-padR)/(b.xmax-b.xmin),(H-padT-padB)/(b.ymax-b.ymin));
+  const slack=Math.max(0,(W-padL-padR)-(b.xmax-b.xmin)*s)/2;
+  const ox=padL+slack-b.xmin*s,oy=H-padB+b.ymin*s;
+  return{s,X:x=>ox+x*s,Y:y=>oy-y*s,invX:px=>(px-ox)/s,invY:py=>(oy-py)/s,b,W,H,padL,padB};
+}
+function arrow(c,x1,y1,x2,y2,color,w){
+  const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy);if(L<2)return;
+  const ux=dx/L,uy=dy/L,hl=Math.min(10,L*0.5),hw=hl*0.55;
+  c.strokeStyle=color;c.fillStyle=color;c.lineWidth=w||2.2;c.setLineDash([]);
+  c.beginPath();c.moveTo(x1,y1);c.lineTo(x2-ux*hl,y2-uy*hl);c.stroke();
+  c.beginPath();c.moveTo(x2,y2);c.lineTo(x2-ux*hl-uy*hw,y2-uy*hl+ux*hw);c.lineTo(x2-ux*hl+uy*hw,y2-uy*hl-ux*hw);c.closePath();c.fill();
+}
+function ball(c,x,y,color,r){c.fillStyle=color;c.beginPath();c.arc(x,y,r||6,0,7);c.fill();}
+function pathOf(c,p,t0,t1,v){
+  const n=Math.max(8,Math.ceil((t1-t0)*60));c.beginPath();
+  for(let i=0;i<=n;i++){const tt=t0+(t1-t0)*i/n,q=p.pos(tt);i?c.lineTo(v.X(q.x),v.Y(q.y)):c.moveTo(v.X(q.x),v.Y(q.y));}
+  c.stroke();
+}
+function gridAxes(c,v,xlab,ylab){
+  const b=v.b,st=niceStep((b.xmax-b.xmin)/8);
+  c.lineWidth=1;c.strokeStyle=C.grid;c.font='11px '+FONT;c.fillStyle=C.soft;
+  c.textAlign='center';c.textBaseline='top';
+  for(let x=Math.ceil(b.xmin/st)*st;x<=b.xmax+1e-9;x+=st){c.beginPath();c.moveTo(v.X(x),v.Y(b.ymax));c.lineTo(v.X(x),v.Y(b.ymin));c.stroke();c.fillText(fmt(x,st<1?1:0),v.X(x),v.Y(0)+5);}
+  c.textAlign='right';c.textBaseline='middle';
+  for(let y=Math.ceil(b.ymin/st)*st;y<=b.ymax+1e-9;y+=st){c.beginPath();c.moveTo(v.X(b.xmin),v.Y(y));c.lineTo(v.X(b.xmax),v.Y(y));c.stroke();if(y>0)c.fillText(fmt(y,st<1?1:0),v.X(b.xmin)-5,v.Y(y));}
+  c.strokeStyle=C.ink;c.lineWidth=1.5;c.beginPath();c.moveTo(v.X(b.xmin),v.Y(0));c.lineTo(v.X(b.xmax),v.Y(0));c.stroke();
+  c.lineWidth=1;c.beginPath();c.moveTo(v.X(0),v.Y(0));c.lineTo(v.X(0),v.Y(b.ymax));c.stroke();
+  c.fillStyle=C.ink;c.font='12px '+FONT;c.textAlign='right';c.textBaseline='bottom';c.fillText(xlab||'x (m)',v.X(b.xmax),v.Y(0)-4);
+  c.textAlign='left';c.textBaseline='top';c.fillText(ylab||'y (m)',v.X(0)+5,v.Y(b.ymax)+2);
+}
+function strobeStep(T){return niceStep(T/10);}
+function label(c,txt,x,y,color,align){c.font='12px '+FONT;c.fillStyle=color||C.ink;c.textAlign=align||'left';c.textBaseline='middle';c.fillText(txt,x,y);}
+
+function draw(){
+  const cv=$('scene'),isNarrow=window.innerWidth<700;
+  const {c,W,H}=fit(cv,isNarrow?320:420);
+  c.clearRect(0,0,W,H);
+  view=makeView(W,H,cur.bounds);
+  const v=view,s=S[mode];
+  if(mode==='wurf')drawWurf(c,v,s);
+  else if(mode==='zwei')drawZwei(c,v,s);
+  else if(mode==='affe')drawAffe(c,v,s);
+  else if(mode==='reichweite')drawReichweite(c,v,s);
+  else drawG(c,v,s);
+  $('tval').textContent=fmt(t,2)+' s';
+  $('tslider').value=t;
+  updateReadout();
+  drawLower();
+}
+
+function drawWurf(c,v,s){
+  const p=cur.p;gridAxes(c,v);
+  c.strokeStyle=C.ghost;c.lineWidth=1.2;c.setLineDash([4,4]);pathOf(c,p,0,p.T,v);c.setLineDash([]);
+  c.strokeStyle=C.ink;c.lineWidth=2.2;pathOf(c,p,0,t,v);
+  if(s.strobe){const st=strobeStep(p.T);for(let tt=0;tt<=t+1e-9&&tt<=p.T;tt+=st){const q=p.pos(tt);ball(c,v.X(q.x),v.Y(q.y),C.soft,3);}}
+  const q=p.pos(t),vel=p.vel(t);
+  if(s.shadow){
+    const bx=v.X(q.x),by=v.Y(q.y);
+    c.strokeStyle=C.x;c.setLineDash([3,4]);c.lineWidth=1;c.beginPath();c.moveTo(bx,by);c.lineTo(bx,v.Y(0));c.stroke();
+    c.strokeStyle=C.y;c.beginPath();c.moveTo(bx,by);c.lineTo(v.X(0),by);c.stroke();c.setLineDash([]);
+    ball(c,bx,v.Y(0),C.x,5);ball(c,v.X(0),by,C.y,5);
+    if(s.strobe){const st=strobeStep(p.T);for(let tt=0;tt<=t+1e-9&&tt<=p.T;tt+=st){const r=p.pos(tt);ball(c,v.X(r.x),v.Y(0),C.x,2.5);ball(c,v.X(0),v.Y(r.y),C.y,2.5);}}
+  }
+  if(s.vec){
+    const k=Math.min(v.s*0.25,8)*Math.max(0.35,Math.min(1,12/p.v0));// px pro m/s
+    const bx=v.X(q.x),by=v.Y(q.y);
+    arrow(c,bx,by,bx+vel.vx*k,by,C.x,2);arrow(c,bx,by,bx,by-vel.vy*k,C.y,2);
+    c.strokeStyle=C.ghost;c.setLineDash([3,3]);c.lineWidth=1;c.beginPath();c.moveTo(bx+vel.vx*k,by);c.lineTo(bx+vel.vx*k,by-vel.vy*k);c.moveTo(bx,by-vel.vy*k);c.lineTo(bx+vel.vx*k,by-vel.vy*k);c.stroke();c.setLineDash([]);
+    arrow(c,bx,by,bx+vel.vx*k,by-vel.vy*k,C.v,2.6);
+    label(c,'v',bx+vel.vx*k+6,by-vel.vy*k-6,C.v);
+    if(Math.abs(vel.vx)>0.3)label(c,'vₓ',bx+vel.vx*k/2,by+12,C.x,'center');
+    if(Math.abs(vel.vy)>0.3)label(c,'vᵧ',bx-12,by-vel.vy*k/2,C.y,'right');
+  }
+  ball(c,v.X(q.x),v.Y(q.y),C.ink,6);
+}
+
+function drawZwei(c,v,s){
+  const A=cur.p,B=cur.q;gridAxes(c,v);
+  // Tisch
+  c.fillStyle='#EDE4D6';c.strokeStyle=C.board;c.lineWidth=1.5;
+  c.beginPath();c.rect(v.X(-0.6),v.Y(s.h),v.X(0)-v.X(-0.6),v.Y(0)-v.Y(s.h));c.fill();c.stroke();
+  c.strokeStyle=C.ghost;c.lineWidth=1.2;c.setLineDash([4,4]);pathOf(c,A,0,A.T,v);c.setLineDash([]);
+  c.strokeStyle=C.ink;c.lineWidth=2.2;pathOf(c,A,0,t,v);
+  c.strokeStyle=C.y;c.lineWidth=2;pathOf(c,B,0,t,v);
+  const st=strobeStep(A.T);
+  for(let tt=0;tt<=t+1e-9&&tt<=A.T;tt+=st){
+    const a=A.pos(tt),b=B.pos(tt);
+    c.strokeStyle=C.ghost;c.setLineDash([2,4]);c.lineWidth=1;c.beginPath();c.moveTo(v.X(b.x),v.Y(b.y));c.lineTo(v.X(a.x),v.Y(a.y));c.stroke();c.setLineDash([]);
+    ball(c,v.X(a.x),v.Y(a.y),C.soft,3);ball(c,v.X(b.x),v.Y(b.y),'#E09A9A',3);
+  }
+  const a=A.pos(t),b=B.pos(t);
+  ball(c,v.X(b.x),v.Y(b.y),C.y,6);ball(c,v.X(a.x),v.Y(a.y),C.ink,6);
+  label(c,'fällt',v.X(b.x),v.Y(s.h)-14,C.y,'center');label(c,'geworfen',v.X(a.x)+10,v.Y(s.h)-14,C.ink);
+  if(t>=A.T-1e-9&&A.T>0){
+    label(c,'beide gleichzeitig am Boden',v.X(a.x)+10,v.Y(0)-28,C.ok);
+    if(!cur.logged){cur.logged=true;s.rows.push({h:s.h,v0:s.v0,w:A.range,T:A.T});renderZTable();}
+  }
+}
+
+function drawAffe(c,v,s){
+  const p=cur.p;gridAxes(c,v);
+  const K={x:v.X(0),y:v.Y(s.hK)},Z0={x:v.X(s.xT),y:v.Y(s.yT)};
+  // Ziellinie
+  c.strokeStyle=C.ghost;c.lineWidth=1;c.setLineDash([6,5]);c.beginPath();c.moveTo(K.x,K.y);
+  const ext=1.6;c.lineTo(K.x+(Z0.x-K.x)*ext,K.y+(Z0.y-K.y)*ext);c.stroke();c.setLineDash([]);
+  // Aufhängung
+  c.strokeStyle=C.rule;c.lineWidth=1;c.beginPath();c.moveTo(Z0.x,v.Y(v.b.ymax));c.lineTo(Z0.x,Z0.y);c.stroke();
+  // Sockel + Kanone
+  c.fillStyle='#D8DCD6';c.strokeStyle=C.ink;c.lineWidth=1.2;c.beginPath();c.rect(v.X(0)-10,v.Y(s.hK),20,v.Y(0)-v.Y(s.hK));c.fill();c.stroke();
+  const ang=Math.atan2(s.yT-s.hK,s.xT);
+  c.strokeStyle=C.ink;c.lineWidth=7;c.lineCap='round';c.beginPath();c.moveTo(K.x,K.y);c.lineTo(K.x+Math.cos(ang)*30,K.y-Math.sin(ang)*30);c.stroke();c.lineCap='butt';
+  // Bahn
+  c.strokeStyle=C.ink;c.lineWidth=2.2;pathOf(c,p,0,t,v);
+  const q=p.pos(t),fall=s.fall?0.5*G*t*t:0,zy=s.yT-fall;
+  if(s.explain){
+    const gx=v.X(p.x0+p.vx*t),gy=v.Y(p.y0+p.vy*t);
+    c.globalAlpha=.6;ball(c,gx,gy,C.ghost,6);c.globalAlpha=1;
+    arrow(c,gx,gy,v.X(q.x),v.Y(q.y),C.g,2);
+    if(s.fall){c.globalAlpha=.6;ball(c,Z0.x,Z0.y,'#C9B8E0',10);c.globalAlpha=1;arrow(c,Z0.x,Z0.y,Z0.x,v.Y(zy),C.g,2);}
+    if(t>0.05){label(c,'½·g·t² = '+fmt(0.5*G*t*t,2)+' m',v.X(q.x)+10,(gy+v.Y(q.y))/2,C.g);}
+  }
+  // Ziel
+  const zr=Math.max(10,Math.min(16,0.3*v.s));
+  c.fillStyle=cur.hit&&t>=cur.T-1e-9?C.ok:C.ziel;c.beginPath();c.arc(Z0.x,v.Y(zy),zr,0,7);c.fill();
+  c.font=(zr*1.5)+'px serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';c.fillText('🐒',Z0.x,v.Y(zy)+1);
+  ball(c,v.X(q.x),v.Y(q.y),C.ink,6);
+  label(c,'α = '+fmt(cur.al,1)+'°',K.x+40,K.y-18,C.ink);
+  const bn=$('banner');
+  if(t>=cur.T-1e-9){bn.className='banner '+(cur.hit?'ok':'bad');bn.textContent=cur.hit?'Treffer! nach t = '+fmt(cur.tHit,2)+' s':(s.fall?'Daneben: Ziel war vorher am Boden':'Daneben: Kugel fliegt '+fmt(0.5*G*cur.tHit*cur.tHit,2)+' m unter dem Ziel durch');}
+  else bn.className='banner';
+}
+
+function drawReichweite(c,v,s){
+  const p=cur.p;gridAxes(c,v);
+  c.lineWidth=1.2;
+  for(const r of s.rows){if(r.v0===s.v0&&r.h0===s.h0){c.strokeStyle=C.ghost;pathOf(c,r.p,0,r.p.T,v);label(c,r.al+'°',v.X(r.p.range)+3,v.Y(0)-(r.al>45?24:10),C.soft);}}
+  c.strokeStyle=C.ghost;c.setLineDash([4,4]);pathOf(c,p,0,p.T,v);c.setLineDash([]);
+  c.strokeStyle=C.ink;c.lineWidth=2.4;pathOf(c,p,0,t,v);
+  const q=p.pos(t);ball(c,v.X(q.x),v.Y(q.y),C.ink,6);
+  const k=Math.min(v.s*0.25,8)*Math.max(0.35,Math.min(1,12/p.v0));
+  if(t<0.02)arrow(c,v.X(0),v.Y(s.h0),v.X(0)+p.vx*k,v.Y(s.h0)-p.vy*k,C.v,2.4);
+  if(t>=p.T-1e-9&&!cur.logged){cur.logged=true;logReichweite(p);}
+}
+function logReichweite(p){
+  const s=S.reichweite;
+  s.rows=s.rows.filter(r=>!(r.v0===s.v0&&r.h0===s.h0&&r.al===p.alpha));
+  s.rows.push({v0:s.v0,h0:s.h0,al:p.alpha,p});
+  s.rows.sort((a,b)=>a.al-b.al);renderRTable();
+}
+
+function drawG(c,v,s){
+  const p=cur.p;gridAxes(c,v);
+  c.fillStyle='#EDE4D6';c.strokeStyle=C.board;c.lineWidth=1.5;
+  c.beginPath();c.rect(v.X(-0.7),v.Y(s.h),v.X(0)-v.X(-0.7),v.Y(0)-v.Y(s.h));c.fill();c.stroke();
+  // Lichtschranke
+  c.strokeStyle=C.v;c.lineWidth=1.2;c.beginPath();c.moveTo(v.X(-0.12),v.Y(s.h)-12);c.lineTo(v.X(-0.12),v.Y(s.h)+2);c.moveTo(v.X(-0.04),v.Y(s.h)-12);c.lineTo(v.X(-0.04),v.Y(s.h)+2);c.stroke();
+  label(c,'Lichtschranke',v.X(-0.08),v.Y(s.h)-20,C.v,'center');
+  // Messband
+  const y0=v.Y(0);c.strokeStyle=C.ink;c.lineWidth=1;c.font='10px '+FONT;c.fillStyle=C.soft;c.textAlign='center';c.textBaseline='top';
+  for(let x=0;x<=v.b.xmax+1e-9;x+=0.1){const big=Math.round(x*10)%5===0;c.beginPath();c.moveTo(v.X(x),y0);c.lineTo(v.X(x),y0+(big?10:5));c.stroke();}
+  c.strokeStyle=C.ink;c.lineWidth=2.2;pathOf(c,p,0,t,v);
+  const q=p.pos(t);ball(c,v.X(q.x),v.Y(q.y),C.ink,6);
+  if(t>=p.T-1e-9){
+    if(!cur.meas){cur.meas={x:Math.round(p.range*(1+(Math.random()-0.5)*0.01)*100)/100,t:Math.round((p.T+(Math.random()-0.5)*0.01)*1000)/1000};
+      s.shots.push({h:s.h,v0:s.v0,x:cur.meas.x,t:cur.meas.t,g:s.planet.g});renderGTable();s.v0=launchSpeed(s.p);}
+    c.strokeStyle=C.y;c.lineWidth=2;c.beginPath();c.moveTo(v.X(cur.meas.x)-6,y0-6);c.lineTo(v.X(cur.meas.x)+6,y0+6);c.moveTo(v.X(cur.meas.x)+6,y0-6);c.lineTo(v.X(cur.meas.x)-6,y0+6);c.stroke();
+    label(c,'x = '+fmt(cur.meas.x,2)+' m',v.X(cur.meas.x),y0-16,C.y,'center');
+  }
+}
+
+// ---------- Readout ----------
+function tiles(arr){
+  const r=$('readout');
+  if(r.children.length!==arr.length){r.innerHTML=arr.map(a=>'<div class="tile '+(a.cls||'')+'"><small></small><b></b></div>').join('');}
+  arr.forEach((a,i)=>{const el=r.children[i];el.className='tile '+(a.cls||'');el.firstChild.textContent=a.l;el.lastChild.textContent=a.v;});
+}
+function updateReadout(){
+  const s=S[mode],p=cur.p;
+  if(mode==='wurf'){
+    const q=p.pos(t),vel=p.vel(t);
+    tiles([{l:'x',v:fmt(q.x,2)+' m',cls:'x'},{l:'y',v:fmt(q.y,2)+' m',cls:'y'},{l:'vₓ = v₀·cos α',v:fmt(vel.vx,2)+' m/s',cls:'x'},{l:'vᵧ = v₀·sin α − g·t',v:fmt(vel.vy,2)+' m/s',cls:'y'},{l:'v (Betrag)',v:fmt(Math.hypot(vel.vx,vel.vy),2)+' m/s',cls:'v'},{l:'Flugzeit · Weite · max. Höhe',v:fmt(p.T,2)+' s · '+fmt(p.range,1)+' m · '+fmt(p.hmax,1)+' m',cls:'long'}]);
+  }else if(mode==='zwei'){
+    const a=p.pos(t),b=cur.q.pos(t);
+    tiles([{l:'Höhe geworfene Kugel',v:fmt(a.y,2)+' m'},{l:'Höhe fallende Kugel',v:fmt(b.y,2)+' m',cls:'y'},{l:'x geworfene Kugel',v:fmt(a.x,2)+' m',cls:'x'},{l:'vᵧ (beide)',v:fmt(p.vel(t).vy,2)+' m/s',cls:'y'},{l:'Flugzeit T',v:fmt(p.T,2)+' s'},{l:'Weite w',v:fmt(p.range,2)+' m'}]);
+  }else if(mode==='affe'){
+    const q=p.pos(t),zy=s.yT-(s.fall?0.5*G*t*t:0),dist=Math.hypot(q.x-s.xT,q.y-zy);
+    tiles([{l:'Zielwinkel α',v:fmt(cur.al,1)+'°'},{l:'Abstand Kanone–Ziel d',v:fmt(cur.d,2)+' m',cls:'z'},{l:'Zeit bis zum Ziel d/v₀',v:fmt(cur.tHit,2)+' s'},{l:'Fallstrecke ½·g·t²',v:fmt(0.5*G*t*t,2)+' m',cls:'g'},{l:'Abstand Kugel–Ziel',v:fmt(dist,2)+' m',cls:'z'},{l:'Ziel am Boden nach',v:s.fall?fmt(Math.sqrt(2*s.yT/G),2)+' s':'– (hängt)'}]);
+  }else if(mode==='reichweite'){
+    const q=p.pos(t);
+    tiles([{l:'Winkel α',v:fmt(p.alpha,0)+'°'},{l:'vₓ = v₀·cos α',v:fmt(p.vx,2)+' m/s',cls:'x'},{l:'vᵧ₀ = v₀·sin α',v:fmt(p.vy,2)+' m/s',cls:'y'},{l:'Flugzeit T',v:fmt(p.T,2)+' s'},{l:'Reichweite w',v:fmt(p.range,2)+' m',cls:'v'},{l:'max. Höhe',v:fmt(p.hmax,2)+' m'}]);
+  }else{
+    const m=cur.meas;
+    tiles([{l:'Planet',v:s.solved?s.planet.n:'unbekannt'},{l:'Tischhöhe h',v:fmt(s.h,2)+' m'},{l:'Lichtschranke: v₀',v:fmt(s.v0,2)+' m/s',cls:'v'},{l:'Messband: x',v:m?fmt(m.x,2)+' m':'–',cls:'y'},{l:'Akustische Stoppuhr: t',v:m?fmt(m.t,3)+' s':'–'},{l:'Schüsse',v:String(s.shots.length)}]);
+  }
+}
+
+// ---------- Diagramme ----------
+function drawDiagram(cv,o){
+  const {c,W,H}=fit(cv,o.h||250);c.clearRect(0,0,W,H);
+  const padL=46,padR=14,padT=28,padB=32;
+  let ymin=Infinity,ymax=-Infinity;
+  for(const s of o.series)for(let i=0;i<=80;i++){const y=s.f(o.tmax*i/80);ymin=Math.min(ymin,y);ymax=Math.max(ymax,y);}
+  if(ymin>0)ymin=0;if(ymax<0)ymax=0;if(ymax-ymin<1e-9)ymax=ymin+1;
+  const mg=(ymax-ymin)*0.08;ymax+=mg;if(ymin<0)ymin-=mg;
+  const X=tt=>padL+(W-padL-padR)*tt/o.tmax,Y=y=>H-padB-(H-padT-padB)*(y-ymin)/(ymax-ymin);
+  const ts=niceStep(o.tmax/5),ys=niceStep((ymax-ymin)/5);
+  c.strokeStyle=C.grid;c.lineWidth=1;c.font='11px '+FONT;c.fillStyle=C.soft;c.textAlign='center';c.textBaseline='top';
+  for(let tt=0;tt<=o.tmax+1e-9;tt+=ts){c.beginPath();c.moveTo(X(tt),padT);c.lineTo(X(tt),H-padB);c.stroke();c.fillText(fmt(tt,ts<0.1?2:1),X(tt),H-padB+4);}
+  c.textAlign='right';c.textBaseline='middle';
+  for(let y=Math.ceil(ymin/ys)*ys;y<=ymax+1e-9;y+=ys){c.beginPath();c.moveTo(padL,Y(y));c.lineTo(W-padR,Y(y));c.stroke();c.fillText(fmt(y,ys<1?1:0),padL-5,Y(y));}
+  c.strokeStyle=C.ink;c.lineWidth=1.2;c.beginPath();c.moveTo(padL,padT);c.lineTo(padL,H-padB);c.lineTo(W-padR,H-padB);c.stroke();
+  if(ymin<0){c.strokeStyle=C.rule;c.beginPath();c.moveTo(padL,Y(0));c.lineTo(W-padR,Y(0));c.stroke();}
+  c.fillStyle=C.ink;c.font='12px '+FONT;c.textAlign='right';c.textBaseline='top';c.fillText('t (s)',W-padR,H-padB+16);
+  const items=[{txt:o.ylabel,color:C.ink},...o.series.map(s=>({txt:s.label,color:s.color}))];
+  let lx=W-padR;c.textAlign='right';c.textBaseline='top';
+  for(const it of items.slice().reverse()){c.fillStyle=it.color;c.fillText(it.txt,lx,padT-20);lx-=c.measureText(it.txt).width+14;}
+  for(const s of o.series){
+    const drawPath=(t1)=>{const n=90;c.beginPath();for(let i=0;i<=n;i++){const tt=t1*i/n;i?c.lineTo(X(tt),Y(s.f(tt))):c.moveTo(X(tt),Y(s.f(tt)));}c.stroke();};
+    c.strokeStyle=s.color;c.setLineDash(s.dash||[]);c.lineWidth=1.2;c.globalAlpha=.25;drawPath(o.tmax);c.globalAlpha=1;
+    c.lineWidth=2.2;if(o.tcur>0)drawPath(o.tcur);c.setLineDash([]);
+    ball(c,X(o.tcur),Y(s.f(o.tcur)),s.color,4);
+  }
+  cv._map={X,padL,padR,W,tmax:o.tmax};
+}
+function drawLower(){
+  const s=S[mode],p=cur.p;
+  if(mode==='wurf'){
+    drawDiagram($('w-dx'),{tmax:p.T,tcur:t,ylabel:'x (m)',series:[{f:tt=>p.pos(tt).x,color:C.x,label:'x = v₀·cos α·t'}]});
+    drawDiagram($('w-dy'),{tmax:p.T,tcur:t,ylabel:'y (m)',series:[{f:tt=>p.pos(tt).y,color:C.y,label:'y(t)'}]});
+    drawDiagram($('w-dv'),{tmax:p.T,tcur:t,ylabel:'v (m/s)',series:[{f:tt=>p.vel(tt).vx,color:C.x,label:'vₓ'},{f:tt=>p.vel(tt).vy,color:C.y,label:'vᵧ'},{f:tt=>{const w=p.vel(tt);return Math.hypot(w.vx,w.vy);},color:C.v,label:'|v|',dash:[5,4]}]});
+  }else if(mode==='zwei'){
+    drawDiagram($('z-dy'),{h:220,tmax:p.T,tcur:t,ylabel:'y (m)',series:[{f:tt=>p.pos(tt).y,color:C.ink,label:'geworfen'},{f:tt=>cur.q.pos(tt).y,color:C.y,label:'fallend',dash:[6,5]}]});
+    drawDiagram($('z-dx'),{h:220,tmax:p.T,tcur:t,ylabel:'x (m)',series:[{f:tt=>p.pos(tt).x,color:C.x,label:'geworfen'},{f:tt=>0,color:C.y,label:'fallend',dash:[6,5]}]});
+  }else if(mode==='reichweite')drawRChart();
+}
+
+// ---------- Tabellen & Charts ----------
+function renderZTable(){
+  const s=S.zwei,tb=$('z-table').tBodies[0];
+  tb.innerHTML=s.rows.length?s.rows.map((r,i)=>'<tr'+(i===s.rows.length-1?' class="hl"':'')+'><td>'+(i+1)+'</td><td>'+fmt(r.h,2)+'</td><td class="cv">'+fmt(r.v0,2)+'</td><td>'+fmt(r.w,2)+'</td><td>'+fmt(r.T,3)+'</td><td class="rev">'+fmt(Math.sqrt(2*r.h/G),3)+'</td></tr>').join('')
+    :'<tr><td class="empty" colspan="6">Noch kein Wurf. Start drücken und bis zum Boden laufen lassen; dann v₀ ändern und wiederholen.</td></tr>';
+}
+function renderRTable(){
+  const s=S.reichweite,rows=s.rows.filter(r=>r.v0===s.v0&&r.h0===s.h0),tb=$('r-table').tBodies[0];
+  tb.innerHTML=rows.length?rows.map(r=>{const partner=rows.find(q=>q.al===90-r.al&&q!==r);return '<tr><td>'+r.al+'</td><td>'+fmt(r.p.range,2)+'</td><td>'+fmt(r.p.T,2)+'</td><td>'+fmt(r.p.hmax,2)+'</td><td class="rev">'+(90-r.al)+'°'+(partner?' → '+fmt(partner.p.range,2)+' m':'')+'</td></tr>';}).join('')
+    :'<tr><td class="empty" colspan="5">Noch kein Wurf bei v₀ = '+s.v0+' m/s, h₀ = '+s.h0+' m. Winkel wählen und Start drücken, oder «Messreihe 10°–80°».</td></tr>';
+}
+function drawRChart(){
+  const s=S.reichweite,cv=$('r-chart'),{c,W,H}=fit(cv,300);c.clearRect(0,0,W,H);
+  const padL=48,padR=14,padT=26,padB=34;
+  const wmax=proj(0,s.h0,s.v0,0,G).range>proj(0,s.h0,s.v0,45,G).range?proj(0,s.h0,s.v0,0,G).range:proj(0,s.h0,s.v0,45,G).range;
+  const ymax=Math.max(wmax*1.1,1),ys=niceStep(ymax/5);
+  const X=a=>padL+(W-padL-padR)*a/90,Y=w=>H-padB-(H-padT-padB)*w/ymax;
+  c.strokeStyle=C.grid;c.lineWidth=1;c.font='11px '+FONT;c.fillStyle=C.soft;c.textAlign='center';c.textBaseline='top';
+  for(let a=0;a<=90;a+=15){c.beginPath();c.moveTo(X(a),padT);c.lineTo(X(a),H-padB);c.stroke();c.fillText(a+'°',X(a),H-padB+4);}
+  c.textAlign='right';c.textBaseline='middle';
+  for(let w=0;w<=ymax+1e-9;w+=ys){c.beginPath();c.moveTo(padL,Y(w));c.lineTo(W-padR,Y(w));c.stroke();c.fillText(fmt(w,ys<1?1:0),padL-5,Y(w));}
+  c.strokeStyle=C.ink;c.lineWidth=1.2;c.beginPath();c.moveTo(padL,padT);c.lineTo(padL,H-padB);c.lineTo(W-padR,H-padB);c.stroke();
+  c.fillStyle=C.ink;c.font='12px '+FONT;c.textAlign='left';c.textBaseline='top';c.fillText('w (m)',padL+4,padT-20);c.textAlign='right';c.fillText('α',W-padR,H-padB+16);
+  if(s.reveal){
+    c.strokeStyle=C.g;c.lineWidth=2;c.beginPath();
+    for(let i=0;i<=90;i++){const w=proj(0,s.h0,s.v0,i,G).range;i?c.lineTo(X(i),Y(w)):c.moveTo(X(i),Y(w));}c.stroke();
+    let best=0,bw=0;for(let i=0;i<=900;i++){const w=proj(0,s.h0,s.v0,i/10,G).range;if(w>bw){bw=w;best=i/10;}}
+    c.strokeStyle=C.g;c.setLineDash([4,4]);c.beginPath();c.moveTo(X(best),Y(bw));c.lineTo(X(best),H-padB);c.stroke();c.setLineDash([]);
+    label(c,'Maximum bei '+fmt(best,best%1?1:0)+'°: '+fmt(bw,2)+' m',X(best)+6,padT+12,C.g);
+  }
+  for(const r of s.rows)if(r.v0===s.v0&&r.h0===s.h0)ball(c,X(r.al),Y(r.p.range),C.ink,4.5);
+  // aktueller Wurf (lebt mit)
+  const q=cur.p.pos(t);ball(c,X(cur.p.alpha),Y(q.x),C.v,5);
+}
+function renderGTable(){
+  const s=S.gmessen,tb=$('g-table').tBodies[0];
+  tb.innerHTML=s.shots.length?s.shots.map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+fmt(r.h,2)+'</td><td class="cv">'+fmt(r.v0,2)+'</td><td>'+fmt(r.x,2)+'</td><td>'+fmt(r.t,3)+'</td><td class="rev">'+fmt(2*r.h*r.v0*r.v0/(r.x*r.x),2)+'</td><td class="rev">'+fmt(2*r.h/(r.t*r.t),2)+'</td></tr>').join('')
+    :'<tr><td class="empty" colspan="7">Noch kein Schuss. Tischhöhe und Druck einstellen, Start drücken.</td></tr>';
+}
+function solveG(){
+  const s=S.gmessen;s.solved=true;$('lower-gmessen').classList.add('reveal');$('g-a').classList.remove('hidden');
+  $('g-planet').innerHTML='<b>'+s.planet.n+'</b>: <i>g</i> = '+fmt(s.planet.g,2)+' m/s². Die beiden Spalten rechts zeigen g aus jeder Messung.';
+  updateReadout();
+}
+
+// ---------- Interaktion ----------
+function setMode(m){
+  mode=m;playing=false;$('play').textContent=m==='affe'||m==='gmessen'?'▶ Schuss':'▶ Start';
+  document.querySelectorAll('#modes button').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
+  document.querySelectorAll('.controls').forEach(e=>e.classList.toggle('show',e.id==='ctl-'+m||e.id==='ctl-common'));
+  document.querySelectorAll('.lower').forEach(e=>e.classList.toggle('show',e.id==='lower-'+m));
+  $('subtitle').textContent=SUB[m];$('intro').textContent=INTRO[m];$('hint').textContent=HINT[m];
+  $('assume').innerHTML='<b>Idealisiert:</b> kein Luftwiderstand, punktförmige Kugel'+(m==='gmessen'?', <i>g</i> des Planeten unbekannt.':', <i>g</i> = 9.81 m/s².');
+  $('scenetitle').textContent={wurf:'Bahn (massstäblich)',zwei:'Waagrechter Wurf und freier Fall',affe:'Affenschuss',reichweite:'Bahnen bei festem v₀',gmessen:'Virtuelles Labor'}[m];
+  if(m==='zwei')renderZTable();if(m==='reichweite')renderRTable();if(m==='gmessen')renderGTable();
+  build(false);
+}
+$('modes').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setMode(b.dataset.mode);});
+
+function bindPair(idS,idN,obj,key,after){
+  const sl=$(idS),nu=$(idN);
+  const on=src=>{let v=parseFloat(src.value);if(isNaN(v))return;v=Math.min(parseFloat(src.max),Math.max(parseFloat(src.min),v));sl.value=v;nu.value=v;obj[key]=v;after&&after();};
+  sl.addEventListener('input',()=>on(sl));nu.addEventListener('change',()=>on(nu));
+}
+const rebuild=()=>{playing=false;$('play').textContent=mode==='affe'||mode==='gmessen'?'▶ Schuss':'▶ Start';build(false);};
+bindPair('w-v0s','w-v0',S.wurf,'v0',rebuild);bindPair('w-als','w-al',S.wurf,'al',rebuild);bindPair('w-h0s','w-h0',S.wurf,'h0',rebuild);
+bindPair('z-hs','z-h',S.zwei,'h',rebuild);bindPair('z-v0s','z-v0',S.zwei,'v0',rebuild);
+bindPair('a-v0s','a-v0',S.affe,'v0',rebuild);bindPair('a-xs','a-x',S.affe,'xT',rebuild);bindPair('a-ys','a-y',S.affe,'yT',rebuild);
+bindPair('r-v0s','r-v0',S.reichweite,'v0',()=>{rebuild();renderRTable();});bindPair('r-als','r-al',S.reichweite,'al',rebuild);bindPair('r-h0s','r-h0',S.reichweite,'h0',()=>{rebuild();renderRTable();});
+bindPair('g-hs','g-h',S.gmessen,'h',rebuild);bindPair('g-ps','g-p',S.gmessen,'p',()=>{S.gmessen.v0=launchSpeed(S.gmessen.p);rebuild();});
+for(const [id,key] of [['w-vec','vec'],['w-shadow','shadow'],['w-strobe','strobe']])$(id).addEventListener('change',e=>{S.wurf[key]=e.target.checked;draw();});
+$('w-eq').addEventListener('change',e=>$('w-eqbox').classList.toggle('hidden',!e.target.checked));
+$('a-fall').addEventListener('change',e=>{S.affe.fall=e.target.checked;rebuild();});
+$('a-explain').addEventListener('change',e=>{S.affe.explain=e.target.checked;$('a-a').classList.toggle('hidden',!e.target.checked);draw();});
+$('z-reveal').addEventListener('change',e=>{S.zwei.reveal=e.target.checked;$('lower-zwei').classList.toggle('reveal',e.target.checked);$('z-a').classList.toggle('hidden',!e.target.checked);});
+$('z-clear').addEventListener('click',()=>{S.zwei.rows=[];renderZTable();});
+$('r-reveal').addEventListener('change',e=>{S.reichweite.reveal=e.target.checked;$('lower-reichweite').classList.toggle('reveal',e.target.checked);$('r-a').classList.toggle('hidden',!e.target.checked);draw();});
+$('r-clear').addEventListener('click',()=>{S.reichweite.rows=[];renderRTable();draw();});
+$('r-serie').addEventListener('click',()=>{const s=S.reichweite;for(let a=10;a<=80;a+=10)logReichweite(proj(0,s.h0,s.v0,a,G));draw();});
+$('g-new').addEventListener('click',()=>{newPlanet();rebuild();});
+$('g-clear').addEventListener('click',()=>{S.gmessen.shots=[];renderGTable();updateReadout();});
+$('g-solve').addEventListener('click',solveG);
+$('g-check').addEventListener('click',()=>{
+  const s=S.gmessen,v=parseFloat($('g-in').value),m=$('g-msg');
+  if(isNaN(v)){m.textContent='Bitte einen Wert eingeben.';m.className='msg bad';return;}
+  const rel=Math.abs(v-s.planet.g)/s.planet.g;
+  if(rel<=0.03){m.textContent='Richtig! Abweichung '+fmt(rel*100,1)+' %.';m.className='msg ok';solveG();}
+  else if(rel<=0.10){m.textContent='Nahe dran ('+fmt(rel*100,1)+' % daneben). Mehr Schüsse, Mittelwert bilden, Rundung prüfen.';m.className='msg near';}
+  else{m.textContent='Noch nicht. Formel und Einheiten prüfen (h in m, t in s).';m.className='msg bad';}
+});
+$('speed').addEventListener('change',e=>speed=parseFloat(e.target.value));
+function togglePlay(){
+  if(t>=cur.T-1e-9){t=0;if(mode==='gmessen'){cur.meas=null;}if(mode==='zwei'||mode==='reichweite')cur.logged=false;}
+  playing=!playing;lastTs=null;$('play').textContent=playing?'❚❚ Stopp':(mode==='affe'||mode==='gmessen'?'▶ Schuss':'▶ Start');
+  if(playing)requestAnimationFrame(tick);
+}
+$('play').addEventListener('click',togglePlay);
+$('reset').addEventListener('click',()=>{playing=false;$('play').textContent=mode==='affe'||mode==='gmessen'?'▶ Schuss':'▶ Start';if(mode==='gmessen')cur.meas=null;build(false);});
+$('tslider').addEventListener('input',e=>{t=parseFloat(e.target.value);if(t>cur.T-0.002)t=cur.T;playing=false;$('play').textContent=mode==='affe'||mode==='gmessen'?'▶ Schuss':'▶ Start';draw();});
+function tick(ts){
+  if(!playing)return;
+  if(lastTs!==null)t=Math.min(cur.T,t+(ts-lastTs)/1000*speed);
+  lastTs=ts;draw();
+  if(t>=cur.T-1e-9){playing=false;$('play').textContent=mode==='affe'||mode==='gmessen'?'▶ Schuss':'▶ Start';return;}
+  requestAnimationFrame(tick);
+}
+document.addEventListener('keydown',e=>{
+  if(e.target.matches('input,select,textarea'))return;
+  if(e.code==='Space'){e.preventDefault();togglePlay();}
+  else if(e.key==='ArrowRight'){t=Math.min(cur.T,t+cur.T/100);playing=false;draw();}
+  else if(e.key==='ArrowLeft'){t=Math.max(0,t-cur.T/100);playing=false;draw();}
+  else if(e.key==='r'||e.key==='R'){$('reset').click();}
+});
+// Diagramme: Zeit setzen
+for(const cv of document.querySelectorAll('canvas.dg')){
+  const set=e=>{const m=cv._map;if(!m)return;const r=cv.getBoundingClientRect();const f=(e.clientX-r.left-m.padL)/(m.W-m.padL-m.padR);t=Math.min(cur.T,Math.max(0,f*m.tmax));playing=false;draw();};
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);set(e);});
+  cv.addEventListener('pointermove',e=>{if(e.buttons)set(e);});
+}
+// Affenschuss: Ziel ziehen
+(()=>{const cv=$('scene');let drag=false;
+  cv.addEventListener('pointerdown',e=>{if(mode!=='affe'||!view)return;const r=cv.getBoundingClientRect();const px=e.clientX-r.left,py=e.clientY-r.top;
+    if(Math.hypot(px-view.X(S.affe.xT),py-view.Y(S.affe.yT))<28){drag=true;cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';}});
+  cv.addEventListener('pointermove',e=>{if(!drag)return;const r=cv.getBoundingClientRect();const s=S.affe;
+    s.xT=Math.round(Math.min(30,Math.max(1,view.invX(e.clientX-r.left)))*2)/2;s.yT=Math.round(Math.min(25,Math.max(0.5,view.invY(e.clientY-r.top)))*2)/2;
+    $('a-xs').value=$('a-x').value=s.xT;$('a-ys').value=$('a-y').value=s.yT;playing=false;build(false);});
+  cv.addEventListener('pointerup',()=>{drag=false;cv.style.cursor='';});
+})();
+window.addEventListener('resize',()=>draw());
+setMode('wurf');
+</script>
+</body>
+</html>
