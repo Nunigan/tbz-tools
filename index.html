@@ -12,13 +12,7 @@
   --bg:#FFFFFF; --panel:#F2F2F2; --ink:#000000; --muted:#737373; --rule:#8C8C8C; --line:#D9D9D9;
   --blau:#005AC8; --blau-hell:#E6EFFA;
   --versuch:#8A5A00; --versuch-bg:#FFF1D6;
-}
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#111111; --panel:#1C1C1C; --ink:#F2F2F2; --muted:#A6A6A6; --rule:#5C5C5C; --line:#333333;
-    --blau:#6FA8F0; --blau-hell:#16263B;
-    --versuch:#F2C46B; --versuch-bg:#382B12;
-  }
+  color-scheme:light;   /* bewusst nur hell (wie Skript und Folien) */
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);
@@ -31,8 +25,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .kopf .seit{font-size:13px;color:var(--muted)}
 
 .titel{padding:36px 0 8px}
-.titel h1{font-size:34px;font-weight:700;margin:0 0 8px;letter-spacing:-.01em}
-.titel p{margin:0;color:var(--muted);max-width:620px;font-size:16px}
+.titel h1{font-size:34px;font-weight:700;margin:0;letter-spacing:-.01em}
 
 nav{display:flex;flex-wrap:wrap;margin:26px 0 0;padding:0 1px 1px 0}
 nav a{padding:8px 16px;color:var(--ink);text-decoration:none;font-size:14px;font-weight:600;
@@ -45,19 +38,17 @@ section > h2{font-size:21px;font-weight:700;margin:0 0 16px;padding-bottom:6px;b
   display:flex;align-items:baseline;gap:10px}
 section > h2 small{font-size:13px;font-weight:400;color:var(--muted)}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(290px,100%),1fr));gap:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));gap:16px}
 .card{position:relative;display:flex;flex-direction:column;background:var(--panel);
   border-left:4px solid var(--ink);padding:16px 18px 14px;transition:border-color .15s,background .15s}
 .card:hover{border-left-color:var(--blau);background:var(--blau-hell)}
 .card .kap{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--blau)}
-.card h3{font-size:17px;font-weight:700;margin:4px 0 6px}
+.card h3{font-size:17px;font-weight:700;margin:4px 0 0;flex:1}
 .card h3 a{color:var(--ink);text-decoration:none}
 .card h3 a::after{content:"";position:absolute;inset:0}   /* ganze Karte klickbar */
 .card h3 a:focus-visible{outline:none}
 .card:focus-within{outline:2px solid var(--blau);outline-offset:2px}
-.card p{margin:0;font-size:14px;color:var(--muted);flex:1}
-.card:hover p{color:var(--ink)}
-.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .badge{font-size:12px;padding:1px 8px;border:1px solid var(--rule);color:var(--muted)}
 .badge.versuch{border-color:transparent;background:var(--versuch-bg);color:var(--versuch);font-weight:700}
 
@@ -72,16 +63,12 @@ footer a{color:var(--blau)}
 <div class="wrap">
 
 <div class="kopf">
-  <picture>
-    <source srcset="tbz-logo-weiss.png" media="(prefers-color-scheme: dark)">
-    <img src="tbz-logo-schwarz.png" alt="TBZ Technische Berufsschule Zürich" width="259" height="52">
-  </picture>
+  <img src="tbz-logo-schwarz.png" alt="TBZ Technische Berufsschule Zürich" width="259" height="52">
   <span class="seit">M. Schmid · Algebra · Physik · TZ</span>
 </div>
 
 <div class="titel">
   <h1>Übungswerkzeuge</h1>
-  <p>Interaktive Trainer und Simulationen zum Unterricht. Alles läuft direkt im Browser, ohne Anmeldung.</p>
   <nav aria-label="Fächer">
     <a href="#algebra">Algebra</a>
     <a href="#physik">Physik</a>
@@ -97,7 +84,6 @@ footer a{color:var(--blau)}
     <article class="card">
       <span class="kap">Kapitel 2.4</span>
       <h3><a href="klammern-trainer.html">Klammern-Trainer</a></h3>
-      <p>Terme Schritt für Schritt vereinfachen – Distributivgesetz, Minus vor der Klammer, Zusammenfassen. Lernen (Regel wählen, Stelle wird markiert) und Üben (eigenen Rechenweg schreiben, Rückmeldung zu typischen Fehlern), sieben Stufen mit Zufallsaufgaben.</p>
     </article>
   </div>
 </section>
@@ -107,35 +93,29 @@ footer a{color:var(--blau)}
   <h2>Physik</h2>
   <div class="grid">
     <article class="card">
-      <span class="kap">Kapitel 2 · Kinematik</span>
+      <span class="kap">Kapitel 2</span>
       <h3><a href="konstante-beschleunigung-animation.html">Konstante Beschleunigung – Animation</a></h3>
-      <p>Fahrzeug, Zerlegung x = x₀ + v₀·t + ½·a·t² und die drei Diagramme x–t, v–t, a–t, die sich mit der Zeit aufbauen.</p>
     </article>
     <article class="card">
-      <span class="kap">Kapitel 2 · Kinematik</span>
+      <span class="kap">Kapitel 2</span>
       <h3><a href="konstante-beschleunigung-ohne-zeit.html">Konstante Beschleunigung ohne Zeit</a></h3>
-      <p>v² = v₀² + 2·a·(x − x₀). Gesuchte Grösse wählen (v, v₀, a oder x), Rechnung Schritt für Schritt, Fahrzeug auf der Strecke, Diagramme v–x, v²–x und v–t.</p>
     </article>
     <article class="card">
-      <span class="kap">Kapitel 2 · Prüfungsvorbereitung</span>
+      <span class="kap">Kapitel 2</span>
       <h3><a href="pruefungstrainer-kinematik.html">Prüfungstrainer Kinematik</a></h3>
-      <p>Fünf animierte Situationen – Tram fährt an, Auto bremst, Stein fällt, Ball nach oben, schiefe Ebene – mit Diagrammen und Multiple-Choice-Fragen zum Lösungsweg: Welche Gleichung? Welches Vorzeichen? Welches Diagramm? Welches Resultat? Zahlen zufällig, mit Begründung.</p>
     </article>
     <article class="card">
-      <span class="kap">Kapitel 2 · Prüfungsvorbereitung</span>
-      <h3><a href="https://smartfeld-ki-kurse-ost.azurewebsites.net/class/direct_static/physiktrainer.html" target="_blank" rel="noopener">Physiktrainer mit KI-Coach</a></h3>
-      <p>Der Prüfungstrainer Kinematik mit einem KI-Coach, dem Sie im Chat Fragen zum Lösungsweg stellen können. Läuft auf einer externen Seite (Smartfeld). Bitte keine persönlichen Daten in den Chat eingeben.</p>
+      <span class="kap">Kapitel 2</span>
+      <h3><a href="https://smartfeld-ki-kurse-ost.azurewebsites.net/class/direct_static/physiktrainer.html" target="_blank" rel="noopener" title="Externe Seite (Smartfeld). Bitte keine persönlichen Daten in den Chat eingeben.">Physiktrainer mit KI-Coach</a></h3>
       <div class="badges"><span class="badge versuch" title="Wird im Unterricht erprobt">Versuch</span><span class="badge">externe Seite ↗</span></div>
     </article>
     <article class="card">
       <span class="kap">Versuch 1</span>
       <h3><a href="schiefe-ebene-simulation.html">Schiefe Ebene – Simulation</a></h3>
-      <p>Wagen auf der schiefen Ebene ohne Reibung, Höhe h einstellbar. Diagramme s–t, v–t, a–t und die Messreihe a in Abhängigkeit von h (Gerade) und von α (Viertel-Sinuskurve).</p>
     </article>
     <article class="card">
-      <span class="kap">Kapitel 3 · Wurfbewegungen</span>
+      <span class="kap">Kapitel 3</span>
       <h3><a href="wurf-simulator.html">Wurf-Simulator</a></h3>
-      <p>Schiefer Wurf mit Geschwindigkeitsvektor und Diagrammen, zwei Kugeln (waagrechter Wurf und freier Fall), Affenschuss, Reichweite in Abhängigkeit vom Winkel und ein virtuelles Labor, in dem g auf einem unbekannten Planeten bestimmt wird.</p>
     </article>
   </div>
 </section>
@@ -145,14 +125,12 @@ footer a{color:var(--blau)}
   <h2>Technisches Zeichnen</h2>
   <div class="grid">
     <article class="card">
-      <span class="kap">Kapitel 2 · Darstellungsarten</span>
+      <span class="kap">Kapitel 2</span>
       <h3><a href="projektionsmethode-trainer.html">Projektionsmethode-Trainer</a></h3>
-      <p>Die sechs Ansichten eines Werkstücks nach Projektionsmethode 1 zuordnen.</p>
     </article>
     <article class="card">
-      <span class="kap">Kapitel 2.3 · Skript S. 18–21</span>
+      <span class="kap">Kapitel 2.3</span>
       <h3><a href="skript-aufgaben.html">Skript-Aufgaben Projektion</a></h3>
-      <p>Die sechs Werkstücke aus dem Skript als drehbares 3D-Modell, Ansichten zum Aufdecken oder als Quiz.</p>
     </article>
   </div>
 </section>
@@ -164,7 +142,6 @@ footer a{color:var(--blau)}
     <article class="card">
       <span class="kap">Kapitel 0</span>
       <h3><a href="ti-nspire.html">TI-Nspire – Tutorial &amp; Trainer</a></h3>
-      <p>Der Taschenrechner CX II-T CAS in zehn Stationen – Lernen (Schritte mit Tastenfeld und Bildschirm) und Üben (drei Stufen mit Rückmeldung).</p>
       <div class="badges"><span class="badge">CC BY-SA 4.0</span></div>
     </article>
   </div>
