@@ -1,19 +1,161 @@
 <!DOCTYPE html>
-<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TBZ Übungswerkzeuge</title>
-<style>body{font-family:"Segoe UI",Helvetica,Arial,sans-serif;max-width:640px;margin:40px auto;padding:0 20px;color:#1E2A38;line-height:1.5}
-h1{font-size:22px;border-bottom:1.5px solid #1E2A38;padding-bottom:8px}a{color:#2F5DA8}li{margin:10px 0}small{color:#5B6878}</style></head>
-<body><h1>TBZ Übungswerkzeuge</h1>
-<ul>
-<li><a href="projektionsmethode-trainer.html">Projektionsmethode-Trainer</a><br><small>Technisches Zeichnen, Kapitel 2: die sechs Ansichten eines Werkstücks nach Projektionsmethode 1 zuordnen.</small></li>
-<li><a href="skript-aufgaben.html">Skript-Aufgaben Projektion</a><br><small>Technisches Zeichnen, Kapitel 2.3 (Skript S. 18–21): die sechs Werkstücke aus dem Skript als drehbares 3D-Modell, Ansichten zum Aufdecken oder als Quiz.</small></li>
-<li><a href="konstante-beschleunigung-animation.html">Konstante Beschleunigung – Animation</a><br><small>Physik, Kapitel 2: Fahrzeug, Zerlegung x = x₀ + v₀·t + ½·a·t² und die drei Diagramme x–t, v–t, a–t, die sich mit der Zeit aufbauen.</small></li>
-<li><a href="konstante-beschleunigung-ohne-zeit.html">Konstante Beschleunigung ohne Zeit – Animation</a><br><small>Physik, Kapitel 2: v² = v₀² + 2·a·(x − x₀). Gesuchte Grösse wählen (v, v₀, a oder x), Rechnung Schritt für Schritt, Fahrzeug auf der Strecke, Diagramme v–x, v²–x und v–t.</small></li>
-<li><a href="pruefungstrainer-kinematik.html">Prüfungstrainer Kinematik</a><br><small>Physik, Kapitel 2 (Vorbereitung Prüfung 2): fünf animierte Situationen – Tram fährt an, Auto bremst, Stein fällt, Ball nach oben, schiefe Ebene – mit Diagrammen und Multiple-Choice-Fragen zum Lösungsweg: Welche Gleichung? Welches Vorzeichen? Welches Diagramm? Welches Resultat? Zahlen zufällig, mit Begründung.</small></li>
-<li><a href="klammern-trainer.html">Klammern-Trainer</a><br><small>Algebra, Kapitel 2.4: Terme Schritt für Schritt vereinfachen – Distributivgesetz, Minus vor der Klammer, Zusammenfassen. Lernen (Regel wählen, Stelle wird markiert) und Üben (eigenen Rechenweg schreiben, Rückmeldung zu typischen Fehlern), sieben Stufen mit Zufallsaufgaben.</small></li>
-<li><a href="ti-nspire.html">TI-Nspire – Tutorial &amp; Trainer</a><br><small>Physik/Algebra, Kapitel 0: der Taschenrechner CX II-T CAS in zehn Stationen – Lernen (Schritte mit Tastenfeld und Bildschirm) und Üben (drei Stufen mit Rückmeldung). Frei nutzbar, CC BY-SA 4.0.</small></li>
-<li><a href="wurf-simulator.html">Wurf-Simulator</a><br><small>Physik, Kapitel 3: schiefer Wurf mit Geschwindigkeitsvektor und Diagrammen, zwei Kugeln (waagrechter Wurf und freier Fall), Affenschuss, Reichweite in Abhängigkeit vom Winkel und ein virtuelles Labor, in dem g auf einem unbekannten Planeten bestimmt wird.</small></li>
-<li><a href="schiefe-ebene-simulation.html">Schiefe Ebene – Simulation</a><br><small>Physik, Versuch 1: Wagen auf der schiefen Ebene ohne Reibung, Höhe h einstellbar. Diagramme s–t, v–t, a–t und die Messreihe a in Abhängigkeit von h (Gerade) und von α (Viertel-Sinuskurve).</small></li>
-</ul>
-<p><small>Nur für den Unterrichtsgebrauch. M. Schmid, Technische Berufsschule Zürich.</small></p>
-</body></html>
+<meta name="description" content="Interaktive Trainer und Simulationen für Algebra, Physik und Technisches Zeichnen an der Technischen Berufsschule Zürich.">
+<style>
+:root{
+  --bg:#F6F7F9; --card:#FFFFFF; --ink:#1E2A38; --muted:#5B6878; --line:#DDE2E8;
+  --link:#2F5DA8;
+  --algebra:#2F5DA8; --physik:#C0571B; --tz:#2E7D5B; --tr:#6A4C9C;
+  --badge-bg:#EEF1F5; --versuch:#9A5C00; --versuch-bg:#FFF3DC;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#12171E; --card:#1B222C; --ink:#E4E9EF; --muted:#9AA6B4; --line:#2C3542;
+    --link:#8DB3F0;
+    --algebra:#7FA7EC; --physik:#F0996A; --tz:#6CC49B; --tr:#B79BE6;
+    --badge-bg:#26303C; --versuch:#F2C46B; --versuch-bg:#3A2F17;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Segoe UI",Helvetica,Arial,sans-serif;line-height:1.5}
+.wrap{max-width:1040px;margin:0 auto;padding:40px 16px 56px}
+header h1{font-size:28px;margin:0 0 6px;letter-spacing:-.01em}
+header p{margin:0;color:var(--muted);max-width:640px}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 8px}
+nav a{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;
+  background:var(--card);border:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:14px}
+nav a:hover{border-color:var(--c)}
+nav a::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c)}
+section{margin-top:36px;scroll-margin-top:16px}
+section > h2{font-size:19px;margin:0 0 14px;display:flex;align-items:baseline;gap:10px}
+section > h2::before{content:"";align-self:stretch;width:4px;border-radius:2px;background:var(--c)}
+section > h2 small{font-size:13px;font-weight:400;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(290px,100%),1fr));gap:14px}
+.card{position:relative;display:flex;flex-direction:column;background:var(--card);
+  border:1px solid var(--line);border-top:3px solid var(--c);border-radius:10px;padding:16px 18px 14px;
+  transition:box-shadow .15s,transform .15s}
+.card:hover{box-shadow:0 6px 18px rgba(20,30,45,.10);transform:translateY(-1px)}
+.card .kap{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--c)}
+.card h3{font-size:17px;margin:4px 0 6px}
+.card h3 a{color:var(--ink);text-decoration:none}
+.card h3 a::after{content:"";position:absolute;inset:0}   /* ganze Karte klickbar */
+.card h3 a:focus-visible{outline:none}
+.card:focus-within{outline:2px solid var(--c);outline-offset:2px}
+.card p{margin:0;font-size:14px;color:var(--muted);flex:1}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.badge{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--badge-bg);color:var(--muted)}
+.badge.versuch{background:var(--versuch-bg);color:var(--versuch);font-weight:600}
+.algebra{--c:var(--algebra)} .physik{--c:var(--physik)} .tz{--c:var(--tz)} .tr{--c:var(--tr)}
+footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+footer a{color:var(--link)}
+@media (prefers-reduced-motion: reduce){.card{transition:none}.card:hover{transform:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>TBZ Übungswerkzeuge</h1>
+  <p>Interaktive Trainer und Simulationen für den Unterricht an der Technischen Berufsschule Zürich. Alles läuft direkt im Browser, ohne Anmeldung.</p>
+</header>
+
+<nav aria-label="Fächer">
+  <a class="algebra" href="#algebra">Algebra</a>
+  <a class="physik" href="#physik">Physik</a>
+  <a class="tz" href="#tz">Technisches Zeichnen</a>
+  <a class="tr" href="#taschenrechner">Taschenrechner</a>
+</nav>
+
+<!-- ================================================================ -->
+<section id="algebra" class="algebra">
+  <h2>Algebra</h2>
+  <div class="grid">
+    <article class="card">
+      <span class="kap">Kapitel 2.4</span>
+      <h3><a href="klammern-trainer.html">Klammern-Trainer</a></h3>
+      <p>Terme Schritt für Schritt vereinfachen – Distributivgesetz, Minus vor der Klammer, Zusammenfassen. Lernen (Regel wählen, Stelle wird markiert) und Üben (eigenen Rechenweg schreiben, Rückmeldung zu typischen Fehlern), sieben Stufen mit Zufallsaufgaben.</p>
+    </article>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="physik" class="physik">
+  <h2>Physik</h2>
+  <div class="grid">
+    <article class="card">
+      <span class="kap">Kapitel 2 · Kinematik</span>
+      <h3><a href="konstante-beschleunigung-animation.html">Konstante Beschleunigung – Animation</a></h3>
+      <p>Fahrzeug, Zerlegung x = x₀ + v₀·t + ½·a·t² und die drei Diagramme x–t, v–t, a–t, die sich mit der Zeit aufbauen.</p>
+    </article>
+    <article class="card">
+      <span class="kap">Kapitel 2 · Kinematik</span>
+      <h3><a href="konstante-beschleunigung-ohne-zeit.html">Konstante Beschleunigung ohne Zeit</a></h3>
+      <p>v² = v₀² + 2·a·(x − x₀). Gesuchte Grösse wählen (v, v₀, a oder x), Rechnung Schritt für Schritt, Fahrzeug auf der Strecke, Diagramme v–x, v²–x und v–t.</p>
+    </article>
+    <article class="card">
+      <span class="kap">Kapitel 2 · Prüfungsvorbereitung</span>
+      <h3><a href="pruefungstrainer-kinematik.html">Prüfungstrainer Kinematik</a></h3>
+      <p>Fünf animierte Situationen – Tram fährt an, Auto bremst, Stein fällt, Ball nach oben, schiefe Ebene – mit Diagrammen und Multiple-Choice-Fragen zum Lösungsweg: Welche Gleichung? Welches Vorzeichen? Welches Diagramm? Welches Resultat? Zahlen zufällig, mit Begründung.</p>
+    </article>
+    <article class="card">
+      <span class="kap">Kapitel 2 · Prüfungsvorbereitung</span>
+      <h3><a href="https://smartfeld-ki-kurse-ost.azurewebsites.net/class/direct_static/physiktrainer.html" target="_blank" rel="noopener">Physiktrainer mit KI-Coach</a></h3>
+      <p>Der Prüfungstrainer Kinematik mit einem KI-Coach, dem Sie im Chat Fragen zum Lösungsweg stellen können. Läuft auf einer externen Seite (Smartfeld). Bitte keine persönlichen Daten in den Chat eingeben.</p>
+      <div class="badges"><span class="badge versuch" title="Wird im Unterricht erprobt">Versuch</span><span class="badge">externe Seite ↗</span></div>
+    </article>
+    <article class="card">
+      <span class="kap">Versuch 1</span>
+      <h3><a href="schiefe-ebene-simulation.html">Schiefe Ebene – Simulation</a></h3>
+      <p>Wagen auf der schiefen Ebene ohne Reibung, Höhe h einstellbar. Diagramme s–t, v–t, a–t und die Messreihe a in Abhängigkeit von h (Gerade) und von α (Viertel-Sinuskurve).</p>
+    </article>
+    <article class="card">
+      <span class="kap">Kapitel 3 · Wurfbewegungen</span>
+      <h3><a href="wurf-simulator.html">Wurf-Simulator</a></h3>
+      <p>Schiefer Wurf mit Geschwindigkeitsvektor und Diagrammen, zwei Kugeln (waagrechter Wurf und freier Fall), Affenschuss, Reichweite in Abhängigkeit vom Winkel und ein virtuelles Labor, in dem g auf einem unbekannten Planeten bestimmt wird.</p>
+    </article>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="tz" class="tz">
+  <h2>Technisches Zeichnen</h2>
+  <div class="grid">
+    <article class="card">
+      <span class="kap">Kapitel 2 · Darstellungsarten</span>
+      <h3><a href="projektionsmethode-trainer.html">Projektionsmethode-Trainer</a></h3>
+      <p>Die sechs Ansichten eines Werkstücks nach Projektionsmethode 1 zuordnen.</p>
+    </article>
+    <article class="card">
+      <span class="kap">Kapitel 2.3 · Skript S. 18–21</span>
+      <h3><a href="skript-aufgaben.html">Skript-Aufgaben Projektion</a></h3>
+      <p>Die sechs Werkstücke aus dem Skript als drehbares 3D-Modell, Ansichten zum Aufdecken oder als Quiz.</p>
+    </article>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="taschenrechner" class="tr">
+  <h2>Taschenrechner <small>für Algebra und Physik</small></h2>
+  <div class="grid">
+    <article class="card">
+      <span class="kap">Kapitel 0</span>
+      <h3><a href="ti-nspire.html">TI-Nspire – Tutorial &amp; Trainer</a></h3>
+      <p>Der Taschenrechner CX II-T CAS in zehn Stationen – Lernen (Schritte mit Tastenfeld und Bildschirm) und Üben (drei Stufen mit Rückmeldung).</p>
+      <div class="badges"><span class="badge">CC BY-SA 4.0</span></div>
+    </article>
+  </div>
+</section>
+
+<footer>
+  Nur für den Unterrichtsgebrauch, ausser wo eine Lizenz angegeben ist. M. Schmid, Technische Berufsschule Zürich.
+  · <a href="https://github.com/Nunigan/tbz-tools/issues">Fehler melden</a>
+</footer>
+
+</div>
+</body>
+</html>
