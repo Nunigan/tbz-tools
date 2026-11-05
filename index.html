@@ -6,73 +6,92 @@
 <title>TBZ Übungswerkzeuge</title>
 <meta name="description" content="Interaktive Trainer und Simulationen für Algebra, Physik und Technisches Zeichnen an der Technischen Berufsschule Zürich.">
 <style>
+/* TBZ-Design wie Skript und Folien (tbzskript.sty / beamerthemetbz.sty):
+   schwarz/weiss/grau, TBZ-Blau (0,90,200) als einziger Akzent. */
 :root{
-  --bg:#F6F7F9; --card:#FFFFFF; --ink:#1E2A38; --muted:#5B6878; --line:#DDE2E8;
-  --link:#2F5DA8;
-  --algebra:#2F5DA8; --physik:#C0571B; --tz:#2E7D5B; --tr:#6A4C9C;
-  --badge-bg:#EEF1F5; --versuch:#9A5C00; --versuch-bg:#FFF3DC;
+  --bg:#FFFFFF; --panel:#F2F2F2; --ink:#000000; --muted:#737373; --rule:#8C8C8C; --line:#D9D9D9;
+  --blau:#005AC8; --blau-hell:#E6EFFA;
+  --versuch:#8A5A00; --versuch-bg:#FFF1D6;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#12171E; --card:#1B222C; --ink:#E4E9EF; --muted:#9AA6B4; --line:#2C3542;
-    --link:#8DB3F0;
-    --algebra:#7FA7EC; --physik:#F0996A; --tz:#6CC49B; --tr:#B79BE6;
-    --badge-bg:#26303C; --versuch:#F2C46B; --versuch-bg:#3A2F17;
+    --bg:#111111; --panel:#1C1C1C; --ink:#F2F2F2; --muted:#A6A6A6; --rule:#5C5C5C; --line:#333333;
+    --blau:#6FA8F0; --blau-hell:#16263B;
+    --versuch:#F2C46B; --versuch-bg:#382B12;
   }
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);
-  font-family:"Segoe UI",Helvetica,Arial,sans-serif;line-height:1.5}
-.wrap{max-width:1040px;margin:0 auto;padding:40px 16px 56px}
-header h1{font-size:28px;margin:0 0 6px;letter-spacing:-.01em}
-header p{margin:0;color:var(--muted);max-width:640px}
-nav{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 8px}
-nav a{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;
-  background:var(--card);border:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:14px}
-nav a:hover{border-color:var(--c)}
-nav a::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c)}
-section{margin-top:36px;scroll-margin-top:16px}
-section > h2{font-size:19px;margin:0 0 14px;display:flex;align-items:baseline;gap:10px}
-section > h2::before{content:"";align-self:stretch;width:4px;border-radius:2px;background:var(--c)}
+  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;line-height:1.5}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+
+/* Kopf: Logo oben links, dünne Linie wie im Skript */
+.kopf{padding:28px 0 14px;border-bottom:1px solid var(--rule);display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.kopf img{height:52px;width:auto;display:block}
+.kopf .seit{font-size:13px;color:var(--muted)}
+
+.titel{padding:36px 0 8px}
+.titel h1{font-size:34px;font-weight:700;margin:0 0 8px;letter-spacing:-.01em}
+.titel p{margin:0;color:var(--muted);max-width:620px;font-size:16px}
+
+nav{display:flex;flex-wrap:wrap;margin:26px 0 0;padding:0 1px 1px 0}
+nav a{padding:8px 16px;color:var(--ink);text-decoration:none;font-size:14px;font-weight:600;
+  border:1px solid var(--ink);margin:0 -1px -1px 0}
+nav a:hover,nav a:focus-visible{background:var(--ink);color:var(--bg);outline:none}
+
+/* Abschnitt wie Folientitel: fett, dünne Linie darunter */
+section{margin-top:44px;scroll-margin-top:16px}
+section > h2{font-size:21px;font-weight:700;margin:0 0 16px;padding-bottom:6px;border-bottom:1px solid var(--rule);
+  display:flex;align-items:baseline;gap:10px}
 section > h2 small{font-size:13px;font-weight:400;color:var(--muted)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(290px,100%),1fr));gap:14px}
-.card{position:relative;display:flex;flex-direction:column;background:var(--card);
-  border:1px solid var(--line);border-top:3px solid var(--c);border-radius:10px;padding:16px 18px 14px;
-  transition:box-shadow .15s,transform .15s}
-.card:hover{box-shadow:0 6px 18px rgba(20,30,45,.10);transform:translateY(-1px)}
-.card .kap{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--c)}
-.card h3{font-size:17px;margin:4px 0 6px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(290px,100%),1fr));gap:16px}
+.card{position:relative;display:flex;flex-direction:column;background:var(--panel);
+  border-left:4px solid var(--ink);padding:16px 18px 14px;transition:border-color .15s,background .15s}
+.card:hover{border-left-color:var(--blau);background:var(--blau-hell)}
+.card .kap{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--blau)}
+.card h3{font-size:17px;font-weight:700;margin:4px 0 6px}
 .card h3 a{color:var(--ink);text-decoration:none}
 .card h3 a::after{content:"";position:absolute;inset:0}   /* ganze Karte klickbar */
 .card h3 a:focus-visible{outline:none}
-.card:focus-within{outline:2px solid var(--c);outline-offset:2px}
+.card:focus-within{outline:2px solid var(--blau);outline-offset:2px}
 .card p{margin:0;font-size:14px;color:var(--muted);flex:1}
+.card:hover p{color:var(--ink)}
 .badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-.badge{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--badge-bg);color:var(--muted)}
-.badge.versuch{background:var(--versuch-bg);color:var(--versuch);font-weight:600}
-.algebra{--c:var(--algebra)} .physik{--c:var(--physik)} .tz{--c:var(--tz)} .tr{--c:var(--tr)}
-footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
-footer a{color:var(--link)}
-@media (prefers-reduced-motion: reduce){.card{transition:none}.card:hover{transform:none}}
+.badge{font-size:12px;padding:1px 8px;border:1px solid var(--rule);color:var(--muted)}
+.badge.versuch{border-color:transparent;background:var(--versuch-bg);color:var(--versuch);font-weight:700}
+
+/* Fuss wie die Fusszeile der Folien: klein, grau */
+footer{margin:56px 0 0;padding:14px 0 32px;border-top:1px solid var(--rule);font-size:12px;color:var(--muted);
+  display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+footer a{color:var(--blau)}
+@media (prefers-reduced-motion: reduce){.card{transition:none}}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-<header>
-  <h1>TBZ Übungswerkzeuge</h1>
-  <p>Interaktive Trainer und Simulationen für den Unterricht an der Technischen Berufsschule Zürich. Alles läuft direkt im Browser, ohne Anmeldung.</p>
-</header>
+<div class="kopf">
+  <picture>
+    <source srcset="tbz-logo-weiss.png" media="(prefers-color-scheme: dark)">
+    <img src="tbz-logo-schwarz.png" alt="TBZ Technische Berufsschule Zürich" width="259" height="52">
+  </picture>
+  <span class="seit">M. Schmid · Algebra · Physik · TZ</span>
+</div>
 
-<nav aria-label="Fächer">
-  <a class="algebra" href="#algebra">Algebra</a>
-  <a class="physik" href="#physik">Physik</a>
-  <a class="tz" href="#tz">Technisches Zeichnen</a>
-  <a class="tr" href="#taschenrechner">Taschenrechner</a>
-</nav>
+<div class="titel">
+  <h1>Übungswerkzeuge</h1>
+  <p>Interaktive Trainer und Simulationen zum Unterricht. Alles läuft direkt im Browser, ohne Anmeldung.</p>
+  <nav aria-label="Fächer">
+    <a href="#algebra">Algebra</a>
+    <a href="#physik">Physik</a>
+    <a href="#tz">Technisches Zeichnen</a>
+    <a href="#taschenrechner">Taschenrechner</a>
+  </nav>
+</div>
 
 <!-- ================================================================ -->
-<section id="algebra" class="algebra">
+<section id="algebra">
   <h2>Algebra</h2>
   <div class="grid">
     <article class="card">
@@ -84,7 +103,7 @@ footer a{color:var(--link)}
 </section>
 
 <!-- ================================================================ -->
-<section id="physik" class="physik">
+<section id="physik">
   <h2>Physik</h2>
   <div class="grid">
     <article class="card">
@@ -122,7 +141,7 @@ footer a{color:var(--link)}
 </section>
 
 <!-- ================================================================ -->
-<section id="tz" class="tz">
+<section id="tz">
   <h2>Technisches Zeichnen</h2>
   <div class="grid">
     <article class="card">
@@ -139,7 +158,7 @@ footer a{color:var(--link)}
 </section>
 
 <!-- ================================================================ -->
-<section id="taschenrechner" class="tr">
+<section id="taschenrechner">
   <h2>Taschenrechner <small>für Algebra und Physik</small></h2>
   <div class="grid">
     <article class="card">
@@ -152,8 +171,8 @@ footer a{color:var(--link)}
 </section>
 
 <footer>
-  Nur für den Unterrichtsgebrauch, ausser wo eine Lizenz angegeben ist. M. Schmid, Technische Berufsschule Zürich.
-  · <a href="https://github.com/Nunigan/tbz-tools/issues">Fehler melden</a>
+  <span>Nur für den Unterrichtsgebrauch, ausser wo eine Lizenz angegeben ist. M. Schmid, Technische Berufsschule Zürich.</span>
+  <a href="https://github.com/Nunigan/tbz-tools/issues">Fehler melden</a>
 </footer>
 
 </div>
