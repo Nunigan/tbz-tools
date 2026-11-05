@@ -13,6 +13,9 @@
   Fragen zum Lösungsweg: Welche Gleichung? Welches Vorzeichen? Welches
   Diagramm? Welches Resultat? Zahlen werden zufällig neu gewählt.
   Alle Situationen, Fragen und Lösungen selbst erstellt, 05.11.2026.
+  Formelsammlung (05.11.2026): Nachbau von formelsammlung-pr01.tex rechts
+  neben dem Quiz; nach jeder Antwort sind Zeile und Formel markiert
+  (Feld f: der Frage = data-f der Formel, fn: Hinweis ohne Formel).
 -->
 <style>
   :root{
@@ -99,12 +102,25 @@
   .result b{font-size:28px;display:block;margin:4px 0 8px}
   .result ul{margin:6px 0 0 18px;padding:0;font-size:14px;color:var(--ink-soft)}
 
-  details.formeln{margin:16px 0 0;background:#fff;border:1.5px solid var(--rule);padding:8px 14px;max-width:860px}
-  details.formeln summary{cursor:pointer;font-weight:600}
-  details.formeln table{border-collapse:collapse;margin-top:8px;font-size:14px;width:100%}
-  details.formeln td{padding:4px 8px;border-top:1px solid var(--grid);vertical-align:top}
-  details.formeln td:first-child{color:var(--ink-soft);white-space:nowrap;width:160px}
-  details.formeln td.f{font-size:16px;font-variant-numeric:tabular-nums}
+  .lower{display:grid;grid-template-columns:minmax(0,1fr) 500px;gap:14px;align-items:start}
+  .quiz{max-width:none}
+  aside.formeln{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow-y:auto;background:#fff;border:1.5px solid var(--ink);padding:10px 12px 8px}
+  .fshead{font-weight:600;font-size:15px;border-bottom:1.5px solid var(--ink);padding-bottom:4px;margin-bottom:8px}
+  .fshead small{display:block;font-weight:400;color:var(--ink-soft);font-size:11.5px}
+  .fsblock{display:flex;border:1px solid var(--ink);margin-bottom:7px}
+  .fsblock .lab{writing-mode:vertical-rl;transform:rotate(180deg);background:var(--ink);color:#fff;font-weight:600;font-size:11.5px;padding:6px 2px;text-align:center;white-space:nowrap;flex:0 0 auto}
+  .fsblock table{border-collapse:collapse;flex:1;font-size:12px;width:100%}
+  .fsblock>table>tbody>tr:nth-child(odd){background:#EDEDED}
+  .fsblock td{padding:4px 6px;vertical-align:middle;transition:background .25s}
+  .fsblock td.n{width:34%} .fsblock td.n b{display:block;font-weight:600} .fsblock td.n small{display:block;color:var(--ink-soft);font-size:10.5px;line-height:1.25}
+  .fsblock td.f{font-size:13.5px;line-height:1.7;font-variant-numeric:tabular-nums}
+  .fsblock td.u{white-space:nowrap;color:var(--ink-soft);font-size:11.5px;text-align:right}
+  .fsblock td.wide{padding:5px 8px} .fsblock td.wide small{display:block;color:var(--ink-soft);font-size:10.5px;margin-top:3px}
+  .vs2{display:flex;gap:14px} .vs2 table.vs{font-size:11px;width:auto} .vs2 table.vs th{text-align:left;font-weight:600;border-bottom:1px solid var(--ink);padding:1px 5px} .vs2 table.vs td{padding:1px 5px}
+  .fx{padding:0 3px;border-radius:3px;white-space:nowrap;display:inline-block;line-height:1.35}
+  .fsblock tr.hl td{background:#FFF6C4} .fx.hlf{background:#FFD54F;box-shadow:0 0 0 1.5px #E0A800}
+  .fsnote{margin-top:8px;font-size:13px;color:var(--ink)} .fsnote b{color:#8A6400}
+  @media (max-width:1100px){.lower{grid-template-columns:1fr}aside.formeln{position:static;max-height:none}.quiz{max-width:860px}}
   .hint{color:var(--ink-soft);font-size:13px;margin:10px 2px 0}
   .hint a{color:var(--blue)}
   footer{margin-top:26px;color:var(--ink-soft);font-size:12px}
@@ -144,24 +160,46 @@
   </div>
 </div>
 
+
+<section class="lower">
 <section class="quiz" id="quiz"></section>
+<aside class="formeln" id="formeln">
+<div class="fshead">Formelsammlung Physik <small>Kapitel 1 und 2 – wird mit der Prüfung abgegeben. Nach jeder Antwort ist die passende Zeile markiert.</small></div>
+<div class="fsblock"><div class="lab">Einheiten</div><table>
+<tr><td class="n"><b>Gleitkommadarstellung</b><small>genau eine Ziffer ≠ 0 vor dem Punkt</small></td><td class="f"><span class="fx" data-f="glk"><i>a</i>·10<sup><i>n</i></sup>, 1 ≤ <i>a</i> &lt; 10</span> &nbsp;z. B. 3500 = 3.5·10³</td><td class="u"></td></tr>
+<tr><td class="n"><b>Flächen und Volumen</b><small>Vorsilbe zählt zweimal bzw. dreimal</small></td><td class="f">(10<sup><i>n</i></sup> m)² = 10<sup>2<i>n</i></sup> m², &nbsp;(10<sup><i>n</i></sup> m)³ = 10<sup>3<i>n</i></sup> m³</td><td class="u"></td></tr>
+<tr><td class="n"><b>Liter</b><small>Volumen</small></td><td class="f">1 l = 1 dm³</td><td class="u"></td></tr>
+</table></div>
+<div class="fsblock"><div class="lab">Vorsilben</div><table><tr><td class="wide" colspan="3">
+<div class="vs2">
+<table class="vs"><tr><th>Vorsilbe</th><th>Zeichen</th><th>Faktor</th></tr>
+<tr><td>Tera-</td><td>T</td><td>10¹²</td></tr><tr><td>Giga-</td><td>G</td><td>10⁹</td></tr><tr><td>Mega-</td><td>M</td><td>10⁶</td></tr><tr><td>Kilo-</td><td>k</td><td>10³</td></tr><tr><td>Hekto-</td><td>h</td><td>10²</td></tr><tr><td>Deka-</td><td>da</td><td>10¹</td></tr></table>
+<table class="vs"><tr><th>Vorsilbe</th><th>Zeichen</th><th>Faktor</th></tr>
+<tr><td>Dezi-</td><td>d</td><td>10⁻¹</td></tr><tr><td>Zenti-</td><td>c</td><td>10⁻²</td></tr><tr><td>Milli-</td><td>m</td><td>10⁻³</td></tr><tr><td>Mikro-</td><td>µ</td><td>10⁻⁶</td></tr><tr><td>Nano-</td><td>n</td><td>10⁻⁹</td></tr><tr><td>Piko-</td><td>p</td><td>10⁻¹²</td></tr></table>
+</div><small>Eine Vorsilbe ist eine Zehnerpotenz vor der Einheit: 3 km = 3·10³ m, 5 µs = 5·10⁻⁶ s.</small></td></tr></table></div>
+<div class="fsblock"><div class="lab">Kinematik</div><table>
+<tr><td class="n"><b>Durchschnittsgeschwindigkeit</b><small>Verschiebung pro Zeit; Richtung über das Vorzeichen</small></td><td class="f"><span class="fx" data-f="vdef"><i>v̄</i> = Δ<i>s</i>/Δ<i>t</i> = (<i>x</i>₂ − <i>x</i>₁)/(<i>t</i>₂ − <i>t</i>₁)</span>, <span class="fx" data-f="vdef-s">Δ<i>s</i> = <i>v̄</i>·Δ<i>t</i></span>, <span class="fx" data-f="vdef-t">Δ<i>t</i> = Δ<i>s</i>/<i>v̄</i></span></td><td class="u">[<i>v</i>] = m/s</td></tr>
+<tr><td class="n"><b>Durchschnittsbeschleunigung</b><small>Geschwindigkeitsänderung pro Zeit; Bremsen: <i>a</i> entgegen <i>v</i> (Vorzeichen)</small></td><td class="f"><span class="fx" data-f="adef"><i>ā</i> = Δ<i>v</i>/Δ<i>t</i> = (<i>v</i>₂ − <i>v</i>₁)/(<i>t</i>₂ − <i>t</i>₁)</span></td><td class="u">[<i>a</i>] = m/s²</td></tr>
+</table></div>
+<div class="fsblock"><div class="lab"><i>a</i> konstant</div><table>
+<tr><td class="n"><b>Geschwindigkeit</b><small>(2.11a) nach der Zeit <i>t</i></small></td><td class="f"><span class="fx" data-f="211a"><i>v</i> = <i>v</i>₀ + <i>a</i>·<i>t</i></span></td><td class="u">[<i>v</i>] = m/s</td></tr>
+<tr><td class="n"><b>Ort</b><small>(2.11b) nach der Zeit <i>t</i>; Weg = <i>x</i> − <i>x</i>₀</small></td><td class="f"><span class="fx" data-f="211b"><i>x</i> = <i>x</i>₀ + <i>v</i>₀·<i>t</i> + ½·<i>a</i>·<i>t</i>²</span></td><td class="u">[<i>x</i>] = m</td></tr>
+<tr><td class="n"><b>Ohne die Zeit <i>t</i></b><small>(2.11c)</small></td><td class="f"><span class="fx" data-f="211c"><i>v</i>² = <i>v</i>₀² + 2·<i>a</i>·(<i>x</i> − <i>x</i>₀)</span></td><td class="u"></td></tr>
+<tr><td class="n"><b>Mittlere Geschwindigkeit</b><small>(2.11d) nur bei konstantem <i>a</i></small></td><td class="f"><span class="fx" data-f="211d"><i>v̄</i> = (<i>v</i> + <i>v</i>₀)/2</span></td><td class="u"></td></tr>
+</table></div>
+<div class="fsblock"><div class="lab">Freier Fall</div><table>
+<tr><td class="n"><b>Gleichungen</b><small><i>y</i> nach unten, <i>a</i> = +<i>g</i>, <i>y</i>₀ = 0; <i>g</i> ≈ 9.81 m/s²</small></td><td class="f"><span class="fx" data-f="ff-v"><i>v</i> = <i>v</i>₀ + <i>g</i>·<i>t</i></span>, <span class="fx" data-f="ff-y"><i>y</i> = <i>v</i>₀·<i>t</i> + ½·<i>g</i>·<i>t</i>²</span>, <span class="fx" data-f="ff-c"><i>v</i>² = <i>v</i>₀² + 2·<i>g</i>·<i>y</i></span></td><td class="u"></td></tr>
+<tr><td class="n"><b>Aus der Ruhe</b><small><i>v</i>₀ = 0, Fallhöhe <i>h</i></small></td><td class="f"><span class="fx" data-f="ff0-v"><i>v</i> = <i>g</i>·<i>t</i></span>, <span class="fx" data-f="ff0-y"><i>y</i> = ½·<i>g</i>·<i>t</i>²</span>, <span class="fx" data-f="ff0-vh"><i>v</i> = √(2·<i>g</i>·<i>h</i>)</span>, <span class="fx" data-f="ff0-t"><i>t</i> = √(2·<i>h</i>/<i>g</i>)</span></td><td class="u"></td></tr>
+</table></div>
+<div class="fsblock"><div class="lab">Senkr. Wurf</div><table>
+<tr><td class="n"><b>Gleichungen</b><small><i>y</i> nach oben, <i>a</i> = −<i>g</i>, <i>y</i>₀ = 0 auf Abwurfhöhe</small></td><td class="f"><span class="fx" data-f="sw-v"><i>v</i> = <i>v</i>₀ − <i>g</i>·<i>t</i></span>, <span class="fx" data-f="sw-y"><i>y</i> = <i>v</i>₀·<i>t</i> − ½·<i>g</i>·<i>t</i>²</span>, <span class="fx" data-f="sw-c"><i>v</i>² = <i>v</i>₀² − 2·<i>g</i>·<i>y</i></span></td><td class="u"></td></tr>
+<tr><td class="n"><b>Höchster Punkt</b><small><i>v</i> = 0, aber <i>a</i> = −<i>g</i></small></td><td class="f"><span class="fx" data-f="sw-to"><i>t</i><sub>o</sub> = <i>v</i>₀/<i>g</i></span>, <span class="fx" data-f="sw-h"><i>h</i> = <i>v</i>₀²/(2·<i>g</i>)</span></td><td class="u">[<i>t</i>] = s, [<i>h</i>] = m</td></tr>
+<tr><td class="n"><b>Zurück auf Abwurfhöhe</b><small>Symmetrie: Aufprall mit −<i>v</i>₀</small></td><td class="f"><span class="fx" data-f="sw-tges"><i>t</i><sub>ges</sub> = 2·<i>t</i><sub>o</sub> = 2·<i>v</i>₀/<i>g</i></span></td><td class="u">[<i>t</i>] = s</td></tr>
+</table></div>
+</aside>
+</section>
 
-<details class="formeln">
-  <summary>Formelsammlung (wie in der Prüfung)</summary>
-  <table>
-    <tr><td>Beschleunigung</td><td class="f"><i>a</i> = Δ<i>v</i>/Δ<i>t</i> = (<i>v</i> − <i>v</i>₀)/<i>t</i></td><td>Steigung der <i>v</i>-<i>t</i>-Geraden</td></tr>
-    <tr><td>(2.11a)</td><td class="f"><i>v</i> = <i>v</i>₀ + <i>a</i>·<i>t</i></td><td>Geschwindigkeit nach der Zeit <i>t</i></td></tr>
-    <tr><td>(2.11b)</td><td class="f"><i>x</i> = <i>x</i>₀ + <i>v</i>₀·<i>t</i> + ½·<i>a</i>·<i>t</i>²</td><td>Ort nach der Zeit <i>t</i>; Weg = <i>x</i> − <i>x</i>₀</td></tr>
-    <tr><td>(2.11c)</td><td class="f"><i>v</i>² = <i>v</i>₀² + 2·<i>a</i>·(<i>x</i> − <i>x</i>₀)</td><td>ohne die Zeit</td></tr>
-    <tr><td>(2.11d)</td><td class="f"><i>v̄</i> = (<i>v</i> + <i>v</i>₀)/2</td><td>mittlere Geschwindigkeit, nur bei konstantem <i>a</i></td></tr>
-    <tr><td>Freier Fall</td><td class="f"><i>v</i> = <i>g</i>·<i>t</i>, <i>y</i> = ½·<i>g</i>·<i>t</i>², <i>v</i> = √(2<i>g</i><i>h</i>)</td><td><i>y</i> nach unten, <i>a</i> = +<i>g</i>, aus der Ruhe; <i>g</i> = 9.81 m/s²</td></tr>
-    <tr><td>Senkrechter Wurf</td><td class="f"><i>v</i> = <i>v</i>₀ − <i>g</i>·<i>t</i>, <i>y</i> = <i>v</i>₀·<i>t</i> − ½·<i>g</i>·<i>t</i>², <i>v</i>² = <i>v</i>₀² − 2<i>g</i><i>y</i></td><td><i>y</i> nach oben, <i>a</i> = −<i>g</i></td></tr>
-    <tr><td>Höchster Punkt</td><td class="f"><i>t</i><sub>o</sub> = <i>v</i>₀/<i>g</i>, <i>h</i> = <i>v</i>₀²/(2<i>g</i>), <i>t</i><sub>ges</sub> = 2·<i>t</i><sub>o</sub></td><td><i>v</i> = 0, aber <i>a</i> = −<i>g</i></td></tr>
-    <tr><td>Umrechnung</td><td class="f">1 km/h = 1/3.6 m/s</td><td>km/h → m/s: durch 3.6; m/s → km/h: mal 3.6</td></tr>
-  </table>
-</details>
-
-<p class="hint">Leertaste: Start/Stopp · Tasten 1–4: Antwort wählen · Enter: weiter · «Neue Zahlen» stellt dieselbe Situation mit anderen Werten.
+<p class="hint">Leertaste: Start/Stopp · Tasten 1–4: Antwort wählen · Enter: weiter · «Neue Zahlen» stellt dieselbe Situation mit anderen Werten. Nach jeder Antwort ist in der Formelsammlung die passende Zeile gelb markiert.
 Farben: <span class="cx">Ort</span>, <span class="cv">Geschwindigkeit</span>, <span class="ca">Beschleunigung</span>. Gerechnet wird mit <i>g</i> = 9.81 m/s², ohne Luftwiderstand.
 Mehr dazu: <a href="konstante-beschleunigung-animation.html">Animation konstante Beschleunigung</a> · <a href="konstante-beschleunigung-ohne-zeit.html">Gleichung ohne Zeit</a> · <a href="schiefe-ebene-simulation.html">Schiefe Ebene</a>.</p>
 <footer>Nur für den Unterrichtsgebrauch. M. Schmid, Technische Berufsschule Zürich.</footer>
@@ -265,7 +303,7 @@ const scenes = [
   given(p){ return [['v₀ = 0'],['t = '+fmt(p.T,1)+' s'],['v = '+fmt(p.vk,1)+' km/h'],['a = ?','s'],['x = ?','s']]; },
   motion(p){ return {tEnd:p.T, f:t => ({x:0.5*p.a*t*t, v:p.a*t, a:p.a})}; },
   draw(ctx,W,H,t,p,s){
-    const base=H-62, left=96, right=W-80, sc=(right-left)/p.x;
+    const base=H-62, left=96, right=W-150, sc=(right-left)/p.x;
     ctx.fillStyle='#E4E7E3'; ctx.fillRect(left-70,base-7,100,7);
     text(ctx,'Haltestelle',left-14,base+16,{size:11,color:C['ink-soft'],align:'right'});
     line(ctx,16,base,W-30,base,C.ink,2); arrow(ctx,W-40,base,W-14,base,C.ink,2); text(ctx,'x',W-18,base+16,{italic:true});
@@ -273,27 +311,29 @@ const scenes = [
     const x=left+s.x*sc;
     tram(ctx,x,base,C['blue-wash']);
     arrow(ctx,x-12,base-56,x+36,base-56,C.a); text(ctx,'a',x+40,base-52,{italic:true,color:C.a,bold:true});
-    if(s.v>0.05){ arrow(ctx,x+44,base-22,x+44+s.v/p.v*100,base-22,C.v); text(ctx,`v = ${fmt(s.v,1)} m/s = ${fmt(s.v*3.6,1)} km/h`,x+46,base-28,{italic:false,color:C.v,size:12}); }
+    if(s.v>0.05){ arrow(ctx,x+44,base-22,x+44+s.v/p.v*90,base-22,C.v);
+      const lab=`v = ${fmt(s.v,1)} m/s = ${fmt(s.v*3.6,1)} km/h`; ctx.font='12px '+FONT; const tw=ctx.measureText(lab).width;
+      text(ctx,lab,Math.max(10,Math.min(x-38,W-10-tw)),base-74,{color:C.v,size:12}); }
     bracketH(ctx,left,x,base+34,`x = ${fmt(s.x,1)} m`,C.x);
     text(ctx,`t = ${fmt(t,2)} s`,16,44,{size:13});
   },
   questions(p){ return [
-    {q:'Welches Diagramm zeigt die <i>v</i>-<i>t</i>-Kurve des Trams beim Anfahren?', diag:true,
+    { f:['211a'],q:'Welches Diagramm zeigt die <i>v</i>-<i>t</i>-Kurve des Trams beim Anfahren?', diag:true,
      opts:diagOpts([mini('v',[[0,0],[1,0.9]]), mini('v',[[0,0.6],[1,0.6]]), mini('v',curve(t=>0.9*t*t)), mini('v',[[0,0.4],[1,0.9]])]),
      why:'Aus der Ruhe (<i>v</i>₀ = 0) mit konstanter Beschleunigung: <i>v</i> = <i>a</i>·<i>t</i> ist eine Gerade durch den Ursprung, die Steigung ist <i>a</i>. Die Parabel wäre das <i>x</i>-<i>t</i>-Diagramm, die waagrechte Linie hiesse <i>a</i> = 0.'},
-    {q:`Die Geschwindigkeit ist in km/h gegeben. Was ist der erste Schritt?`,
+    { f:[], fn:'Die Umrechnung steht nicht in der Formelsammlung: 1 km/h = 1000 m / 3600 s, also durch 3.6 teilen – auswendig wissen.',q:`Die Geschwindigkeit ist in km/h gegeben. Was ist der erste Schritt?`,
      opts:txtOpts([`durch 3.6 teilen: ${fmt(p.vk,1)} km/h = ${fmt(p.v,1)} m/s`, `mit 3.6 multiplizieren: ${fmt(p.vk*3.6,1)} m/s`, `mit 1000 multiplizieren: ${fmt(p.vk*1000,0)} m/s`, `nichts – km/h kann direkt eingesetzt werden`]),
      why:'1 km/h = 1000 m / 3600 s = 1/3.6 m/s. In die Gleichungen gehören nur Meter und Sekunden, sonst kommt <i>a</i> nicht in m/s² heraus.'},
-    {q:'Mit welcher Gleichung berechnen Sie die Beschleunigung?',
+    { f:['adef'],q:'Mit welcher Gleichung berechnen Sie die Beschleunigung?',
      opts:txtOpts(['<i>a</i> = Δ<i>v</i>/Δ<i>t</i> = (<i>v</i> − <i>v</i>₀)/<i>t</i>', '<i>x</i> = ½·<i>a</i>·<i>t</i>²', '<i>v</i>² = <i>v</i>₀² + 2·<i>a</i>·(<i>x</i> − <i>x</i>₀)', '<i>v̄</i> = (<i>v</i> + <i>v</i>₀)/2']),
      why:'Gegeben sind die Geschwindigkeitsänderung und die Zeit, also direkt die Definition der Beschleunigung (das ist 2.11a nach <i>a</i> aufgelöst).'},
-    {q:'Wie gross ist die Beschleunigung?',
+    { f:['adef'],q:'Wie gross ist die Beschleunigung?',
      opts:numOpts([p.a, p.vk/p.T, p.v*p.T, p.T/p.v],'m/s²',2),
      why:`<i>a</i> = (${fmt(p.v,1)} m/s − 0) / ${fmt(p.T,1)} s = ${fmt(p.a,2)} m/s². Wer ${fmt(p.vk,1)} km/h direkt einsetzt, erhält ${fmt(p.vk/p.T,2)} – falsche Einheit.`},
-    {q:'Welche Gleichung gibt die Strecke beim Anfahren?',
+    { f:['211b','211d'],q:'Welche Gleichung gibt die Strecke beim Anfahren?',
      opts:txtOpts(['<i>x</i> = ½·<i>a</i>·<i>t</i>² (2.11b mit <i>x</i>₀ = 0 und <i>v</i>₀ = 0)', '<i>x</i> = <i>v</i>·<i>t</i> mit der Endgeschwindigkeit <i>v</i>', '<i>x</i> = <i>a</i>·<i>t</i>', '<i>x</i> = <i>v</i>²·<i>t</i>']),
      why:'<i>x</i> = <i>v</i>·<i>t</i> gilt nur bei konstanter Geschwindigkeit. Beim Anfahren ist die mittlere Geschwindigkeit nur <i>v</i>/2 (2.11d), darum <i>x</i> = <i>v̄</i>·<i>t</i> = ½·<i>v</i>·<i>t</i> = ½·<i>a</i>·<i>t</i>². Im <i>v</i>-<i>t</i>-Diagramm: Fläche des Dreiecks.'},
-    {q:'Welche Strecke legt das Tram beim Anfahren zurück?',
+    { f:['211b','211d'],q:'Welche Strecke legt das Tram beim Anfahren zurück?',
      opts:numOpts([p.x, 2*p.x, p.a*p.T, p.x/2],'m',1),
      why:`<i>x</i> = ½ · ${fmt(p.a,2)} m/s² · (${fmt(p.T,1)} s)² = ${fmt(p.x,1)} m. ${fmt(2*p.x,1)} m wäre <i>v</i>·<i>t</i> – doppelt zu viel.`},
   ]; }
@@ -327,31 +367,31 @@ const scenes = [
     text(ctx, t<p.tr ? 'Reaktionszeit: v bleibt' : (s.v>0.001 ? 'Bremsen: a < 0' : 'Stillstand: v = 0'), W-16, 44, {size:12,align:'right',color:C['ink-soft']});
   },
   questions(p){ return [
-    {q:'Die <i>x</i>-Achse zeigt in Fahrtrichtung. Welches Vorzeichen hat die Beschleunigung beim Bremsen?',
+    { f:['adef'],q:'Die <i>x</i>-Achse zeigt in Fahrtrichtung. Welches Vorzeichen hat die Beschleunigung beim Bremsen?',
      opts:txtOpts([`negativ, <i>a</i> = −${fmt(p.ab,1)} m/s²: <i>a</i> zeigt entgegen <i>v</i>`, 'positiv – eine Beschleunigung ist immer positiv', 'null, das Auto wird ja nur langsamer', 'positiv, weil der Bremsweg positiv ist']),
      why:'Bremsen heisst: Die Geschwindigkeit nimmt ab, Δ<i>v</i> ist negativ, also ist <i>a</i> = Δ<i>v</i>/Δ<i>t</i> negativ. Mit <i>a</i> = +5 m/s² würde das Auto schneller.'},
-    {q:'Was macht das Auto während der Reaktionszeit?',
+    { f:['vdef-s'],q:'Was macht das Auto während der Reaktionszeit?',
      opts:txtOpts([`es fährt gleichförmig weiter mit ${fmt(p.v0,1)} m/s: Weg = <i>v</i>₀·<i>t</i>`, 'es bremst schon leicht', 'es steht still', `es bremst bereits mit ${fmt(-p.ab,1)} m/s²`]),
      why:'Reagieren heisst: Das Auto fährt noch unverändert weiter. Erst danach wirkt die Bremse. Im <i>v</i>-<i>t</i>-Diagramm ist das die waagrechte Strecke.'},
-    {q:'Wie lang ist der Reaktionsweg?',
+    { f:['vdef-s'],q:'Wie lang ist der Reaktionsweg?',
      opts:numOpts([p.xr, p.vk*p.tr, 0.5*p.ab*p.tr*p.tr, p.v0/p.tr],'m',1),
      why:`<i>v</i>₀ = ${fmt(p.vk,0)} km/h = ${fmt(p.v0,1)} m/s; Reaktionsweg = ${fmt(p.v0,1)} m/s · ${fmt(p.tr,1)} s = ${fmt(p.xr,1)} m. ${fmt(p.vk*p.tr,1)} m käme heraus, wenn man km/h nicht umrechnet.`},
-    {q:'Für den Bremsweg kennen Sie <i>v</i>₀, <i>v</i> = 0 und <i>a</i>, aber nicht die Zeit. Welche Gleichung passt direkt?',
+    { f:['211c'],q:'Für den Bremsweg kennen Sie <i>v</i>₀, <i>v</i> = 0 und <i>a</i>, aber nicht die Zeit. Welche Gleichung passt direkt?',
      opts:txtOpts(['<i>v</i>² = <i>v</i>₀² + 2·<i>a</i>·(<i>x</i> − <i>x</i>₀) (2.11c, ohne Zeit)', '<i>v</i> = <i>v</i>₀ + <i>a</i>·<i>t</i> (2.11a)', '<i>x</i> = <i>x</i>₀ + <i>v</i>₀·<i>t</i> + ½·<i>a</i>·<i>t</i>² (2.11b)', '<i>v̄</i> = (<i>v</i> + <i>v</i>₀)/2 (2.11d)']),
      why:'(2.11c) ist die Gleichung ohne <i>t</i>. (2.11a) und (2.11b) brauchen die Zeit – das geht auch, aber in zwei Schritten: zuerst <i>t</i> aus (2.11a), dann <i>x</i> aus (2.11b).'},
-    {q:'Welcher Wert gehört für <i>v</i> in die Gleichung?',
+    { f:['211c'],q:'Welcher Wert gehört für <i>v</i> in die Gleichung?',
      opts:txtOpts(['<i>v</i> = 0 (Stillstand am Ende)', '<i>v</i> = <i>v</i>₀', '<i>v</i> = −<i>v</i>₀', '<i>v</i> = <i>a</i>·<i>t</i>']),
      why:'Am Ende des Bremsens steht das Auto: <i>v</i> = 0. Das ist die Bedingung, die die Gleichung lösbar macht: 0 = <i>v</i>₀² + 2·<i>a</i>·(<i>x</i> − <i>x</i>₀).'},
-    {q:'Wie lang ist der Bremsweg?',
+    { f:['211c'],q:'Wie lang ist der Bremsweg?',
      opts:numOpts([p.xb, -p.xb, 2*p.xb, p.v0/p.ab],'m',1),
      why:`<i>x</i> − <i>x</i>₀ = −<i>v</i>₀²/(2<i>a</i>) = −(${fmt(p.v0,1)})² / (2 · (−${fmt(p.ab,1)})) = ${fmt(p.xb,1)} m. Ein negativer Bremsweg ist ein Vorzeichenfehler bei <i>a</i>.`},
-    {q:'Wie lange dauert das Bremsen?',
+    { f:['211a','211d'],q:'Wie lange dauert das Bremsen?',
      opts:numOpts([p.tb, p.tb/2, 2*p.tb, p.ab/p.v0],'s',2),
      why:`Aus (2.11a) mit <i>v</i> = 0: <i>t</i> = (0 − ${fmt(p.v0,1)} m/s) / (−${fmt(p.ab,1)} m/s²) = ${fmt(p.tb,2)} s. Kontrolle: Bremsweg = <i>v̄</i>·<i>t</i> = ${fmt(p.v0/2,1)} m/s · ${fmt(p.tb,2)} s = ${fmt(p.xb,1)} m.`},
-    {q:'Welches Diagramm zeigt die <i>v</i>-<i>t</i>-Kurve vom Erkennen des Hindernisses bis zum Stillstand?', diag:true,
+    { f:['211a'],q:'Welches Diagramm zeigt die <i>v</i>-<i>t</i>-Kurve vom Erkennen des Hindernisses bis zum Stillstand?', diag:true,
      opts:diagOpts([mini('v',[[0,0.85],[0.3,0.85],[1,0]]), mini('v',[[0,0.85],[1,0]]), mini('v',[[0,0.85],[0.3,0.85],[0.3,0],[1,0]]), mini('v',[[0,0.85],[0.3,0.85],[1,0.3]])]),
      why:'Zuerst waagrecht (Reaktionszeit, <i>v</i> konstant), dann eine fallende Gerade bis null (konstantes <i>a</i> &lt; 0). Ein senkrechter Sprung auf null hiesse unendlich grosse Bremsbeschleunigung.'},
-    {q:'Wie gross ist der gesamte Anhalteweg?',
+    { f:[], fn:'Keine Formel nötig: Reaktionsweg + Bremsweg.',q:'Wie gross ist der gesamte Anhalteweg?',
      opts:numOpts([p.xt, p.xb, p.xr+2*p.xb, p.xr],'m',1),
      why:`Anhalteweg = Reaktionsweg + Bremsweg = ${fmt(p.xr,1)} m + ${fmt(p.xb,1)} m = ${fmt(p.xt,1)} m.`},
   ]; }
@@ -380,25 +420,25 @@ const scenes = [
     text(ctx,`t = ${fmt(t,2)} s`,16,44,{size:13});
   },
   questions(p){ return [
-    {q:'Sie rechnen mit der <i>y</i>-Achse nach unten. Welche Werte gelten?',
+    { f:['ff-v','ff-y'],q:'Sie rechnen mit der <i>y</i>-Achse nach unten. Welche Werte gelten?',
      opts:txtOpts(['<i>v</i>₀ = 0 und <i>a</i> = +<i>g</i> = 9.81 m/s²', '<i>v</i>₀ = 0 und <i>a</i> = −<i>g</i>', '<i>v</i>₀ = <i>g</i> und <i>a</i> = 0', '<i>v</i>₀ = 9.81 m/s und <i>a</i> = +<i>g</i>']),
      why:'Fallen lassen ohne Abstoss: <i>v</i>₀ = 0. Zeigt <i>y</i> nach unten, ist die Fallbeschleunigung positiv: <i>a</i> = +<i>g</i>. Mit <i>y</i> nach oben wäre <i>a</i> = −<i>g</i>; beides ist richtig, man muss es nur sagen.'},
-    {q:'Welche Gleichung gibt die Höhe der Brücke?',
+    { f:['ff0-y'],q:'Welche Gleichung gibt die Höhe der Brücke?',
      opts:txtOpts(['<i>h</i> = ½·<i>g</i>·<i>t</i>²', '<i>h</i> = <i>g</i>·<i>t</i>', '<i>h</i> = <i>v</i>·<i>t</i> mit <i>v</i> = <i>g</i>·<i>t</i>', '<i>h</i> = <i>g</i>·<i>t</i>²']),
      why:'(2.11b) mit <i>y</i>₀ = 0, <i>v</i>₀ = 0 und <i>a</i> = <i>g</i>: <i>y</i> = ½·<i>g</i>·<i>t</i>². Mit <i>v</i>·<i>t</i> rechnet man mit der Endgeschwindigkeit und erhält das Doppelte.'},
-    {q:'Wie hoch ist die Brücke über dem Wasser?',
+    { f:['ff0-y'],q:'Wie hoch ist die Brücke über dem Wasser?',
      opts:numOpts([p.h, G*p.tf, G*p.tf*p.tf, 0.25*G*p.tf*p.tf],'m',1),
      why:`<i>h</i> = ½ · 9.81 m/s² · (${fmt(p.tf,1)} s)² = ${fmt(p.h,1)} m. ${fmt(G*p.tf*p.tf,1)} m ist das Doppelte (½ vergessen).`},
-    {q:'Welche Gleichung gibt die Geschwindigkeit beim Aufprall?',
+    { f:['ff0-v','ff0-vh'],q:'Welche Gleichung gibt die Geschwindigkeit beim Aufprall?',
      opts:txtOpts(['<i>v</i> = <i>g</i>·<i>t</i>', '<i>v</i> = ½·<i>g</i>·<i>t</i>²', '<i>v</i> = <i>h</i>/<i>t</i>', '<i>v</i> = <i>g</i>/<i>t</i>']),
      why:'(2.11a) mit <i>v</i>₀ = 0: <i>v</i> = <i>g</i>·<i>t</i>. Ebenfalls richtig wäre <i>v</i> = √(2<i>g</i><i>h</i>). <i>h</i>/<i>t</i> ist nur die <i>mittlere</i> Geschwindigkeit, halb so gross.'},
-    {q:'Wie gross ist die Aufprallgeschwindigkeit in km/h?',
+    { f:['ff0-v'], fn:'Die Umrechnung m/s → km/h (mal 3.6) steht nicht in der Formelsammlung.',q:'Wie gross ist die Aufprallgeschwindigkeit in km/h?',
      opts:numOpts([p.vk, p.v/3.6, p.v, p.h/p.tf*3.6],'km/h',0),
      why:`<i>v</i> = 9.81 m/s² · ${fmt(p.tf,1)} s = ${fmt(p.v,1)} m/s; mal 3.6: ${fmt(p.vk,0)} km/h. (${fmt(p.v,1)} km/h wäre die Zahl ohne Umrechnung.)`},
-    {q:`Nach der halben Fallzeit (${fmt(p.tf/2,1)} s) ist der Stein …`,
+    { f:['ff0-y'],q:`Nach der halben Fallzeit (${fmt(p.tf/2,1)} s) ist der Stein …`,
      opts:txtOpts(['… erst ein Viertel der Höhe gefallen', '… genau auf halber Höhe', '… schon drei Viertel der Höhe gefallen', '… je nach Masse verschieden weit gefallen']),
      why:`Der Fallweg wächst mit <i>t</i>²: (½)² = ¼. Nach ${fmt(p.tf/2,1)} s sind es ${fmt(p.h/4,1)} m von ${fmt(p.h,1)} m – am Anfang ist der Stein noch langsam.`},
-    {q:'Zwei Steine, 50 g und 200 g, werden gleichzeitig fallen gelassen (Luftwiderstand vernachlässigbar). Welcher trifft zuerst auf?',
+    { f:[], fn:'Keine Formel: In keiner Fallgleichung kommt die Masse vor.',q:'Zwei Steine, 50 g und 200 g, werden gleichzeitig fallen gelassen (Luftwiderstand vernachlässigbar). Welcher trifft zuerst auf?',
      opts:txtOpts(['beide gleichzeitig – <i>g</i> hängt nicht von der Masse ab', 'der schwere Stein', 'der leichte Stein', 'das hängt davon ab, welcher grösser ist']),
      why:'Im freien Fall haben alle Körper dieselbe Beschleunigung <i>g</i>, unabhängig von der Masse (Versuch mit Feder und Münze im Vakuum).'},
   ]; }
@@ -426,34 +466,34 @@ const scenes = [
     text(ctx,`t = ${fmt(t,2)} s`,16,44,{size:13});
   },
   questions(p){ return [
-    {q:'Sie rechnen mit <i>y</i> nach oben. Welche Werte gelten für Anfangsgeschwindigkeit und Beschleunigung?',
+    { f:['sw-v','sw-y'],q:'Sie rechnen mit <i>y</i> nach oben. Welche Werte gelten für Anfangsgeschwindigkeit und Beschleunigung?',
      opts:txtOpts([`<i>v</i>₀ = +${fmt(p.v0,1)} m/s und <i>a</i> = −<i>g</i>`, `<i>v</i>₀ = +${fmt(p.v0,1)} m/s und <i>a</i> = +<i>g</i>`, `<i>v</i>₀ = −${fmt(p.v0,1)} m/s und <i>a</i> = −<i>g</i>`, '<i>v</i>₀ = 0 und <i>a</i> = −<i>g</i>']),
      why:'Der Ball startet nach oben (positiv), die Schwerkraft beschleunigt ihn nach unten (negativ): <i>a</i> = −<i>g</i> während des ganzen Flugs.'},
-    {q:'Was gilt im höchsten Punkt?',
+    { f:['sw-to','sw-h'],q:'Was gilt im höchsten Punkt?',
      opts:txtOpts(['<i>v</i> = 0 und <i>a</i> = −<i>g</i>', '<i>v</i> = 0 und <i>a</i> = 0', '<i>v</i> = <i>v</i>₀ und <i>a</i> = −<i>g</i>', '<i>v</i> = 0 und <i>a</i> = +<i>g</i>']),
      why:'Oben steht der Ball für einen Moment still (<i>v</i> = 0), aber die Schwerkraft wirkt weiter: <i>a</i> = −<i>g</i>. Wäre <i>a</i> = 0, bliebe der Ball schweben.'},
-    {q:'Mit welcher Gleichung finden Sie die Steigzeit <i>t</i><sub>o</sub>?',
+    { f:['sw-v','sw-to'],q:'Mit welcher Gleichung finden Sie die Steigzeit <i>t</i><sub>o</sub>?',
      opts:txtOpts(['0 = <i>v</i>₀ − <i>g</i>·<i>t</i> (2.11a mit <i>v</i> = 0), also <i>t</i><sub>o</sub> = <i>v</i>₀/<i>g</i>', '<i>t</i><sub>o</sub> = 2·<i>v</i>₀/<i>g</i>', '<i>t</i><sub>o</sub> = <i>v</i>₀²/(2<i>g</i>)', '<i>t</i><sub>o</sub> = <i>g</i>/<i>v</i>₀']),
      why:'Die Bedingung «oben» ist <i>v</i> = 0. In (2.11a) eingesetzt: 0 = <i>v</i>₀ − <i>g</i>·<i>t</i>. 2·<i>v</i>₀/<i>g</i> ist die ganze Flugzeit, <i>v</i>₀²/(2<i>g</i>) die Höhe.'},
-    {q:'Wie gross ist die Steigzeit?',
+    { f:['sw-to'],q:'Wie gross ist die Steigzeit?',
      opts:numOpts([p.to, p.tg, p.h, G/p.v0],'s',2),
      why:`<i>t</i><sub>o</sub> = ${fmt(p.v0,1)} m/s / 9.81 m/s² = ${fmt(p.to,2)} s. Das Doppelte (${fmt(p.tg,2)} s) ist die Zeit bis zur Rückkehr.`},
-    {q:'Welche Gleichung gibt die Steighöhe <i>h</i>?',
+    { f:['sw-c','sw-h'],q:'Welche Gleichung gibt die Steighöhe <i>h</i>?',
      opts:txtOpts(['<i>h</i> = <i>v</i>₀²/(2<i>g</i>) – aus (2.11c) mit <i>v</i> = 0', '<i>h</i> = <i>v</i>₀·<i>t</i><sub>o</sub>', '<i>h</i> = <i>v</i>₀²/<i>g</i>', '<i>h</i> = <i>g</i>·<i>t</i><sub>o</sub>²']),
      why:'0 = <i>v</i>₀² − 2<i>g</i>·<i>h</i> ergibt <i>h</i> = <i>v</i>₀²/(2<i>g</i>). Ebenso richtig: <i>h</i> = <i>v</i>₀·<i>t</i><sub>o</sub> − ½·<i>g</i>·<i>t</i><sub>o</sub>² (2.11b). <i>v</i>₀·<i>t</i><sub>o</sub> allein ist doppelt zu viel, der Ball wird ja langsamer.'},
-    {q:'Wie hoch über der Abwurfhöhe liegt der höchste Punkt?',
+    { f:['sw-h'],q:'Wie hoch über der Abwurfhöhe liegt der höchste Punkt?',
      opts:numOpts([p.h, 2*p.h, p.h/2, p.v0*p.tg],'m',2),
      why:`<i>h</i> = (${fmt(p.v0,1)} m/s)² / (2 · 9.81 m/s²) = ${fmt(p.h,2)} m. Kontrolle mit (2.11b): ${fmt(p.v0,1)} · ${fmt(p.to,2)} − ½ · 9.81 · ${fmt(p.to,2)}² = ${fmt(p.h,2)} m.`},
-    {q:'Wann ist der Ball wieder auf Abwurfhöhe?',
+    { f:['sw-tges'],q:'Wann ist der Ball wieder auf Abwurfhöhe?',
      opts:numOpts([p.tg, p.to, p.to/2, 4*p.to],'s',2),
      why:`Symmetrie: Hinauf und hinunter dauern gleich lang, <i>t</i><sub>ges</sub> = 2·<i>t</i><sub>o</sub> = ${fmt(p.tg,2)} s. Oder (2.11b) mit <i>y</i> = 0: 0 = <i>v</i>₀·<i>t</i> − ½·<i>g</i>·<i>t</i>².`},
-    {q:'Mit welcher Geschwindigkeit kommt der Ball auf Abwurfhöhe an?',
+    { f:['sw-v','sw-tges'],q:'Mit welcher Geschwindigkeit kommt der Ball auf Abwurfhöhe an?',
      opts:txtOpts([`−${fmt(p.v0,1)} m/s: gleich schnell wie beim Abwurf, aber nach unten`, `+${fmt(p.v0,1)} m/s`, '0 m/s', `−${fmt(2*p.v0,1)} m/s`]),
      why:`<i>v</i> = <i>v</i>₀ − <i>g</i>·<i>t</i><sub>ges</sub> = ${fmt(p.v0,1)} − 9.81 · ${fmt(p.tg,2)} = −${fmt(p.v0,1)} m/s. Das Minus heisst: nach unten.`},
-    {q:'Welches Diagramm zeigt die <i>v</i>-<i>t</i>-Kurve vom Abwurf bis zur Rückkehr?', diag:true,
+    { f:['sw-v'],q:'Welches Diagramm zeigt die <i>v</i>-<i>t</i>-Kurve vom Abwurf bis zur Rückkehr?', diag:true,
      opts:diagOpts([mini('v',[[0,0.85],[1,-0.85]],{neg:true}), mini('v',curve(t=>0.85*(1-4*(t-0.5)*(t-0.5))),{neg:true}), mini('v',[[0,0.85],[0.5,0],[1,0.85]],{neg:true}), mini('v',[[0,0.85],[1,0.85]],{neg:true})]),
      why:'<i>v</i> = <i>v</i>₀ − <i>g</i>·<i>t</i>: eine fallende Gerade mit Steigung −<i>g</i>, von +<i>v</i>₀ durch null (höchster Punkt) bis −<i>v</i>₀. Das V-förmige Diagramm wäre der Betrag |<i>v</i>|, die Parabel die Höhe <i>y</i>.'},
-    {q:'Welches Diagramm zeigt die <i>a</i>-<i>t</i>-Kurve vom Abwurf bis zur Rückkehr?', diag:true,
+    { f:['sw-v'], fn:'Die Beschleunigung steht in der Zeile als Bedingung: <i>a</i> = −<i>g</i>, und zwar die ganze Zeit.',q:'Welches Diagramm zeigt die <i>a</i>-<i>t</i>-Kurve vom Abwurf bis zur Rückkehr?', diag:true,
      opts:diagOpts([mini('a',[[0,-0.8],[1,-0.8]],{neg:true}), mini('a',[[0,-0.8],[0.45,-0.8],[0.45,0],[0.55,0],[0.55,-0.8],[1,-0.8]],{neg:true}), mini('a',[[0,0.8],[1,0.8]],{neg:true}), mini('a',[[0,0.8],[1,-0.8]],{neg:true})]),
      why:'Die Beschleunigung ist die ganze Zeit −<i>g</i> = −9.81 m/s², eine waagrechte Linie unter der Achse – auch im höchsten Punkt, dort ist nur <i>v</i> = 0.'},
   ]; }
@@ -494,25 +534,25 @@ const scenes = [
     text(ctx,`t = ${fmt(t,2)} s`,16,44,{size:13});
   },
   questions(p){ return [
-    {q:'Welches Diagramm zeigt die <i>s</i>-<i>t</i>-Kurve (Weg) derselben Fahrt?', diag:true,
+    { f:['211b'],q:'Welches Diagramm zeigt die <i>s</i>-<i>t</i>-Kurve (Weg) derselben Fahrt?', diag:true,
      opts:diagOpts([mini('x',curve(t=>0.9*t*t),{lab:'s'}), mini('x',[[0,0],[1,0.9]],{lab:'s'}), mini('x',[[0,0.6],[1,0.6]],{lab:'s'}), mini('x',curve(t=>0.9*Math.sqrt(t)),{lab:'s'})]),
      why:'<i>s</i> = ½·<i>a</i>·<i>t</i>²: eine Parabel, die immer steiler wird (die Steigung ist <i>v</i>, und <i>v</i> wächst). Die Gerade wäre eine gleichförmige Bewegung.'},
-    {q:`Steigungsdreieck an der <i>v</i>-<i>t</i>-Geraden: Sie lesen ab <i>v</i>(0.5 s) = ${fmt(p.a*0.5,2)} m/s und <i>v</i>(1.0 s) = ${fmt(p.a,2)} m/s. Wie gross ist die Beschleunigung?`,
+    { f:['adef'],q:`Steigungsdreieck an der <i>v</i>-<i>t</i>-Geraden: Sie lesen ab <i>v</i>(0.5 s) = ${fmt(p.a*0.5,2)} m/s und <i>v</i>(1.0 s) = ${fmt(p.a,2)} m/s. Wie gross ist die Beschleunigung?`,
      opts:numOpts([p.a, p.a*0.5, 2*p.a, 1/p.a],'m/s²',2),
      why:`<i>a</i> = Δ<i>v</i>/Δ<i>t</i> = (${fmt(p.a,2)} − ${fmt(p.a*0.5,2)}) m/s / (1.0 − 0.5) s = ${fmt(p.a,2)} m/s². ${fmt(p.a*0.5,2)} ist nur Δ<i>v</i>, noch nicht durch Δ<i>t</i> geteilt.`},
-    {q:'Was bedeutet die Steigung der <i>v</i>-<i>t</i>-Geraden?',
+    { f:['adef'],q:'Was bedeutet die Steigung der <i>v</i>-<i>t</i>-Geraden?',
      opts:txtOpts(['die Beschleunigung <i>a</i>', 'den zurückgelegten Weg', 'die Geschwindigkeit', 'die Fahrzeit bis zum Anschlag']),
      why:'Steigung = Δ<i>v</i>/Δ<i>t</i>, das ist die Definition von <i>a</i>. Eine Gerade bedeutet: <i>a</i> ist konstant.'},
-    {q:'Was bedeutet die Fläche zwischen der <i>v</i>-<i>t</i>-Geraden und der <i>t</i>-Achse?',
+    { f:['vdef-s','211d'],q:'Was bedeutet die Fläche zwischen der <i>v</i>-<i>t</i>-Geraden und der <i>t</i>-Achse?',
      opts:txtOpts(['den zurückgelegten Weg <i>s</i>', 'die Beschleunigung', 'die mittlere Geschwindigkeit', 'nichts – nur die Steigung hat eine Bedeutung']),
      why:'Weg = Geschwindigkeit mal Zeit, und für eine Gerade aus dem Ursprung ist das die Dreiecksfläche ½·<i>v</i>·<i>t</i> = ½·<i>a</i>·<i>t</i>².'},
-    {q:'Welche Strecke hat der Wagen vom Loslassen bis zum Anschlag zurückgelegt?',
+    { f:['211b'],q:'Welche Strecke hat der Wagen vom Loslassen bis zum Anschlag zurückgelegt?',
      opts:numOpts([p.s, p.ve*p.T, p.a*p.T, p.s/2],'m',2),
      why:`<i>s</i> = ½ · ${fmt(p.a,2)} m/s² · (${fmt(p.T,1)} s)² = ${fmt(p.s,2)} m, oder als Dreiecksfläche ½ · ${fmt(p.T,1)} s · ${fmt(p.ve,2)} m/s. ${fmt(p.ve*p.T,2)} m wäre <i>v</i>·<i>t</i> mit der Endgeschwindigkeit.`},
-    {q:'Es werden mehr Bücher unter das Brett gelegt. Was passiert mit der Beschleunigung des Wagens?',
+    { f:[], fn:'Keine Formel aus der Sammlung – Versuch 1: je steiler, desto grösser <i>a</i>; Grenzfall ist der freie Fall.',q:'Es werden mehr Bücher unter das Brett gelegt. Was passiert mit der Beschleunigung des Wagens?',
      opts:txtOpts(['sie wird grösser, höchstens bis <i>g</i> (Brett senkrecht = freier Fall)', 'sie bleibt gleich, <i>g</i> ist überall dasselbe', 'sie wird kleiner, weil die Fahrt kürzer dauert', 'sie wird grösser, ohne Grenze']),
      why:'Je steiler, desto grösser der Anteil von <i>g</i> längs der Ebene. Senkrecht gestellt ist es der freie Fall mit <i>a</i> = <i>g</i>, mehr geht nicht.'},
-    {q:'Der Wagen wird mit einem Zusatzgewicht doppelt so schwer, die Neigung bleibt (Reibung vernachlässigt). Was ändert sich an <i>a</i>?',
+    { f:[], fn:'Keine Formel: Die Masse kommt in keiner Bewegungsgleichung vor.',q:'Der Wagen wird mit einem Zusatzgewicht doppelt so schwer, die Neigung bleibt (Reibung vernachlässigt). Was ändert sich an <i>a</i>?',
      opts:txtOpts(['nichts – wie im freien Fall hängt <i>a</i> nicht von der Masse ab', '<i>a</i> wird doppelt so gross', '<i>a</i> wird halb so gross', 'der Wagen rollt nicht mehr los']),
      why:'Wie beim freien Fall gilt: Die Beschleunigung durch die Schwerkraft ist für alle Massen gleich, nur die Neigung bestimmt <i>a</i>.'},
   ]; }
@@ -535,7 +575,7 @@ function loadScene(i, keepParams){
   S.m = sc.motion(S.p);
   S.qs = sc.questions(S.p).map(q => ({...q, opts: q.diag ? shuffle(q.opts.slice()) : shuffle(q.opts.slice())}));
   S.qi=0; S.right=0; S.done=[]; S.answered=false; S.first=true;
-  S.t=0; setPlaying(false);
+  S.t=0; setPlaying(false); highlight([]);
   $('tslider').max = S.m.tEnd; $('tslider').value = 0;
   $('situation').innerHTML = sc.text(S.p);
   $('given').innerHTML = sc.given(S.p).map(([s,cls]) => `<span class="${cls||''}">${s}</span>`).join('');
@@ -641,19 +681,32 @@ function renderQuiz(){
   box.querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => answer(+b.dataset.i)));
   $('next').addEventListener('click', nextQ);
 }
+function highlight(ids){
+  document.querySelectorAll('#formeln .hl, #formeln .hlf').forEach(e => e.classList.remove('hl','hlf'));
+  const names=[]; let first=null;
+  (ids||[]).forEach(id => { const el=document.querySelector(`#formeln .fx[data-f="${id}"]`); if(!el) return;
+    el.classList.add('hlf'); const tr=el.closest('tr'); tr.classList.add('hl'); if(!first) first=tr;
+    const blk=tr.closest('.fsblock').querySelector('.lab').textContent, row=tr.querySelector('td.n b').textContent;
+    const n=`${blk} → ${row}`; if(!names.includes(n)) names.push(n); });
+  const aside=$('formeln');
+  if(first && aside.scrollHeight>aside.clientHeight) aside.scrollTop = first.offsetTop - aside.clientHeight/2 + first.offsetHeight/2;
+  return names;
+}
 function answer(i){
   if(S.answered) return;
   const q=S.qs[S.qi], ok=q.opts[i].ok;
   S.answered=true; S.done[S.qi]=ok; if(ok) S.right++;
   document.querySelectorAll('#quiz .opt').forEach((b,j) => { b.disabled=true; if(q.opts[j].ok) b.classList.add('ok'); else if(j===i) b.classList.add('bad'); });
   const fb=$('fb'); fb.className='feedback'+(ok?'':' bad'); fb.style.display='block';
-  fb.innerHTML = `<b class="lead">${ok?'Richtig.':'Leider nicht – die richtige Antwort ist grün markiert.'}</b>${q.why}`;
+  const names=highlight(q.f);
+  fb.innerHTML = `<b class="lead">${ok?'Richtig.':'Leider nicht – die richtige Antwort ist grün markiert.'}</b>${q.why}` +
+    (names.length ? `<div class="fsnote">Formelsammlung: <b>${names.join('</b>, <b>')}</b>${q.fn?' – '+q.fn:''}</div>` : (q.fn ? `<div class="fsnote">${q.fn}</div>` : ''));
   $('next').style.display=''; $('next').focus();
   const dotsEl=document.querySelectorAll('#quiz .dots span'); if(dotsEl[S.qi]) dotsEl[S.qi].classList.add(ok?'ok':'bad');
   const sc=scenes[S.si];
   if(S.qi===S.qs.length-1){ const b=scores[sc.id]; if(!b || S.right>=b.r) scores[sc.id]={r:S.right,n:S.qs.length}; saveScores(); renderTabs(); }
 }
-function nextQ(){ S.qi++; S.answered=false; renderQuiz(); window.scrollTo({top:$('quiz').offsetTop-20, behavior:'smooth'}); }
+function nextQ(){ S.qi++; S.answered=false; highlight([]); renderQuiz(); window.scrollTo({top:$('quiz').offsetTop-20, behavior:'smooth'}); }
 
 // ---------- Bedienung ----------
 $('play').addEventListener('click', () => setPlaying(!S.playing));

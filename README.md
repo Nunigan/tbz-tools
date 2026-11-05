@@ -33,7 +33,9 @@ dort hierher kopiert.
   Ball nach oben, schiefe Ebene) mit Animation und zwei Diagrammen, dazu
   Multiple-Choice-Fragen zum Lösungsweg (welche Gleichung, welches
   Vorzeichen, welches Diagramm, welches Resultat) mit Begründung;
-  Zahlen zufällig, Ergebnis pro Situation bleibt im Browser.
+  Zahlen zufällig, Ergebnis pro Situation bleibt im Browser. Daneben die
+  Formelsammlung der Prüfung; nach jeder Antwort ist die passende Formel
+  markiert.
 - `klammern-trainer.html` – Algebra Kap. 2.4, Terme vereinfachen Schritt
   für Schritt: Lernen (vor jedem Schritt die Regel wählen – Klammer
   ausrechnen, Distributivgesetz, Produkte berechnen, Plus/Minus vor der
