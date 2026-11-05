@@ -28,6 +28,12 @@ dort hierher kopiert.
   freier Fall gleichzeitig), Affenschuss (Ziel fällt im Schussmoment),
   Reichweite gegen Winkel und virtuelles Labor «g bestimmen» auf einem
   unbekannten Planeten.
+- `pruefungstrainer-kinematik.html` – Physik Kap. 2, Vorbereitung auf
+  Prüfung 2: fünf Situationen (Tram fährt an, Auto bremst, Stein fällt,
+  Ball nach oben, schiefe Ebene) mit Animation und zwei Diagrammen, dazu
+  Multiple-Choice-Fragen zum Lösungsweg (welche Gleichung, welches
+  Vorzeichen, welches Diagramm, welches Resultat) mit Begründung;
+  Zahlen zufällig, Ergebnis pro Situation bleibt im Browser.
 - `ti-nspire.html` – Physik/Algebra Kap. 0, TI-Nspire CX II-T CAS:
   Tutorial und Trainer in zehn Stationen (Lernen mit Tastenfeld und
   Bildschirm-Nachbau, Üben in drei Stufen mit Aufgaben aus den Skripten).
