@@ -131,8 +131,8 @@
   <ol>
     <li><b>Ansichten lesen.</b> Links stehen Vorderansicht V, Draufsicht D (darunter) und Seitenansicht von links SL (rechts daneben) nach Projektionsmethode&nbsp;1, auf einem Raster. Zähle die Kästchen: Breite aus V/D, Höhe aus V/SL, Tiefe aus D/SL. Gestrichelt sind verdeckte Kanten.</li>
     <li><b>Isometrisch zeichnen.</b> Rechts ist das Iso-Raster (wie das Blatt auf S.&nbsp;25). Alle Kanten laufen entlang der drei Achsen: Breite nach rechts oben (30°), Tiefe nach rechts unten (30°), Höhe senkrecht. Die Vorderseite V liegt rechts unten, die linke Seite SL links unten, die Draufsicht D oben – wie beim Raumeck. Wo du den Körper hinzeichnest, spielt keine Rolle.</li>
-    <li><b>Linie ziehen.</b> Von Rasterpunkt zu Rasterpunkt: entweder gedrückt halten und ziehen, oder erst den Anfangspunkt anklicken, dann den Endpunkt. Eine lange Kante darf aus mehreren Stücken bestehen. Mit dem Werkzeug <em>gestrichelt</em> zeichnest du verdeckte Kanten (falls oben eingeschaltet); eine Linie noch einmal über die alte ziehen ändert ihren Typ. <em>Radierer</em> löscht eine Linie, <em>Rückgängig</em> den letzten Schritt.</li>
-    <li><b>Prüfen.</b> Rot sind Linien, die nicht zum Körper gehören, orange solche mit falschem Linientyp (Volllinie statt gestrichelt oder umgekehrt). Fehlende Kanten werden gezählt, aber nicht gezeigt. «Lösung zeigen» blendet sie blau ein und zeigt das 3D-Modell – gibt aber keine Punkte.</li>
+    <li><b>Linie ziehen.</b> Von Rasterpunkt zu Rasterpunkt: entweder gedrückt halten und ziehen, oder erst den Anfangspunkt anklicken, dann den Endpunkt. Eine lange Kante darf aus mehreren Stücken bestehen; Stücke, die sich auf derselben Geraden überlappen oder berühren, werden zu einer Linie zusammengefasst. Mit dem Werkzeug <em>gestrichelt</em> zeichnest du verdeckte Kanten (falls oben eingeschaltet); eine Linie noch einmal mit dem anderen Werkzeug nachziehen ändert dort ihren Typ. <em>Radierer</em> löscht eine Linie, <em>Rückgängig</em> den letzten Schritt.</li>
+    <li><b>Prüfen.</b> Rot sind Linien, die nicht zum Körper gehören, orange solche mit falschem Linientyp (Volllinie statt gestrichelt oder umgekehrt). Fehlende Kanten werden gezählt, aber nicht gezeigt. «Lösung zeigen» blendet sie blau ein und zeigt das 3D-Modell – gibt aber keine Punkte; «Lösung ausblenden» versteckt sie wieder, damit du den Rest aus dem Kopf fertig zeichnen und prüfen kannst.</li>
     <li><b>Ziel.</b> Stufe «mittel» drei Körper hintereinander beim ersten Prüfen richtig, dann «schwer» (mehr Ausschnitte, Werkstücke mit Schrägen). Das ist die Vorbereitung auf Übung&nbsp;2.3.3 und die Prüfung zu Kapitel&nbsp;2.</li>
   </ol>
 </details>
@@ -615,11 +615,36 @@ function nearestLine(pt){
 }
 function hiddenMode(){return document.getElementById("hiddenMode").value==="dash";}
 function pushHistory(){history.push(lines.map(s=>({a:s.a,b:s.b,t:s.t})));if(history.length>200)history.shift();}
+// Parameterbereich von s auf der Geraden von N (ungeclippt), null wenn nicht kollinear
+function colinParam(N,s){
+  const dx=N.b[0]-N.a[0],dy=N.b[1]-N.a[1],dd=dx*dx+dy*dy;
+  const cr=P=>dx*(P[1]-N.a[1])-dy*(P[0]-N.a[0]);
+  if(Math.abs(cr(s.a))>1e-6||Math.abs(cr(s.b))>1e-6)return null;
+  const t=P=>((P[0]-N.a[0])*dx+(P[1]-N.a[1])*dy)/dd;
+  return [Math.min(t(s.a),t(s.b)),Math.max(t(s.a),t(s.b))];
+}
+// Neue Linie einfügen: überlappende oder anstossende Linien gleichen Typs auf derselben Geraden
+// werden mit ihr vereinigt, Linien des anderen Typs werden unter ihr weggeschnitten
 function addLine(a,b){
   if(sameP(a,b))return;
   pushHistory();
-  const idx=lines.findIndex(s=>(sameP(s.a,a)&&sameP(s.b,b))||(sameP(s.a,b)&&sameP(s.b,a)));
-  if(idx>=0)lines[idx]={a,b,t:tool};else lines.push({a,b,t:tool});
+  let N={a,b,t:tool},rest=lines,grown=true;
+  while(grown){
+    grown=false;const next=[];
+    for(const s of rest){
+      const iv=colinParam(N,s);
+      if(!iv){next.push(s);continue;}
+      if(s.t===N.t&&iv[1]>=-1e-9&&iv[0]<=1+1e-9){
+        const t0=Math.min(0,iv[0]),t1=Math.max(1,iv[1]);
+        if(t0<-1e-9||t1>1+1e-9)grown=true;
+        N={a:lerp2(N,t0).map(Math.round),b:lerp2(N,t1).map(Math.round),t:N.t};
+      }else if(s.t!==N.t&&overlapIv(N,s)){
+        subtract([[0,1]],[overlapIv(s,N)]).forEach(([t0,t1])=>next.push({a:lerp2(s,t0).map(Math.round),b:lerp2(s,t1).map(Math.round),t:s.t}));
+      }else next.push(s);
+    }
+    rest=next;
+  }
+  rest.push(N);lines=rest;
   edited();
 }
 function edited(){result=null;if(!solved)document.getElementById("feedback").className="feedback";draw();}
@@ -769,7 +794,7 @@ function newRound(){
   const nvis=task.edges.filter(e=>e.t===2).length,nhid=task.edges.filter(e=>e.t===1).length;
   $("feedback").className="feedback";
   $("feedback").innerHTML=`Zeichne den Körper isometrisch auf dem Raster und klicke auf <b>Prüfen</b>. Zur Kontrolle: der Körper hat ${nvis} sichtbare${hiddenMode()?` und ${nhid} verdeckte`:""} Kantenlinien.`;
-  $("check").disabled=false;$("round").textContent=round;
+  $("check").disabled=false;$("round").textContent=round;$("reveal").textContent="Lösung zeigen";
   draw();
 }
 function viewCell(proj){
@@ -794,7 +819,7 @@ $("check").onclick=()=>{
     const first=checks===1&&!peeked;
     if(!peeked)applyScore(first);
     fb.className="feedback ok";
-    fb.innerHTML=`<b>Richtig – die Zeichnung stimmt mit dem Körper überein.</b> ${peeked?"Ohne Punkte, weil der Körper aufgedeckt war.":first?"Beim ersten Prüfen, volle Punktzahl.":`Nach ${checks} Prüfungen.`} Vergleiche mit dem 3D-Modell links, dann <b>Nächster Körper</b>.`;
+    fb.innerHTML=`<b>Richtig – die Zeichnung stimmt mit dem Körper überein.</b> ${peeked?"Ohne Punkte, weil die Lösung oder der Körper aufgedeckt war.":first?"Beim ersten Prüfen, volle Punktzahl.":`Nach ${checks} Prüfungen.`} Vergleiche mit dem 3D-Modell links, dann <b>Nächster Körper</b>.`;
     showModel();
   }else{
     streak=0;$("streak").textContent=0;
@@ -809,12 +834,18 @@ $("check").onclick=()=>{
 };
 $("reveal").onclick=()=>{
   if(!task)return;
+  if(revealed){ // Lösung wieder ausblenden, weiterzeichnen und prüfen bleibt möglich (ohne Punkte)
+    revealed=false;$("reveal").textContent="Lösung zeigen";
+    if(!solved){$("feedback").className="feedback";$("feedback").innerHTML=`Lösung ausgeblendet. Zeichne weiter und klicke auf <b>Prüfen</b> – Punkte gibt es für diesen Körper keine mehr.`;}
+    draw();return;
+  }
   const C=task.edges.filter(e=>hiddenMode()||e.t===2);
   if(lines.length){result=checkDrawing(lines,C);solOff=result.off;}else{result=null;solOff=defaultOffset();}
-  revealed=true;peeked=true;streak=0;$("streak").textContent=0;
-  if(!solved){solved=true;$("check").disabled=true;}
-  $("feedback").className="feedback";
-  $("feedback").innerHTML=`<span class="sw blue"></span>Blau ist die Lösung (fehlende Kanten bleiben blau sichtbar, deine Linien liegen darüber). Links das 3D-Modell in isometrischer Lage – drehe es, um die drei Ansichten wiederzufinden. Keine Punkte für diesen Körper.`;
+  revealed=true;peeked=true;streak=0;$("streak").textContent=0;$("reveal").textContent="Lösung ausblenden";
+  if(!solved){
+    $("feedback").className="feedback";
+    $("feedback").innerHTML=`<span class="sw blue"></span>Blau ist die Lösung (fehlende Kanten bleiben blau sichtbar, deine Linien liegen darüber). Links das 3D-Modell in isometrischer Lage – drehe es, um die drei Ansichten wiederzufinden. <b>Lösung ausblenden</b> blendet sie wieder aus, du kannst weiterzeichnen und prüfen – aber ohne Punkte für diesen Körper.`;
+  }
   showModel();draw();
 };
 $("peek").onclick=()=>{if(!task)return;peeked=true;streak=0;$("streak").textContent=0;showModel();};
