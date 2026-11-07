@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Isometrie-Trainer</title>
+<!--
+  Isometrie-Trainer (TZ Kap. 2.1/2.3): aus drei Ansichten nach Methode 1
+  (V, D, SL) den Körper isometrisch auf dem Iso-Raster zeichnen (Übungstyp
+  2.3.3 im Skript). Eine Datei ohne Abhängigkeiten, läuft lokal im Browser.
+  Werkstücke zufällig aus Voxeln erzeugt (plus einige Prismen mit Schrägen),
+  Projektions- und 3D-Code wie projektionsmethode-trainer.html.
+  Konvention wie Musterlösung Kap. 2: x nach rechts oben, Vorderseite rechts
+  unten, Höhe senkrecht; Verkürzung 1:1:1.
+  Prüfung: Linien des Lernenden werden mit den projizierten Kanten verglichen
+  (verschiebungsunabhängig, Linienstücke dürfen geteilt oder zusammengezogen
+  sein); verdeckte Kanten wahlweise gestrichelt oder weggelassen.
+-->
+<style>
+  :root{
+    --paper:#F6F7F4;
+    --grid:#E3E7E0;
+    --ink:#1E2A38;
+    --ink-soft:#5B6878;
+    --rule:#9AA6B4;
+    --blue:#2F5DA8;
+    --blue-wash:#DCE4F5;
+    --ok:#2E7D4F;
+    --ok-wash:#DDEFE3;
+    --bad:#B3402F;
+    --bad-wash:#F5DDD8;
+    --warn:#C7791A;
+    --font:"Avenir Next","Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:24px 24px}
+  body{padding:20px 22px 40px;max-width:1180px;margin:0 auto;font-size:15px;line-height:1.4}
+
+  header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 22px;border-bottom:1.5px solid var(--ink);padding-bottom:10px;margin-bottom:18px}
+  h1{font-size:22px;font-weight:600;margin:0;letter-spacing:-.01em}
+  h1 span{color:var(--blue);font-weight:500}
+  header label{font-size:13px;color:var(--ink-soft)}
+  .stats{display:flex;gap:22px;margin-left:auto;font-variant-numeric:tabular-nums}
+  .stat{display:flex;flex-direction:column;line-height:1.1}
+  .stat b{font-size:20px;font-weight:600}
+  .stat small{color:var(--ink-soft);font-size:12px}
+  select{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--rule);padding:4px 8px;border-radius:3px}
+
+  main{display:grid;grid-template-columns:minmax(300px,0.9fr) minmax(360px,1.3fr);gap:26px;align-items:start}
+  @media (max-width:860px){main{grid-template-columns:1fr}}
+
+  .sheet{background:#fff;border:1.5px solid var(--ink);position:relative;margin-bottom:14px}
+  .sheet .title{position:absolute;left:0;top:0;background:var(--ink);color:#fff;font-size:12px;padding:3px 9px;letter-spacing:.02em;z-index:2}
+  .sheet .inner{padding:30px 14px 12px}
+  canvas{display:block;width:100%;height:auto;touch-action:none}
+  #c3d{cursor:grab}
+  #c3d:active{cursor:grabbing}
+  #iso{cursor:crosshair}
+  .hint{color:var(--ink-soft);font-size:13px;margin:8px 2px 0}
+  svg.views{display:block;max-width:100%;height:auto;margin:0 auto}
+
+  .veil{position:absolute;inset:0;background:rgba(246,247,244,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;font-size:14px;color:var(--ink-soft);z-index:1}
+  .veil.off{display:none}
+
+  .tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 0}
+  .tools .sep{flex:1 0 8px}
+  .tool{font:inherit;background:#fff;border:1.5px solid var(--rule);border-radius:3px;padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--ink)}
+  .tool:hover{border-color:var(--ink)}
+  .tool.on{border-color:var(--ink);background:var(--blue-wash);font-weight:600}
+  .tool svg{display:block}
+  .tool kbd{font:11px/1 var(--font);color:var(--ink-soft);border:1px solid var(--rule);border-radius:3px;padding:2px 4px}
+  .tool:disabled{opacity:.45;cursor:not-allowed}
+
+  .actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0 0}
+  button.primary{font:inherit;font-weight:600;background:var(--ink);color:#fff;border:0;padding:9px 16px;border-radius:3px;cursor:pointer}
+  button.primary:hover{background:var(--blue)}
+  button.primary:disabled{background:var(--rule);cursor:not-allowed}
+  button.ghost{font:inherit;background:transparent;color:var(--ink-soft);border:1px solid var(--rule);padding:6px 10px;border-radius:3px;cursor:pointer}
+  button.ghost:hover{color:var(--ink);border-color:var(--ink)}
+  button.ghost:disabled{opacity:.45;cursor:not-allowed}
+
+  .feedback{margin-top:14px;padding:11px 14px;border:1.5px solid var(--rule);background:#fff;border-radius:3px;font-size:14px;min-height:46px}
+  .feedback.ok{border-color:var(--ok);background:var(--ok-wash)}
+  .feedback.bad{border-color:var(--bad);background:var(--bad-wash)}
+  .feedback b{font-weight:600}
+  .feedback ul{margin:6px 0 0;padding-left:20px}
+  .feedback li{margin:2px 0}
+  .sw{display:inline-block;width:22px;height:0;border-top:3px solid;vertical-align:middle;margin:0 4px 2px 0}
+  .sw.red{border-color:var(--bad)}
+  .sw.orange{border-color:var(--warn)}
+  .sw.blue{border-color:var(--blue)}
+
+  .legend{margin-top:10px;font-size:13px;color:var(--ink-soft);display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:4px 18px}
+  .legend b{color:var(--ink);font-weight:600;display:inline-block;width:28px}
+
+  .howto{background:#fff;border:1.5px solid var(--rule);border-radius:3px;padding:8px 14px;margin:-6px 0 18px;font-size:14px}
+  .howto summary{cursor:pointer;font-weight:600;color:var(--blue)}
+  .howto ol{margin:8px 0 4px;padding-left:20px}
+  .howto li{margin:4px 0}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Isometrie-Trainer <span>· Körper aus drei Ansichten zeichnen</span></h1>
+  <label>Schwierigkeit
+    <select id="diff">
+      <option value="0">leicht</option>
+      <option value="1" selected>mittel</option>
+      <option value="2">schwer</option>
+    </select>
+  </label>
+  <label>Verdeckte Kanten
+    <select id="hiddenMode">
+      <option value="dash" selected>gestrichelt zeichnen</option>
+      <option value="none">weglassen</option>
+    </select>
+  </label>
+  <a href="projektionsmethode-trainer.html" style="color:var(--blue);font-size:13px;text-decoration:none">Projektionsmethode-Trainer →</a>
+  <div class="stats">
+    <div class="stat"><b id="score">0</b><small>Punkte</small></div>
+    <div class="stat"><b id="streak">0</b><small>Serie</small></div>
+    <div class="stat"><b id="round">1</b><small>Körper</small></div>
+  </div>
+</header>
+
+<details class="howto">
+  <summary>So übst du mit dem Trainer</summary>
+  <ol>
+    <li><b>Ansichten lesen.</b> Links stehen Vorderansicht V, Draufsicht D (darunter) und Seitenansicht von links SL (rechts daneben) nach Projektionsmethode&nbsp;1, auf einem Raster. Zähle die Kästchen: Breite aus V/D, Höhe aus V/SL, Tiefe aus D/SL. Gestrichelt sind verdeckte Kanten.</li>
+    <li><b>Isometrisch zeichnen.</b> Rechts ist das Iso-Raster (wie das Blatt auf S.&nbsp;25). Alle Kanten laufen entlang der drei Achsen: Breite nach rechts oben (30°), Tiefe nach rechts unten (30°), Höhe senkrecht. Die Vorderseite V liegt rechts unten, die linke Seite SL links unten, die Draufsicht D oben – wie beim Raumeck. Wo du den Körper hinzeichnest, spielt keine Rolle.</li>
+    <li><b>Linie ziehen.</b> Von Rasterpunkt zu Rasterpunkt: entweder gedrückt halten und ziehen, oder erst den Anfangspunkt anklicken, dann den Endpunkt. Eine lange Kante darf aus mehreren Stücken bestehen. Mit dem Werkzeug <em>gestrichelt</em> zeichnest du verdeckte Kanten (falls oben eingeschaltet); eine Linie noch einmal über die alte ziehen ändert ihren Typ. <em>Radierer</em> löscht eine Linie, <em>Rückgängig</em> den letzten Schritt.</li>
+    <li><b>Prüfen.</b> Rot sind Linien, die nicht zum Körper gehören, orange solche mit falschem Linientyp (Volllinie statt gestrichelt oder umgekehrt). Fehlende Kanten werden gezählt, aber nicht gezeigt. «Lösung zeigen» blendet sie blau ein und zeigt das 3D-Modell – gibt aber keine Punkte.</li>
+    <li><b>Ziel.</b> Stufe «mittel» drei Körper hintereinander beim ersten Prüfen richtig, dann «schwer» (mehr Ausschnitte, Werkstücke mit Schrägen). Das ist die Vorbereitung auf Übung&nbsp;2.3.3 und die Prüfung zu Kapitel&nbsp;2.</li>
+  </ol>
+</details>
+
+<main>
+  <section>
+    <div class="sheet">
+      <div class="title">Gegeben – Ansichten nach Methode 1</div>
+      <div class="inner" id="viewsBox"></div>
+    </div>
+    <div class="legend">
+      <div><b>V</b> Vorderansicht</div>
+      <div><b>D</b> Draufsicht (unter V)</div>
+      <div><b>SL</b> Seitenansicht von links (rechts von V)</div>
+    </div>
+    <div class="sheet" style="margin-top:16px">
+      <div class="title">Werkstück – 3D</div>
+      <canvas id="c3d" width="460" height="320" aria-label="Drehbares 3D-Modell"></canvas>
+      <div class="veil" id="veil">
+        <div>Das 3D-Modell ist verdeckt. Es erscheint, sobald deine Zeichnung stimmt oder du die Lösung anzeigen lässt.</div>
+        <button class="ghost" id="peek">Körper aufdecken (ohne Punkte)</button>
+      </div>
+    </div>
+    <p class="hint">Ziehen zum Drehen. <button class="ghost" id="reset">Isometrische Lage</button></p>
+  </section>
+
+  <section>
+    <div class="sheet">
+      <div class="title">Zeichnung – isometrische Darstellung</div>
+      <canvas id="iso" width="600" height="540" aria-label="Zeichenfläche mit Iso-Raster"></canvas>
+    </div>
+    <div class="tools">
+      <button class="tool on" id="toolSolid" title="sichtbare Kante (Taste 1)">
+        <svg width="34" height="12"><line x1="2" y1="6" x2="32" y2="6" stroke="#1E2A38" stroke-width="2.4" stroke-linecap="round"/></svg>sichtbar <kbd>1</kbd>
+      </button>
+      <button class="tool" id="toolHidden" title="verdeckte Kante, gestrichelt (Taste 2)">
+        <svg width="34" height="12"><line x1="2" y1="6" x2="32" y2="6" stroke="#1E2A38" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round"/></svg>verdeckt <kbd>2</kbd>
+      </button>
+      <button class="tool" id="toolErase" title="Linie löschen (Taste 3)">
+        <svg width="20" height="16" viewBox="0 0 20 16"><path d="M2 11 L9 3 L17 9 L12 14 L6 14 Z" fill="#fff" stroke="#1E2A38" stroke-width="1.6" stroke-linejoin="round"/><line x1="6" y1="14" x2="18" y2="14" stroke="#1E2A38" stroke-width="1.6"/></svg>Radierer <kbd>3</kbd>
+      </button>
+      <span class="sep"></span>
+      <button class="ghost" id="undo" title="Rückgängig (Taste Z)">Rückgängig</button>
+      <button class="ghost" id="clear">Alles löschen</button>
+    </div>
+    <div class="actions">
+      <button class="primary" id="check">Prüfen</button>
+      <button class="ghost" id="reveal">Lösung zeigen</button>
+      <button class="ghost" id="next">Nächster Körper</button>
+      <span class="hint" id="count" style="margin:0 0 0 auto"></span>
+    </div>
+    <div class="feedback" id="feedback">Zeichne den Körper auf dem Raster und klicke auf <b>Prüfen</b>.</div>
+  </section>
+</main>
+
+<script>
+/* ---------- Grundlagen ---------- */
+const key=(x,y,z)=>x+","+y+","+z;
+const rnd=n=>Math.floor(Math.random()*n);
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const nrm=a=>{const l=Math.hypot(...a)||1;return a.map(v=>v/l);};
+const R2=v=>Math.round(v*100)/100;
+
+/* ---------- Voxel-Modell (zufällig) ---------- */
+function genShape(dims,cuts){
+  const [nx,ny,nz]=dims;
+  const occ=new Set();
+  for(let x=0;x<nx;x++)for(let y=0;y<ny;y++)for(let z=0;z<nz;z++)occ.add(key(x,y,z));
+  for(let c=0;c<cuts;c++){
+    const s=[nx,ny,nz].map(n=>1+rnd(n-1));
+    const p=[nx,ny,nz].map((n,i)=>Math.random()<0.85?(Math.random()<.5?0:n-s[i]):rnd(n-s[i]+1));
+    for(let x=p[0];x<p[0]+s[0];x++)for(let y=p[1];y<p[1]+s[1];y++)for(let z=p[2];z<p[2]+s[2];z++)occ.delete(key(x,y,z));
+  }
+  if(occ.size<Math.max(4,nx*ny*nz*0.3))return null;
+  const cells=[...occ].map(k=>k.split(",").map(Number));
+  const seen=new Set([cells[0].join(",")]),st=[cells[0]];
+  while(st.length){const [x,y,z]=st.pop();
+    for(const [dx,dy,dz] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]){
+      const k=key(x+dx,y+dy,z+dz);if(occ.has(k)&&!seen.has(k)){seen.add(k);st.push([x+dx,y+dy,z+dz]);}
+    }}
+  if(seen.size!==occ.size)return null;
+  const mn=[1e9,1e9,1e9],mx=[-1,-1,-1];
+  cells.forEach(c=>c.forEach((v,i)=>{mn[i]=Math.min(mn[i],v);mx[i]=Math.max(mx[i],v);}));
+  const d=mx.map((v,i)=>v-mn[i]+1);
+  if(d.some(v=>v<2))return null;
+  const c2=cells.map(c=>[c[0]-mn[0],c[1]-mn[1],c[2]-mn[2]]);
+  const shape={occ:new Set(c2.map(c=>key(...c))),dims:d,cells:c2,voxel:true,name:""};
+  shape.mesh=voxelMesh(shape);
+  return shape;
+}
+// Voxel -> Flächen + echte Kanten (Nähte zwischen gleichliegenden Flächen entfallen)
+function voxelMesh(shape){
+  const N=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]],faces=[],edges=[];
+  shape.cells.forEach(([x,y,z])=>N.forEach(n=>{
+    if(shape.occ.has(key(x+n[0],y+n[1],z+n[2])))return;
+    let vs;
+    if(n[0])vs=[[x+(n[0]>0),y,z],[x+(n[0]>0),y+1,z],[x+(n[0]>0),y+1,z+1],[x+(n[0]>0),y,z+1]];
+    else if(n[1])vs=[[x,y+(n[1]>0),z],[x+1,y+(n[1]>0),z],[x+1,y+(n[1]>0),z+1],[x,y+(n[1]>0),z+1]];
+    else vs=[[x,y,z+(n[2]>0)],[x+1,y,z+(n[2]>0)],[x+1,y+1,z+(n[2]>0)],[x,y+1,z+(n[2]>0)]];
+    faces.push({pts:vs,n});
+    for(let i=0;i<4;i++){
+      const a=vs[i],b=vs[(i+1)%4],cen=[x+.5,y+.5,z+.5];
+      const mid=[(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2];
+      const dir=mid.map((m,k)=>Math.sign(Math.round((m-cen[k])*2))*(n[k]?0:1));
+      const nb=[x+dir[0],y+dir[1],z+dir[2]];
+      const coplanar=shape.occ.has(key(...nb))&&!shape.occ.has(key(nb[0]+n[0],nb[1]+n[1],nb[2]+n[2]));
+      if(!coplanar)edges.push([a,b]);
+    }
+  }));
+  return {faces,edges};
+}
+
+/* ---------- Prismen-Modelle (mit Schrägen), nur ganzzahlige Ecken ---------- */
+const to3=(axis,p,t)=>axis==="x"?[t,p[0],p[1]]:axis==="y"?[p[0],t,p[1]]:[p[0],p[1],t];
+function orient(faces){
+  const all=faces.flat(),cen=[0,1,2].map(k=>all.reduce((s,p)=>s+p[k],0)/all.length);
+  return faces.map(pts=>{
+    let n=[0,0,0];for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];n=n.map((v,k)=>v+cross(a,b)[k]);}
+    n=nrm(n);const fc=[0,1,2].map(k=>pts.reduce((s,p)=>s+p[k],0)/pts.length);
+    if(dot(n,sub(fc,cen))<0)n=n.map(v=>-v);
+    return {pts,n};
+  });
+}
+function prism(axis,lo,hi,poly){
+  const faces=[poly.map(p=>to3(axis,p,lo)),poly.map(p=>to3(axis,p,hi))];
+  for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length];faces.push([to3(axis,a,lo),to3(axis,b,lo),to3(axis,b,hi),to3(axis,a,hi)]);}
+  return orient(faces);
+}
+function prismMesh(faces){
+  const covered=(f,g)=>{
+    const e1=nrm(sub(g.pts[1],g.pts[0])),e2=cross(g.n,e1),p2=p=>[dot(sub(p,g.pts[0]),e1),dot(sub(p,g.pts[0]),e2)];
+    const G=g.pts.map(p2),c=[G.reduce((s,p)=>s+p[0],0)/G.length,G.reduce((s,p)=>s+p[1],0)/G.length];
+    const sg=Math.sign((G[1][0]-G[0][0])*(c[1]-G[0][1])-(G[1][1]-G[0][1])*(c[0]-G[0][0]));
+    return f.pts.every(p=>{const q=p2(p);for(let i=0;i<G.length;i++){const a=G[i],b=G[(i+1)%G.length];
+      if(((b[0]-a[0])*(q[1]-a[1])-(b[1]-a[1])*(q[0]-a[0]))*sg<-1e-6)return false;}return true;});
+  };
+  const all=faces;
+  faces=faces.filter(f=>!all.some(g=>g!==f&&dot(g.n,f.n)<-0.999&&Math.abs(dot(g.n,sub(f.pts[0],g.pts[0])))<1e-6&&covered(f,g)));
+  const clipSeg=(a,u,len,g)=>{
+    const e1=nrm(sub(g.pts[1],g.pts[0])),e2=cross(g.n,e1),p2=p=>[dot(sub(p,g.pts[0]),e1),dot(sub(p,g.pts[0]),e2)];
+    const G=g.pts.map(p2),c=[G.reduce((s,p)=>s+p[0],0)/G.length,G.reduce((s,p)=>s+p[1],0)/G.length];
+    const sg=Math.sign((G[1][0]-G[0][0])*(c[1]-G[0][1])-(G[1][1]-G[0][1])*(c[0]-G[0][0]));
+    const A=p2(a),U=[dot(u,e1),dot(u,e2)];let t0=0,t1=len;
+    for(let i=0;i<G.length;i++){const P=G[i],Q=G[(i+1)%G.length];
+      const f0=((Q[0]-P[0])*(A[1]-P[1])-(Q[1]-P[1])*(A[0]-P[0]))*sg,df=((Q[0]-P[0])*U[1]-(Q[1]-P[1])*U[0])*sg;
+      if(Math.abs(df)<1e-9){if(f0<-1e-6)return null;continue;}
+      const t=-f0/df;if(df>0)t0=Math.max(t0,t);else t1=Math.min(t1,t);}
+    return t1>t0+1e-6?[t0,t1]:null;
+  };
+  const edges=[];
+  faces.forEach(f=>{
+    for(let i=0;i<f.pts.length;i++){
+      const a=f.pts[i],b=f.pts[(i+1)%f.pts.length];
+      const dir=sub(b,a),len=Math.hypot(...dir),u=dir.map(v=>v/len);
+      let keep=[[0,len]];
+      faces.forEach(g=>{
+        if(g===f||dot(g.n,f.n)<0.999||Math.abs(dot(g.n,sub(g.pts[0],a)))>1e-6)return;
+        for(let j=0;j<g.pts.length;j++){
+          const c=g.pts[j],d=g.pts[(j+1)%g.pts.length];
+          const dc=sub(c,a),dd=sub(d,a);
+          if(Math.hypot(...cross(dc,u))>1e-6||Math.hypot(...cross(dd,u))>1e-6)continue;
+          const t0=Math.min(dot(dc,u),dot(dd,u)),t1=Math.max(dot(dc,u),dot(dd,u));
+          keep=keep.flatMap(([s,e])=>{const r=[];if(t0>s+1e-6)r.push([s,Math.min(e,t0)]);if(t1<e-1e-6)r.push([Math.max(s,t1),e]);return r.filter(([p,q])=>q-p>1e-6);});
+        }
+      });
+      all.forEach(g=>{
+        if(dot(g.n,f.n)>-0.999||Math.abs(dot(g.n,sub(a,g.pts[0])))>1e-6)return;
+        const iv=clipSeg(a,u,len,g);if(!iv)return;const [t0,t1]=iv;
+        keep=keep.flatMap(([s,e])=>{const r=[];if(t0>s+1e-6)r.push([s,Math.min(e,t0)]);if(t1<e-1e-6)r.push([Math.max(s,t1),e]);return r.filter(([p,q])=>q-p>1e-6);});
+      });
+      keep.forEach(([s,e])=>edges.push([a.map((v,k)=>v+u[k]*s),a.map((v,k)=>v+u[k]*e)]));
+    }
+  });
+  const seen=new Set(),out=[];
+  edges.forEach(([a,b])=>{const k=[a,b].map(p=>p.map(R2).join(",")).sort().join("|");if(!seen.has(k)){seen.add(k);out.push([a,b]);}});
+  return {faces,edges:out};
+}
+function angledShape(name,level,parts){
+  const faces=parts.flat(),all=faces.flatMap(f=>f.pts);
+  const dims=[0,1,2].map(k=>Math.max(...all.map(p=>p[k])));
+  return {name,level,dims,mesh:prismMesh(faces),voxel:false};
+}
+// Polygone: Achse z -> Punkte (x,y); Achse x -> Punkte (y,z). Alle Ecken ganzzahlig,
+// damit die Isometrie auf dem Raster liegt (wird in isoEdges geprüft).
+const ANGLED=[
+  angledShape("Rampe",1,[prism("z",0,3,[[0,0],[4,0],[4,1],[0,3]])]),
+  angledShape("Block mit Fase",1,[prism("z",0,3,[[0,0],[4,0],[4,2],[3,3],[0,3]])]),
+  angledShape("Pultdach",1,[prism("x",0,4,[[0,0],[3,0],[2,3],[0,3]])]),
+  angledShape("Keil auf Sockel",2,[prism("z",0,3,[[0,0],[4,0],[4,1],[0,1]]),prism("z",0,3,[[0,1],[2,1],[0,3]])]),
+  angledShape("Giebelhaus",2,[prism("x",0,4,[[0,0],[2,0],[2,4],[0,4]]),prism("x",0,4,[[2,0],[4,2],[2,4]])]),
+  angledShape("Winkel mit Schräge",2,[prism("z",0,3,[[0,0],[4,0],[4,1],[0,1]]),prism("z",0,1,[[0,1],[1,1],[1,2],[0,3]])]),
+  angledShape("Sattel",2,[prism("z",0,3,[[0,0],[4,0],[4,2],[0,2]]),prism("z",1,3,[[1,2],[3,2],[2,3]])]),
+];
+
+/* ---------- Ansichten: Abbildung Welt -> Zeichnung (u rechts, v unten, d in die Tiefe) ---------- */
+function viewMap(dims,view){
+  const [nx,ny,nz]=dims;
+  switch(view){
+    case "V": return {W:nx,H:ny,D:nz,f:([x,y,z])=>[x,ny-y,nz-z]};
+    case "SL":return {W:nz,H:ny,D:nx,f:([x,y,z])=>[z,ny-y,x]};
+    case "D": return {W:nx,H:nz,D:ny,f:([x,y,z])=>[x,z,ny-y]};
+  }
+}
+function projectVoxel(shape,view){
+  const m=viewMap(shape.dims,view),W=m.W,H=m.H,D=m.D;
+  const cols=Array.from({length:W*H},()=>new Set());
+  shape.cells.forEach(([x,y,z])=>{const [u,v,d]=m.f([x+.5,y+.5,z+.5]).map(Math.floor);cols[v*W+u].add(d);});
+  const col=(u,v)=>(u<0||v<0||u>=W||v>=H)?new Set():cols[v*W+u];
+  function edge(a,b){
+    let closest=Infinity;a.forEach(d=>closest=Math.min(closest,d));b.forEach(d=>closest=Math.min(closest,d));
+    if(closest===Infinity)return 0;
+    let any=false;
+    for(let d=0;d<D;d++){if(a.has(d)!==b.has(d)){if(d===closest)return 2;any=true;}}
+    return any?1:0;
+  }
+  const lines=[];
+  for(let v=0;v<=H;v++){let run=null;
+    for(let u=0;u<=W;u++){const t=u<W?edge(col(u,v-1),col(u,v)):0;
+      if(run&&run.t!==t){lines.push([run.s,v,u,v,run.t]);run=null;}
+      if(!run&&t){run={s:u,t};}
+    }}
+  for(let u=0;u<=W;u++){let run=null;
+    for(let v=0;v<=H;v++){const t=v<H?edge(col(u-1,v),col(u,v)):0;
+      if(run&&run.t!==t){lines.push([u,run.s,u,v,run.t]);run=null;}
+      if(!run&&t){run={s:v,t};}
+    }}
+  return {W,H,lines};
+}
+// Sichtbarkeit von Kanten gegen zugewandte Flächen (2D-Koordinaten + Tiefe d, kleiner = näher)
+function edgeRuns(faces,edges,K){
+  const occl=faces.filter(f=>f.n[2]<-1e-6);
+  occl.forEach(f=>{f.p0=f.pts[0];
+    const cu=f.pts.reduce((s,p)=>s+p[0],0)/f.pts.length,cv=f.pts.reduce((s,p)=>s+p[1],0)/f.pts.length;
+    const a=f.pts[0],b=f.pts[1];f.sign=Math.sign((b[0]-a[0])*(cv-a[1])-(b[1]-a[1])*(cu-a[0]));});
+  const inside=(f,u,v)=>{for(let i=0;i<f.pts.length;i++){const a=f.pts[i],b=f.pts[(i+1)%f.pts.length];
+      const c=(b[0]-a[0])*(v-a[1])-(b[1]-a[1])*(u-a[0]);if(c*f.sign<-1e-6)return false;}return true;};
+  const depthAt=(f,u,v)=>f.p0[2]-(f.n[0]*(u-f.p0[0])+f.n[1]*(v-f.p0[1]))/f.n[2];
+  const out=[];
+  edges.forEach(([P,Q])=>{
+    if(Math.hypot(Q[0]-P[0],Q[1]-P[1])<1e-6)return;
+    const cand=occl.filter(f=>!(Math.abs(dot(f.n,sub(P,f.p0)))<1e-6&&Math.abs(dot(f.n,sub(Q,f.p0)))<1e-6));
+    const types=[];
+    for(let k=0;k<K;k++){const t=(k+.5)/K,u=P[0]+(Q[0]-P[0])*t,v=P[1]+(Q[1]-P[1])*t,d=P[2]+(Q[2]-P[2])*t;
+      types.push(cand.some(f=>inside(f,u,v)&&depthAt(f,u,v)<d-1e-4)?1:2);}
+    let s=0;for(let k=1;k<=K;k++){if(k===K||types[k]!==types[s]){out.push({P,Q,t0:s/K,t1:k/K,t:types[s]});s=k;}}
+  });
+  return out;
+}
+function projectMesh(shape,view){
+  const m=viewMap(shape.dims,view),o=m.f([0,0,0]);
+  const T=p=>m.f(p),TN=n=>sub(m.f(n),o);
+  const faces=shape.mesh.faces.map(f=>({pts:f.pts.map(T),n:TN(f.n)}));
+  const runs=edgeRuns(faces,shape.mesh.edges.map(([A,B])=>[T(A),T(B)]),48);
+  const L=(P,Q,t)=>[R2(P[0]+(Q[0]-P[0])*t),R2(P[1]+(Q[1]-P[1])*t)];
+  return {W:m.W,H:m.H,lines:runs.map(r=>[...L(r.P,r.Q,r.t0),...L(r.P,r.Q,r.t1),r.t])};
+}
+const project=(shape,view)=>shape.voxel?projectVoxel(shape,view):projectMesh(shape,view);
+
+// Die drei Ansichten nach Methode 1 in einem SVG: V oben links, SL rechts daneben, D darunter
+function viewsSvg(proj,cell){
+  const V=proj.V,SL=proj.SL,D=proj.D,pad=6,gap=cell*1.2+18;
+  const w=pad*2+(V.W+SL.W)*cell+gap,h=pad*2+(V.H+D.H)*cell+gap+18;
+  const group=(p,ox,oy,label)=>{
+    let s=`<rect x="${ox}" y="${oy}" width="${p.W*cell}" height="${p.H*cell}" fill="#F3F5F8"/>`;
+    for(let i=1;i<p.W;i++)s+=`<line x1="${ox+i*cell}" y1="${oy}" x2="${ox+i*cell}" y2="${oy+p.H*cell}" stroke="#D5DBE3" stroke-width="0.8"/>`;
+    for(let i=1;i<p.H;i++)s+=`<line x1="${ox}" y1="${oy+i*cell}" x2="${ox+p.W*cell}" y2="${oy+i*cell}" stroke="#D5DBE3" stroke-width="0.8"/>`;
+    for(const [x1,y1,x2,y2,t] of [...p.lines].sort((a,b)=>a[4]-b[4])){
+      s+=`<line x1="${ox+x1*cell}" y1="${oy+y1*cell}" x2="${ox+x2*cell}" y2="${oy+y2*cell}" stroke="#1E2A38" stroke-width="${t===2?2.4:1.3}" ${t===1?`stroke-dasharray="6 4"`:""} stroke-linecap="round"/>`;
+    }
+    s+=`<text x="${ox+p.W*cell/2}" y="${oy+p.H*cell+15}" text-anchor="middle" font-size="13" font-weight="600" fill="#1E2A38">${label}</text>`;
+    return s;
+  };
+  return `<svg class="views" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-label="Ansichten V, D und SL">`
+    +group(V,pad,pad,"V")+group(SL,pad+V.W*cell+gap,pad,"SL")+group(D,pad,pad+V.H*cell+gap,"D")+"</svg>";
+}
+
+/* ---------- Isometrie: Kanten des Körpers als Strecken auf dem Iso-Raster ---------- */
+// Rasterkoordinaten (i,j): i = x+z (Spalte, Abstand s*cos30), j = x-z+2y (Höhe in s/2);
+// Rasterpunkte haben i+j gerade. Bild: x nach rechts oben, z (vorne) nach rechts unten, y senkrecht.
+const SQ2=Math.SQRT2,SQ6=Math.sqrt(6),SQ3=Math.sqrt(3);
+// orthonormales Bildsystem für den Sichtbarkeitstest: u rechts, v unten, d Tiefe (kleiner = näher)
+const isoP=p=>[(p[0]+p[2])/SQ2,-(p[0]+2*p[1]-p[2])/SQ6,(p[0]-p[1]-p[2])/SQ3];
+const toLat=q=>[q[0]*SQ2,-q[1]*SQ6];
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const lerp2=(s,t)=>[s.a[0]+(s.b[0]-s.a[0])*t,s.a[1]+(s.b[1]-s.a[1])*t];
+const segLen=s=>Math.hypot(s.b[0]-s.a[0],(s.b[1]-s.a[1])/SQ3); // in Rastereinheiten (Spaltenabstand = 1)
+// Intervalle [t0,t1] in [0,1]
+function union(ivs){
+  const s=[...ivs].sort((a,b)=>a[0]-b[0]),out=[];
+  for(const iv of s){const l=out[out.length-1];if(l&&iv[0]<=l[1]+1e-9)l[1]=Math.max(l[1],iv[1]);else out.push([iv[0],iv[1]]);}
+  return out;
+}
+function complement(ivs,lo,hi){const out=[];let c=lo;for(const [a,b] of ivs){if(a>c+1e-9)out.push([c,a]);c=Math.max(c,b);}if(hi>c+1e-9)out.push([c,hi]);return out;}
+function subtract(A,B){let out=A.map(iv=>[...iv]);for(const [b0,b1] of B)out=out.flatMap(([a0,a1])=>{const r=[];if(b0>a0+1e-9)r.push([a0,Math.min(a1,b0)]);if(b1<a1-1e-9)r.push([Math.max(a0,b1),a1]);return r.filter(([p,q])=>q-p>1e-9);});return out;}
+const ivLen=ivs=>ivs.reduce((s,[a,b])=>s+b-a,0);
+// Überlappung von s mit c als Parameterintervall auf c (null, wenn nicht kollinear)
+function overlapIv(c,s){
+  const dx=c.b[0]-c.a[0],dy=c.b[1]-c.a[1],dd=dx*dx+dy*dy;
+  const cr=P=>dx*(P[1]-c.a[1])-dy*(P[0]-c.a[0]);
+  if(Math.abs(cr(s.a))>1e-6||Math.abs(cr(s.b))>1e-6)return null;
+  const t=P=>((P[0]-c.a[0])*dx+(P[1]-c.a[1])*dy)/dd;
+  const t0=Math.max(0,Math.min(t(s.a),t(s.b))),t1=Math.min(1,Math.max(t(s.a),t(s.b)));
+  return t1-t0>1e-9?[t0,t1]:null;
+}
+// kollineare, sich berührende Strecken gleichen Typs zu einer zusammenfassen
+function mergeSegs(segs){
+  const groups=new Map();
+  segs.forEach(s=>{
+    let dx=s.b[0]-s.a[0],dy=s.b[1]-s.a[1];const g=gcd(Math.abs(dx),Math.abs(dy))||1;dx/=g;dy/=g;
+    if(dx<0||(dx===0&&dy<0)){dx=-dx;dy=-dy;}
+    const k=s.t+"#"+dx+","+dy+"|"+(dx*s.a[1]-dy*s.a[0]);
+    if(!groups.has(k))groups.set(k,{d:[dx,dy],t:s.t,base:s.a,ivs:[]});
+    const G=groups.get(k),p=P=>(P[0]-G.base[0])*G.d[0]+(P[1]-G.base[1])*G.d[1];
+    G.ivs.push([Math.min(p(s.a),p(s.b)),Math.max(p(s.a),p(s.b))]);
+  });
+  const out=[];
+  groups.forEach(G=>{const dd=G.d[0]*G.d[0]+G.d[1]*G.d[1],pt=k=>[G.base[0]+G.d[0]*k/dd,G.base[1]+G.d[1]*k/dd];
+    union(G.ivs).forEach(([s0,s1])=>out.push({a:pt(s0),b:pt(s1),t:G.t}));});
+  return out;
+}
+// Alle Kanten des Körpers isometrisch: {a,b,t} mit t=2 sichtbar, t=1 verdeckt; null, wenn ein
+// Kantenende nicht auf dem Raster liegt (dann ist der Körper für den Trainer ungeeignet)
+function isoEdges(shape){
+  const faces=shape.mesh.faces.map(f=>({pts:f.pts.map(isoP),n:isoP(f.n)}));
+  const edges=shape.mesh.edges.map(([A,B])=>[isoP(A),isoP(B)]);
+  const runs=edgeRuns(faces,edges,shape.voxel?2:96),tol=shape.voxel?1e-6:0.12;
+  const pieces=[];
+  for(const r of runs){
+    const L=t=>toLat([r.P[0]+(r.Q[0]-r.P[0])*t,r.P[1]+(r.Q[1]-r.P[1])*t]);
+    const a=L(r.t0),b=L(r.t1),ra=a.map(Math.round),rb=b.map(Math.round);
+    if(Math.hypot(a[0]-ra[0],a[1]-ra[1])>tol||Math.hypot(b[0]-rb[0],b[1]-rb[1])>tol)return null;
+    if(Math.abs(ra[0]+ra[1])%2||Math.abs(rb[0]+rb[1])%2)return null;
+    if(ra[0]===rb[0]&&ra[1]===rb[1])continue;
+    pieces.push({a:ra,b:rb,t:r.t});
+  }
+  // verdeckte Stücke, die genau hinter sichtbaren liegen, entfallen (Volllinie gewinnt)
+  const vis=pieces.filter(p=>p.t===2),out=[...vis];
+  pieces.filter(p=>p.t===1).forEach(h=>{
+    const cov=[];vis.forEach(v=>{const iv=overlapIv(h,v);if(iv)cov.push(iv);});
+    complement(union(cov),0,1).forEach(([t0,t1])=>out.push({a:lerp2(h,t0).map(Math.round),b:lerp2(h,t1).map(Math.round),t:1}));
+  });
+  return mergeSegs(out);
+}
+
+/* ---------- Prüfung: Zeichnung gegen die Kanten (verschiebungsunabhängig) ---------- */
+function evaluate(S,C,off){
+  const Ss=S.map(s=>({a:[s.a[0]+off[0],s.a[1]+off[1]],b:[s.b[0]+off[0],s.b[1]+off[1]],t:s.t,src:s}));
+  let miss=0,extra=0,wrong=0;const cres=[],sres=[];
+  for(const c of C){
+    const same=[],other=[];
+    for(const s of Ss){const iv=overlapIv(c,s);if(iv)(s.t===c.t?same:other).push(iv);}
+    const covSame=union(same),covAny=union([...same,...other]);
+    const missing=complement(covAny,0,1),wrongT=subtract(union(other),covSame);
+    miss+=ivLen(missing)*segLen(c);wrong+=ivLen(wrongT)*segLen(c);
+    cres.push({c,missing});
+  }
+  for(const s of Ss){
+    const same=[],other=[];
+    for(const c of C){const iv=overlapIv(s,c);if(iv)(c.t===s.t?same:other).push(iv);}
+    const covAny=union([...same,...other]),unc=complement(covAny,0,1),wrongT=subtract(union(other),union(same));
+    extra+=ivLen(unc)*segLen(s);
+    sres.push({s:s.src,extra:unc,wrongT});
+  }
+  return {off,score:miss+extra+wrong,miss,extra,wrong,cres,sres};
+}
+function checkDrawing(S,C){
+  if(!S.length)return null;
+  const votes=new Map();
+  for(const c of C)for(const cp of [c.a,c.b])for(const s of S)for(const sp of [s.a,s.b]){
+    const k=(cp[0]-sp[0])+","+(cp[1]-sp[1]);votes.set(k,(votes.get(k)||0)+1);
+  }
+  const cands=[...votes.entries()].sort((a,b)=>b[1]-a[1]).slice(0,12).map(([k])=>k.split(",").map(Number));
+  let best=null;
+  for(const off of cands){const r=evaluate(S,C,off);if(!best||r.score<best.score-1e-9)best=r;}
+  return best;
+}
+
+/* ---------- Aufgabe erzeugen ---------- */
+const LEVELS=[{dims:[3,2,3],cuts:1},{dims:[4,3,4],cuts:2},{dims:[4,4,4],cuts:3}];
+let lastAngled=-1;
+function buildTask(shape){
+  const edges=isoEdges(shape);if(!edges)return null;
+  if(!edges.some(e=>e.t===1)&&Math.random()<0.5)return null; // meist Körper mit mindestens einer verdeckten Kante
+  const proj={};["V","D","SL"].forEach(v=>proj[v]=project(shape,v));
+  return {shape,proj,edges};
+}
+function makeTask(level){
+  if(level>0&&Math.random()<0.3){
+    const order=ANGLED.map((_,i)=>i).filter(i=>i!==lastAngled&&ANGLED[i].level<=level).sort(()=>Math.random()-.5);
+    for(const i of order){const t=buildTask(ANGLED[i]);if(t){lastAngled=i;return t;}}
+  }
+  const L=LEVELS[level];
+  for(let tries=0;tries<400;tries++){
+    const shape=genShape(L.dims,L.cuts);if(!shape)continue;
+    const t=buildTask(shape);if(t)return t;
+  }
+  return null;
+}
+
+/* ---------- Zeichenfläche ---------- */
+const cv=document.getElementById("iso"),ctx=cv.getContext("2d");
+const CW=600,CH=540,S=36,HX=S*Math.sqrt(3)/2,HY=S/2; // Rasterseite S px; Spaltenabstand HX, Höhenschritt HY
+const ORG={x:0,y:CH}; // Rasterpunkt (0,0) unten links
+const px=P=>({x:ORG.x+P[0]*HX,y:ORG.y-P[1]*HY});
+function snap(x,y){
+  const i0=(x-ORG.x)/HX,j0=(ORG.y-y)/HY;
+  let best=null;
+  for(const [di,dj] of [[0,0],[1,0],[-1,0],[0,1],[0,-1]]){
+    const i=Math.round(i0)+di,j=Math.round(j0)+dj;if(Math.abs(i+j)%2)continue;
+    const d=Math.hypot((i-i0)*HX,(j-j0)*HY);if(!best||d<best.d)best={p:[i,j],d};
+  }
+  return best.p;
+}
+let lines=[],history=[],pending=null,hover=null,down=null,tool=2,result=null,revealed=false,solOff=null;
+const sameP=(a,b)=>a&&b&&a[0]===b[0]&&a[1]===b[1];
+function setupCanvas(){
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.width=CW*dpr;cv.height=CH*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+function drawSeg(a,b,t,color,width){
+  const A=px(a),B=px(b);ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);
+  ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap="round";ctx.setLineDash(t===1?[7,5]:[]);ctx.stroke();ctx.setLineDash([]);
+}
+function drawPart(s,iv,color,width){
+  const a=lerp2(s,iv[0]),b=lerp2(s,iv[1]);drawSeg(a,b,s.t,color,width);
+}
+function draw(){
+  ctx.clearRect(0,0,CW,CH);
+  ctx.fillStyle="#fff";ctx.fillRect(0,0,CW,CH);
+  // Raster: senkrecht und +-30 Grad
+  ctx.strokeStyle="#C9CFD6";ctx.lineWidth=0.7;ctx.beginPath();
+  const ni=Math.ceil(CW/HX);
+  for(let i=0;i<=ni;i++){const x=ORG.x+i*HX;ctx.moveTo(x,0);ctx.lineTo(x,CH);}
+  const nj=Math.ceil(CH/HY),span=Math.ceil(CW/HX);
+  for(let k=-span-2;k<=nj+2;k+=2){ // Linien j-i=k (nach rechts oben) und j+i=k (nach rechts unten)
+    let A=px([0,k]),B=px([span+2,k+span+2]);ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);
+    A=px([0,k]);B=px([span+2,k-span-2]);ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);
+  }
+  ctx.stroke();
+  // Lösung (blau, unter den eigenen Linien)
+  if(revealed&&task&&solOff){
+    for(const e of task.edges)if(hiddenMode()||e.t===2)drawSeg([e.a[0]-solOff[0],e.a[1]-solOff[1]],[e.b[0]-solOff[0],e.b[1]-solOff[1]],e.t,"#2F5DA8",e.t===2?4:3);
+  }
+  // eigene Linien
+  const eraseTarget=tool===0&&hover&&!down?nearestLine(hoverPix):null;
+  for(const s of lines){
+    drawSeg(s.a,s.b,s.t,s===eraseTarget?"#B3402F":"#1E2A38",s.t===2?2.6:1.8);
+  }
+  if(result){
+    for(const r of result.sres){
+      r.wrongT.forEach(iv=>drawPart(r.s,iv,"#C7791A",4));
+      r.extra.forEach(iv=>drawPart(r.s,iv,"#B3402F",4));
+    }
+  }
+  // Gummiband
+  const start=down&&down.moved?down.p:pending;
+  if(start&&hover&&tool!==0){
+    drawSeg(start,hover,tool,"#2F5DA8",2.2);
+    const A=px(start);ctx.beginPath();ctx.arc(A.x,A.y,5,0,Math.PI*2);ctx.fillStyle="#2F5DA8";ctx.fill();
+  }
+  // Markierung des Rasterpunkts unter dem Zeiger
+  if(hover&&tool!==0){const H=px(hover);ctx.beginPath();ctx.arc(H.x,H.y,4,0,Math.PI*2);ctx.strokeStyle="#2F5DA8";ctx.lineWidth=1.5;ctx.stroke();}
+  // Punkte der eigenen Linien
+  ctx.fillStyle="#1E2A38";
+  for(const s of lines)for(const p of [s.a,s.b]){const P=px(p);ctx.beginPath();ctx.arc(P.x,P.y,2.2,0,Math.PI*2);ctx.fill();}
+  document.getElementById("count").textContent=lines.length?lines.length+" Linie"+(lines.length===1?"":"n"):"";
+}
+let hoverPix=null;
+function pointerPos(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)*CW/r.width,y:(e.clientY-r.top)*CH/r.height};}
+function nearestLine(pt){
+  if(!pt)return null;let best=null,bd=10;
+  for(const s of lines){
+    const A=px(s.a),B=px(s.b),dx=B.x-A.x,dy=B.y-A.y,l2=dx*dx+dy*dy;
+    const t=Math.max(0,Math.min(1,((pt.x-A.x)*dx+(pt.y-A.y)*dy)/l2));
+    const d=Math.hypot(pt.x-(A.x+dx*t),pt.y-(A.y+dy*t));if(d<bd){bd=d;best=s;}
+  }
+  return best;
+}
+function hiddenMode(){return document.getElementById("hiddenMode").value==="dash";}
+function pushHistory(){history.push(lines.map(s=>({a:s.a,b:s.b,t:s.t})));if(history.length>200)history.shift();}
+function addLine(a,b){
+  if(sameP(a,b))return;
+  pushHistory();
+  const idx=lines.findIndex(s=>(sameP(s.a,a)&&sameP(s.b,b))||(sameP(s.a,b)&&sameP(s.b,a)));
+  if(idx>=0)lines[idx]={a,b,t:tool};else lines.push({a,b,t:tool});
+  edited();
+}
+function edited(){result=null;if(!solved)document.getElementById("feedback").className="feedback";draw();}
+function removeLine(s){if(!s)return;pushHistory();lines=lines.filter(l=>l!==s);edited();}
+cv.addEventListener("pointerdown",e=>{
+  if(e.button!==0&&e.pointerType==="mouse")return;
+  e.preventDefault();cv.setPointerCapture(e.pointerId);
+  hoverPix=pointerPos(e);const p=snap(hoverPix.x,hoverPix.y);hover=p;down={p,moved:false};draw();
+});
+cv.addEventListener("pointermove",e=>{
+  hoverPix=pointerPos(e);const p=snap(hoverPix.x,hoverPix.y);
+  if(down&&!sameP(p,down.p))down.moved=true;
+  if(!sameP(p,hover)||tool===0){hover=p;draw();}
+});
+cv.addEventListener("pointerup",e=>{
+  if(!down)return;
+  hoverPix=pointerPos(e);const p=snap(hoverPix.x,hoverPix.y);
+  if(tool===0){removeLine(nearestLine(hoverPix));down=null;draw();return;}
+  if(down.moved){if(!sameP(p,down.p))addLine(down.p,p);pending=null;}
+  else if(pending){if(sameP(p,pending))pending=null;else{addLine(pending,p);pending=null;}}
+  else pending=p;
+  down=null;draw();
+});
+cv.addEventListener("pointercancel",()=>{down=null;draw();});
+cv.addEventListener("pointerleave",()=>{if(!down){hover=null;hoverPix=null;draw();}});
+function setTool(t){
+  tool=t;
+  document.getElementById("toolSolid").classList.toggle("on",t===2);
+  document.getElementById("toolHidden").classList.toggle("on",t===1);
+  document.getElementById("toolErase").classList.toggle("on",t===0);
+  if(t===0)pending=null;
+  cv.style.cursor=t===0?"pointer":"crosshair";draw();
+}
+document.getElementById("toolSolid").onclick=()=>setTool(2);
+document.getElementById("toolHidden").onclick=()=>setTool(1);
+document.getElementById("toolErase").onclick=()=>setTool(0);
+document.getElementById("undo").onclick=undo;
+function undo(){if(!history.length)return;lines=history.pop();pending=null;edited();}
+document.getElementById("clear").onclick=()=>{if(!lines.length)return;pushHistory();lines=[];pending=null;edited();};
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="SELECT"||e.target.tagName==="INPUT")return;
+  if(e.key==="1")setTool(2);else if(e.key==="2"&&hiddenMode())setTool(1);else if(e.key==="3")setTool(0);
+  else if(e.key==="Escape"){pending=null;draw();}
+  else if((e.key==="z"&&!e.shiftKey)||e.key==="Backspace"||e.key==="Delete"){e.preventDefault();undo();}
+});
+
+/* ---------- 3D-Darstellung (Tiefenpuffer) ---------- */
+const c3=document.getElementById("c3d"),ctx3=c3.getContext("2d");
+const off=document.createElement("canvas");off.width=c3.width;off.height=c3.height;const octx=off.getContext("2d");
+const home={yaw:Math.PI/4,pitch:Math.atan(1/Math.SQRT2)}; // isometrische Lage: Ecke links-vorn-oben zum Betrachter
+const cam={...home};
+let anim=null,shape3=null;
+function rot(p){
+  const [x,y,z]=p,cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw),cp=Math.cos(cam.pitch),sp=Math.sin(cam.pitch);
+  const x1=x*cy+z*sy,z1=-x*sy+z*cy;
+  return [x1,y*cp-z1*sp,y*sp+z1*cp];
+}
+const SHADE={"1,0,0":[201,211,223],"-1,0,0":[179,191,205],"0,1,0":[238,242,246],"0,-1,0":[143,157,174],"0,0,1":[217,226,236],"0,0,-1":[169,182,196]};
+function shadeFor(n){const L=nrm([-0.35,0.8,0.5]);const k=Math.max(0,dot(n,L));const b=Math.round(150+100*k);return [b-14,b-6,b+4].map(v=>Math.max(120,Math.min(245,v)));}
+function draw3d(){
+  const W=c3.width,H=c3.height;ctx3.clearRect(0,0,W,H);
+  if(!shape3)return;
+  const [nx,ny,nz]=shape3.dims,c=[nx/2,ny/2,nz/2],Sc=Math.min(W,H)/(Math.max(nx,ny,nz)*2.0);
+  const P=p=>{const [x,y,z]=rot(sub(p,c));return {x:W/2+x*Sc,y:H/2-y*Sc,d:z};};
+  const g=[[-0.6,0,-0.6],[nx+0.6,0,-0.6],[nx+0.6,0,nz+0.6],[-0.6,0,nz+0.6]].map(P);
+  ctx3.beginPath();g.forEach((p,i)=>i?ctx3.lineTo(p.x,p.y):ctx3.moveTo(p.x,p.y));ctx3.closePath();
+  ctx3.fillStyle="rgba(30,42,56,.05)";ctx3.fill();ctx3.strokeStyle="rgba(30,42,56,.25)";ctx3.setLineDash([6,4]);ctx3.lineWidth=1;ctx3.stroke();ctx3.setLineDash([]);
+  const img=octx.createImageData(W,H),pxl=img.data,zb=new Float32Array(W*H).fill(-1e9);
+  shape3.mesh.faces.forEach(f=>{
+    if(rot(f.n)[2]<=1e-6)return;
+    const col=shape3.voxel?SHADE[f.n.map(Math.round).join(",")]:shadeFor(f.n);
+    const pts=f.pts.map(P);
+    for(let i=1;i<pts.length-1;i++)rasterTri(pts[0],pts[i],pts[i+1],col,pxl,zb,W,H);
+  });
+  octx.putImageData(img,0,0);ctx3.drawImage(off,0,0);
+  const faces2=shape3.mesh.faces.map(f=>({pts:f.pts.map(p=>{const q=P(p);return [q.x,q.y,-q.d*Sc];}),n:(()=>{const n=rot(f.n);return [n[0],-n[1],-n[2]];})()}));
+  const edges2=shape3.mesh.edges.map(([A,B])=>[A,B].map(p=>{const q=P(p);return [q.x,q.y,-q.d*Sc];}));
+  ctx3.lineCap="round";
+  edgeRuns(faces2,edges2,32).forEach(r=>{
+    if(r.t===1&&!hiddenMode())return;
+    const x=t=>r.P[0]+(r.Q[0]-r.P[0])*t,y=t=>r.P[1]+(r.Q[1]-r.P[1])*t;
+    ctx3.strokeStyle=r.t===2?"#1E2A38":"rgba(30,42,56,.45)";ctx3.lineWidth=r.t===2?1.8:1.2;ctx3.setLineDash(r.t===2?[]:[5,4]);
+    ctx3.beginPath();ctx3.moveTo(x(r.t0),y(r.t0));ctx3.lineTo(x(r.t1),y(r.t1));ctx3.stroke();
+  });
+  ctx3.setLineDash([]);
+  // Blickrichtungspfeil V
+  const a0=P([nx/2,ny/2,nz+2.4]),a1=P([nx/2,ny/2,nz+0.9]);
+  ctx3.globalAlpha=rot([0,0,1])[2]>-0.2?1:0.35;
+  ctx3.strokeStyle="#2F5DA8";ctx3.fillStyle="#2F5DA8";ctx3.lineWidth=3;
+  ctx3.beginPath();ctx3.moveTo(a0.x,a0.y);ctx3.lineTo(a1.x,a1.y);ctx3.stroke();
+  const ang=Math.atan2(a1.y-a0.y,a1.x-a0.x);
+  ctx3.beginPath();ctx3.moveTo(a1.x,a1.y);ctx3.lineTo(a1.x-12*Math.cos(ang-0.45),a1.y-12*Math.sin(ang-0.45));ctx3.lineTo(a1.x-12*Math.cos(ang+0.45),a1.y-12*Math.sin(ang+0.45));ctx3.closePath();ctx3.fill();
+  ctx3.font="600 15px "+getComputedStyle(document.body).fontFamily;ctx3.textAlign="center";ctx3.fillText("V",a0.x,a0.y-10);
+  ctx3.globalAlpha=1;
+}
+function rasterTri(a,b,c,col,pxl,zb,W,H){
+  const minX=Math.max(0,Math.floor(Math.min(a.x,b.x,c.x))),maxX=Math.min(W-1,Math.ceil(Math.max(a.x,b.x,c.x)));
+  const minY=Math.max(0,Math.floor(Math.min(a.y,b.y,c.y))),maxY=Math.min(H-1,Math.ceil(Math.max(a.y,b.y,c.y)));
+  const area=(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);if(Math.abs(area)<1e-9)return;
+  for(let y=minY;y<=maxY;y++)for(let x=minX;x<=maxX;x++){
+    const X=x+.5,Y=y+.5;
+    let w0=((b.x-X)*(c.y-Y)-(b.y-Y)*(c.x-X))/area,w1=((c.x-X)*(a.y-Y)-(c.y-Y)*(a.x-X))/area,w2=1-w0-w1;
+    if(w0<-0.02||w1<-0.02||w2<-0.02)continue;
+    const d=w0*a.d+w1*b.d+w2*c.d,i=y*W+x;
+    if(d>zb[i]){zb[i]=d;pxl[i*4]=col[0];pxl[i*4+1]=col[1];pxl[i*4+2]=col[2];pxl[i*4+3]=255;}
+  }
+}
+let drag3=null;
+c3.addEventListener("pointerdown",e=>{drag3={x:e.clientX,y:e.clientY};anim=null;c3.setPointerCapture(e.pointerId);});
+c3.addEventListener("pointermove",e=>{if(!drag3)return;cam.yaw+=(e.clientX-drag3.x)*0.01;cam.pitch=Math.max(-1.5,Math.min(1.5,cam.pitch+(e.clientY-drag3.y)*0.01));drag3={x:e.clientX,y:e.clientY};draw3d();});
+c3.addEventListener("pointerup",()=>drag3=null);c3.addEventListener("pointercancel",()=>drag3=null);
+function animateTo(target,ms){
+  const from={...cam},t0=performance.now();
+  const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  anim=function step(now){
+    if(anim!==step)return;
+    const t=Math.min(1,(now-t0)/ms),k=ease(t);
+    let dy=target.yaw-from.yaw;dy=((dy+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
+    cam.yaw=from.yaw+dy*k;cam.pitch=from.pitch+(target.pitch-from.pitch)*k;draw3d();
+    if(t<1)requestAnimationFrame(step);else anim=null;
+  };
+  requestAnimationFrame(anim);
+}
+document.getElementById("reset").onclick=()=>animateTo(home,500);
+
+/* ---------- Spielablauf ---------- */
+const $=id=>document.getElementById(id);
+let task=null,score=0,streak=0,round=1,checks=0,solved=false,peeked=false;
+function defaultOffset(){
+  // Körper mittig auf die Zeichenfläche legen (Verschiebung in Rasterkoordinaten, i+j gerade)
+  const [nx,ny,nz]=task.shape.dims;
+  const ci=(CW/2-ORG.x)/HX,cj=(ORG.y-CH/2)/HY;
+  let oi=Math.round((nx+nz)/2-ci),oj=Math.round((nx+2*ny-nz)/2-cj);
+  if(Math.abs(oi+oj)%2)oi+=1;
+  return [oi,oj];
+}
+function showModel(){shape3=task.shape;Object.assign(cam,home);anim=null;draw3d();$("veil").classList.add("off");}
+function newRound(){
+  const level=+$("diff").value;
+  task=makeTask(level);
+  if(!task){alert("Kein passendes Modell gefunden – bitte erneut versuchen.");return;}
+  lines=[];history=[];pending=null;result=null;revealed=false;solOff=null;solved=false;peeked=false;checks=0;
+  shape3=null;draw3d();$("veil").classList.remove("off");
+  $("viewsBox").innerHTML=viewsSvg(task.proj,viewCell(task.proj));
+  document.querySelector(".sheet .title").textContent="Gegeben – Ansichten nach Methode 1"+(task.shape.voxel?"":" · "+task.shape.name);
+  $("toolHidden").style.display=hiddenMode()?"":"none";if(tool===1&&!hiddenMode())setTool(2);
+  const nvis=task.edges.filter(e=>e.t===2).length,nhid=task.edges.filter(e=>e.t===1).length;
+  $("feedback").className="feedback";
+  $("feedback").innerHTML=`Zeichne den Körper isometrisch auf dem Raster und klicke auf <b>Prüfen</b>. Zur Kontrolle: der Körper hat ${nvis} sichtbare${hiddenMode()?` und ${nhid} verdeckte`:""} Kantenlinien.`;
+  $("check").disabled=false;$("round").textContent=round;
+  draw();
+}
+function viewCell(proj){
+  const W=proj.V.W+proj.SL.W+2,H=proj.V.H+proj.D.H+2;
+  return Math.max(14,Math.min(26,Math.floor(380/W),Math.floor(330/H)));
+}
+function applyScore(firstTry){
+  streak=firstTry?streak+1:0;
+  score+=firstTry?10+Math.min(streak-1,5)*2:4;
+  $("score").textContent=score;$("streak").textContent=streak;
+}
+$("check").onclick=()=>{
+  if(!task||solved)return;
+  const C=task.edges.filter(e=>hiddenMode()||e.t===2);
+  if(!lines.length){$("feedback").className="feedback bad";$("feedback").innerHTML="Noch keine Linie gezeichnet.";return;}
+  checks++;
+  result=checkDrawing(lines,C);solOff=result.off;
+  const nMiss=result.cres.filter(r=>r.missing.length).length,nExtra=result.sres.filter(r=>r.extra.length).length,nWrong=result.sres.filter(r=>r.wrongT.length).length;
+  const fb=$("feedback");
+  if(result.score<1e-6){
+    solved=true;$("check").disabled=true;
+    const first=checks===1&&!peeked;
+    if(!peeked)applyScore(first);
+    fb.className="feedback ok";
+    fb.innerHTML=`<b>Richtig – die Zeichnung stimmt mit dem Körper überein.</b> ${peeked?"Ohne Punkte, weil der Körper aufgedeckt war.":first?"Beim ersten Prüfen, volle Punktzahl.":`Nach ${checks} Prüfungen.`} Vergleiche mit dem 3D-Modell links, dann <b>Nächster Körper</b>.`;
+    showModel();
+  }else{
+    streak=0;$("streak").textContent=0;
+    fb.className="feedback bad";
+    const items=[];
+    if(nMiss)items.push(`<li><b>${nMiss} Kante${nMiss===1?"":"n"} fehl${nMiss===1?"t":"en"}</b> (ganz oder teilweise). Gehe die Ansichten durch: Jede Kante in V, D oder SL muss auch im Körper vorkommen.</li>`);
+    if(nExtra)items.push(`<li><span class="sw red"></span><b>${nExtra} Linie${nExtra===1?"":"n"} gehör${nExtra===1?"t":"en"} nicht zum Körper</b> (rot) – falsche Richtung, falsche Länge oder an der falschen Stelle.</li>`);
+    if(nWrong)items.push(`<li><span class="sw orange"></span><b>${nWrong} Linie${nWrong===1?"":"n"} mit falschem Linientyp</b> (orange): sichtbare Kanten als Volllinie, verdeckte gestrichelt.</li>`);
+    fb.innerHTML=`<b>Noch nicht richtig.</b><ul>${items.join("")}</ul>`+(checks>=3?`<div style="margin-top:6px">Tipp: <b>Lösung zeigen</b> blendet die fehlenden Kanten blau ein.</div>`:"");
+  }
+  draw();
+};
+$("reveal").onclick=()=>{
+  if(!task)return;
+  const C=task.edges.filter(e=>hiddenMode()||e.t===2);
+  if(lines.length){result=checkDrawing(lines,C);solOff=result.off;}else{result=null;solOff=defaultOffset();}
+  revealed=true;peeked=true;streak=0;$("streak").textContent=0;
+  if(!solved){solved=true;$("check").disabled=true;}
+  $("feedback").className="feedback";
+  $("feedback").innerHTML=`<span class="sw blue"></span>Blau ist die Lösung (fehlende Kanten bleiben blau sichtbar, deine Linien liegen darüber). Links das 3D-Modell in isometrischer Lage – drehe es, um die drei Ansichten wiederzufinden. Keine Punkte für diesen Körper.`;
+  showModel();draw();
+};
+$("peek").onclick=()=>{if(!task)return;peeked=true;streak=0;$("streak").textContent=0;showModel();};
+$("next").onclick=()=>{if(!solved){streak=0;$("streak").textContent=0;}round++;newRound();};
+$("diff").onchange=()=>newRound();
+$("hiddenMode").onchange=()=>newRound();
+setupCanvas();window.addEventListener("resize",()=>{setupCanvas();draw();});
+newRound();
+</script>
+</body>
+</html>

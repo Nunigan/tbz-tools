@@ -7,6 +7,11 @@ dort hierher kopiert.
 
 - `projektionsmethode-trainer.html` – TZ Kap. 2, sechs Ansichten nach
   Projektionsmethode 1 zuordnen (drehbares 3D-Modell).
+- `isometrie-trainer.html` – TZ Kap. 2 (Übungstyp 2.3.3): aus den drei
+  Ansichten V, D, SL den Körper isometrisch auf dem Iso-Raster zeichnen
+  (Linien von Rasterpunkt zu Rasterpunkt, sichtbar/verdeckt), Prüfung
+  mit Rückmeldung (fehlend, überzählig, falscher Linientyp), Lösung und
+  drehbares 3D-Modell.
 - `skript-aufgaben.html` – TZ Kap. 2.3, die Werkstücke der
   Skript-Aufgaben S. 18–21 als 3D-Modell; Ansichten aufdecken oder als
   Quiz zuordnen (vom Trainer aus verlinkt). Dazu die vier Teile der
