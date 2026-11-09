@@ -33,21 +33,6 @@ dort hierher kopiert.
   freier Fall gleichzeitig), Affenschuss (Ziel fällt im Schussmoment),
   Reichweite gegen Winkel und virtuelles Labor «g bestimmen» auf einem
   unbekannten Planeten.
-- `pruefungstrainer-kinematik.html` – Physik Kap. 2, Vorbereitung auf
-  Prüfung 2: fünf Situationen (Tram fährt an, Auto bremst, Stein fällt,
-  Ball nach oben, schiefe Ebene) mit Animation und zwei Diagrammen, dazu
-  Multiple-Choice-Fragen zum Lösungsweg (welche Gleichung, welches
-  Vorzeichen, welches Diagramm, welches Resultat) mit Begründung;
-  Zahlen zufällig, Ergebnis pro Situation bleibt im Browser. Daneben die
-  Formelsammlung der Prüfung; nach jeder Antwort ist die passende Formel
-  markiert. Formeln in LaTeX gesetzt (KaTeX eingebettet, MIT-Lizenz).
-- `klammern-trainer.html` – Algebra Kap. 2.4, Terme vereinfachen Schritt
-  für Schritt: Lernen (vor jedem Schritt die Regel wählen – Klammer
-  ausrechnen, Distributivgesetz, Produkte berechnen, Plus/Minus vor der
-  Klammer, Zusammenfassen – die Stelle wird markiert) und Üben (eigenen
-  Rechenweg Zeile für Zeile schreiben, Rückmeldung mit typischen Fehlern,
-  Tipp und «Schritt zeigen»). Sieben Stufen mit Zufallsaufgaben, eigene
-  Terme möglich.
 - `ti-nspire.html` – Physik/Algebra Kap. 0, TI-Nspire CX II-T CAS:
   Tutorial und Trainer in zehn Stationen (Lernen mit Tastenfeld und
   Bildschirm-Nachbau, Üben in drei Stufen mit Aufgaben aus den Skripten).
