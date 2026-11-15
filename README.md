@@ -17,6 +17,12 @@ dort hierher kopiert.
   Quiz zuordnen (vom Trainer aus verlinkt). Dazu die vier Teile der
   Übung 2.3.3 (S. 24, ISO aus V, D, SL): Lösung ist der Körper selbst,
   zuerst verdeckt, mit Taste für die isometrische Lage.
+- `ansichten-zeichnen-loesungen.html` – TZ Kap. 2.5.2 (Skript S. 31,
+  Übung «Ansichten zeichnen»): die drei Werkstücke einzeln als drehbares
+  3D-Modell, dazu Vorderansicht, Seitenansicht von links und Draufsicht
+  als Lösung zum Aufdecken. Modelle und Ansichten stammen aus
+  CadQuery-Modellen im Unterrichts-Repo (`musterloesung-werkstuecke.py
+  --web`). Direkt-Links: `?teil=2`, `?loesung`.
 - `konstante-beschleunigung-animation.html` – Physik Kap. 2, Bewegung
   mit konstanter Beschleunigung: Fahrzeug, Zerlegung
   x = x₀ + v₀·t + ½·a·t² und die drei Diagramme x–t, v–t, a–t.
